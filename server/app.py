@@ -62,21 +62,21 @@ async def _check_query_numbers(request: Request) -> None:
         raw = qp.get(name)
         if ann is bool:
             if raw.strip().lower() not in (_TRUE | _FALSE):
-                raise HTTPException(400, f"参数 {name} 要填是/否（收到 {raw[:20]!r}）")
+                raise HTTPException(400, f"Tham số {name} phải điền có/không (nhận được {raw[:20]!r})")
             continue
         if ann not in (int, float):
             continue
         try:
             val = int(raw) if ann is int else float(raw)
         except (TypeError, ValueError):
-            raise HTTPException(400, f"参数 {name} 要是数字（收到 {raw[:20]!r}）")
+            raise HTTPException(400, f"Tham số {name} phải là số (nhận được {raw[:20]!r})")
         if val != val or val in (float("inf"), float("-inf")):     # NaN / inf
-            raise HTTPException(400, f"参数 {name} 超出范围（收到 {raw[:20]!r}）")
+            raise HTTPException(400, f"Tham số {name} vượt phạm vi (nhận được {raw[:20]!r})")
         if abs(val) > MAX_INT:
-            raise HTTPException(400, f"参数 {name} 超出范围（最大 {MAX_INT}，收到 {raw[:20]!r}）")
+            raise HTTPException(400, f"Tham số {name} vượt phạm vi (tối đa {MAX_INT}, nhận được {raw[:20]!r})")
 
 
-app = FastAPI(title="小说 App 自研后端", version=VERSION, docs_url=None, redoc_url=None,
+app = FastAPI(title="Backend tự phát triển của App Tiểu thuyết", version=VERSION, docs_url=None, redoc_url=None,
               openapi_url=None, dependencies=[Depends(_check_query_numbers)])
 
 # ── 路由（同一个 router 挂两套前缀：老前端用 api/，工具页用 nb/api/）────────
@@ -165,7 +165,7 @@ async def _observe(request: Request, call_next):
         if os.environ.get("NOVELAPP_DEBUG_TRACE"):
             return JSONResponse({"detail": str(e)[:200], "traceback": tb[-4000:]},
                                 status_code=500)
-        return JSONResponse({"detail": "服务器内部错误：%s" % (str(e)[:120] or "未知")},
+        return JSONResponse({"detail": "Lỗi nội bộ máy chủ: %s" % (str(e)[:120] or "không rõ")},
                             status_code=500)
     ms = int((time.time() - t0) * 1000)
     p = request.url.path
@@ -234,7 +234,7 @@ async def _watch_outside(request: Request, call_next):
     resp = await call_next(request)
     if not local:
         try:
-            print("[外部访问] %s %s %s → %s  %.0fms  ua=%s" % (
+            print("[Truy cập ngoài] %s %s %s → %s  %.0fms  ua=%s" % (
                 ip, request.method, request.url.path, resp.status_code,
                 (_t.time() - t0) * 1000, (request.headers.get("user-agent") or "")[:70]),
                 flush=True)
@@ -248,7 +248,7 @@ async def _any_error(request: Request, exc: Exception):
     import traceback
     log_line({"at": now_ms(), "level": "error", "path": request.url.path,
               "error": repr(exc)[:300], "traceback": traceback.format_exc()[-2000:]})
-    return JSONResponse({"detail": str(exc)[:200] or "出错了"}, status_code=500)
+    return JSONResponse({"detail": str(exc)[:200] or "Có lỗi"}, status_code=500)
 
 
 # ── 启动 ────────────────────────────────────────────────────────────────────
@@ -293,10 +293,10 @@ def bootstrap_user() -> None:
         os.chmod(f, 0o600)
         if f.parent.is_dir():
             try:
-                _t = f.parent / "口令.txt"      # 中文名，用户在文件管理器里一眼能看到
-                _t.write_text("App 登录口令：%s\n\n"
-                              "(改口令： python3 tools/set_password.py 新口令；\n"
-                              " 也能在 App 的「设置」里改)\n" % pw, encoding="utf-8")
+                _t = f.parent / "ma-dang-nhap.txt"      # 中文名，用户在文件管理器里一眼能看到
+                _t.write_text("Mã đăng nhập App: %s\n\n"
+                              "(Đổi mã: python3 tools/set_password.py mã_mới;\n"
+                              " cũng có thể đổi trong「Cài đặt」của App)\n" % pw, encoding="utf-8")
                 os.chmod(_t, 0o600)
             except Exception:
                 pass
@@ -308,21 +308,28 @@ def bootstrap_user() -> None:
             remember_password(pw)
         except Exception:
             pass
-        print("  首次启动：这是你的登录口令")
+        print("  Lần đầu khởi động: đây là mã đăng nhập của bạn")
         print("    %s" % pw)
-        print("  （已存到 %s，随时可用 tools/set_password.py 改）" % f)
+        print("  (đã lưu vào %s, lúc nào cũng có thể đổi bằng tools/set_password.py)" % f)
         print("=" * 58 + "\n", flush=True)
     h, salt = hash_password(pw)
     n = now_ms()
     d.execute("INSERT INTO user(username,display_name,password_hash,salt,role,status,"
               "created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)",
-              ("admin", "管理员", h, salt, "admin", "active", n, n))
+              ("admin", "Quản trị viên", h, salt, "admin", "active", n, n))
 
 
 @app.on_event("startup")
 async def _startup():
     dbm.init(P.db)
     bootstrap_user()
+    try:
+        # Khởi động lại thì không còn phiên nào đang chạy thật: gỡ các trạng thái "running" mồ côi
+        _d = dbm.db()
+        _d.execute("UPDATE chat_session SET status='idle' WHERE status='running'")
+        _d.execute("UPDATE orchestra_run SET status='aborted', ended_at=? WHERE status='running'", (now_ms(),))
+    except Exception as e:
+        log_line({"at": now_ms(), "level": "error", "event": "reset-running", "error": repr(e)[:200]})
     try:
         from server.routers.books import heal_book_index
         gone = heal_book_index()         # 幽灵书（库里有行、磁盘上没目录）开机就清掉
@@ -352,7 +359,7 @@ async def _startup():
 
 @app.get("/api/version")
 async def version():
-    return {"version": VERSION, "name": CFG.get("app_name", "小说")}
+    return {"version": VERSION, "name": CFG.get("app_name", "Tiểu thuyết")}
 
 
 # ── 静态前端（必须最后挂：Starlette 按注册顺序匹配）─────────────────────────
@@ -361,7 +368,7 @@ if P.frontend.is_dir():
 else:
     @app.get("/")
     async def _no_frontend():
-        return PlainTextResponse("前端目录还没准备好：" + str(P.frontend), status_code=503)
+        return PlainTextResponse("Thư mục frontend chưa sẵn sàng: " + str(P.frontend), status_code=503)
 
 
 if __name__ == "__main__":

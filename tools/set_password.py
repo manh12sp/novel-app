@@ -41,14 +41,14 @@ def main() -> int:
             user = sys.argv[i + 1]
     pw = args[0] if args else gen_password()
     if len(pw) < 6:
-        print("口令太短了（至少 6 位）")
+        print("Mã quá ngắn (ít nhất 6 ký tự)")
         return 2
 
     dbm.init(P.db)
     d = dbm.db()
     row = d.query("SELECT id FROM user WHERE username=?", (user,))
     if not row:
-        print("找不到用户 %r —— 先启动一次后端让账号建出来" % user)
+        print("Không tìm thấy người dùng %r —— hãy khởi động backend một lần để tạo tài khoản trước" % user)
         return 1
     h, salt = hash_password(pw)
     d.execute("UPDATE user SET password_hash=?, salt=?, updated_at=? WHERE username=?",
@@ -58,10 +58,10 @@ def main() -> int:
         f = P.data / "initial-password.txt"
         f.write_text(pw + "\n", encoding="utf-8")
         os.chmod(f, 0o600)
-        t = P.data / "口令.txt"          # 中文名，文件管理器里一眼能看到
-        t.write_text("App 登录口令：%s\n\n"
-                     "(改口令： python3 tools/set_password.py 新口令；\n"
-                     " 也能在 App 的「设置」里改)\n" % pw, encoding="utf-8")
+        t = P.data / "ma-dang-nhap.txt"          # 中文名，文件管理器里一眼能看到
+        t.write_text("Mã đăng nhập App: %s\n\n"
+                     "(Đổi mã: python3 tools/set_password.py mã_mới;\n"
+                     " cũng có thể đổi trong「Cài đặt」của App)\n" % pw, encoding="utf-8")
         os.chmod(t, 0o600)
     except Exception:
         pass
@@ -71,9 +71,9 @@ def main() -> int:
         d.execute("INSERT INTO setting(key, value_json, updated_at) VALUES(?,?,?)",
                   ("app.password_plain", d.jdumps(pw), now_ms()))
     except Exception as e:
-        print("   （setting 表没写进去：%s —— 不影响口令本身）" % e)
-    print("✅ 已重设 %s 的口令：%s" % (user, pw))
-    print("   （现在就能用，不用重启后端；在 App 的「设置」里也能自己再改）")
+        print("   (bảng setting chưa ghi được: %s —— không ảnh hưởng bản thân mã)" % e)
+    print("✅ Đã đặt lại mã của %s: %s" % (user, pw))
+    print("   (dùng được ngay, không cần khởi động lại backend; trong「Cài đặt」của App cũng tự đổi được)")
     return 0
 
 

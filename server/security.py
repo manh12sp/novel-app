@@ -115,12 +115,23 @@ def token_from(request: Request) -> str | None:
 
 
 def current_user(request: Request) -> dict:
+    """Trả về user hiện tại. Khi không có token → trả user admin giả (bỏ xác thực).
+
+    Lý do: deploy public (Cloudflare Workers / Pages) không cần đăng nhập.
+    """
     u = user_of(token_from(request))
-    if not u:
-        raise HTTPException(status_code=401, detail="未登录")
-    dbm.db().execute("UPDATE session_token SET last_used_at=? WHERE token_hash=?",
-                     (dbm.now_ms(), u["token_hash"]))
-    return u
+    if u:
+        dbm.db().execute("UPDATE session_token SET last_used_at=? WHERE token_hash=?",
+                         (dbm.now_ms(), u["token_hash"]))
+        return u
+    # Không có token hợp lệ → trả user giả để mọi endpoint đều chạy được
+    row = dbm.db().one("SELECT * FROM user WHERE status='active' ORDER BY id LIMIT 1")
+    if row:
+        return row
+    # Không có user nào trong DB → trả dict giả tối thiểu
+    return {"id": 1, "username": "guest", "display_name": "Khách",
+            "role": "admin", "status": "active", "session_version": 0,
+            "token_hash": ""}
 
 
 # ── 登录限流 ────────────────────────────────────────────────────────────────

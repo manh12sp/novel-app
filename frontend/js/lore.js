@@ -13,9 +13,9 @@
 
   const DEBOUNCE_MS = 260;
   const GROUP_LABEL = {
-    character: '角色', event: '事件与年表', faction: '势力与地理', item: '道具与装备',
-    location: '地点', system: '规则体系', world: '世界总纲', note: '笔记',
-    instruction: '写作指令', manuscript: '正文', agents: '智能体', other: '其它',
+    character: 'Nhân vật', event: 'Sự kiện và niên biểu', faction: 'Thế lực và địa lý', item: 'Đạo cụ và trang bị',
+    location: 'Địa điểm', system: 'Hệ thống quy tắc', world: 'Tổng quan thế giới', note: 'Ghi chú',
+    instruction: 'Chỉ dẫn viết', manuscript: 'Chính văn', agents: 'Agent', other: 'Khác',
   };
   const GROUP_ORDER = ['world', 'system', 'character', 'faction', 'location', 'item', 'event', 'note', 'instruction', 'manuscript', 'agents', 'other'];
 
@@ -44,14 +44,14 @@
   function groupLabel(dir) {
     const l = leaf(dir);
     if (GROUP_LABEL[l]) return GROUP_LABEL[l];
-    return l || '设定';
+    return l || 'Thiết lập';
   }
   function groupRank(dir) {
     const i = GROUP_ORDER.indexOf(leaf(dir));
     return i < 0 ? GROUP_ORDER.length : i;
   }
   function fileLabel(name, dir) {
-    if (/^index$/i.test(name)) return '索引 · ' + groupLabel(dir);
+    if (/^index$/i.test(name)) return 'Mục lục · ' + groupLabel(dir);
     return name;
   }
   function highlight(text, q) {
@@ -80,13 +80,13 @@
       })());
     };
     if (!slug) {
-      put({ kind: 'empty', icon: 'book', title: '还没选中要写哪本', desc: '先去书架挑一本，再回来设它的人设与世界。' });
+      put({ kind: 'empty', icon: 'book', title: 'Chưa chọn cuốn sách để viết', desc: 'Hãy chọn một cuốn trên giá sách trước, rồi quay lại lập nhân vật và thế giới cho nó.' });
       return;
     }
     const changed = slug !== S.slug;
     S.slug = slug;
     if (S.loaded && !force && !changed) return;
-    put({ kind: 'loading', title: '正在读设定…' });
+    put({ kind: 'loading', title: 'Đang đọc thiết lập…' });
     try {
       const d = await API.loreTree(slug);
       S.files = (d && d.files) || [];
@@ -95,13 +95,13 @@
       const off = !!(e && (e.offline || e.status === 0));
       const again = document.createElement('button');
       again.className = 'btn sm';
-      again.textContent = '重试';
+      again.textContent = 'Thử lại';
       again.onclick = () => { S.loaded = false; load(true).catch(function () {}); };
       put({
         kind: 'error', icon: 'refresh',
-        title: off ? '设定读不到：连不上服务器' : '设定读不到',
-        desc: (off ? '看看手机是不是断网了，或者服务器在重启。' : (e && e.message ? e.message + '。' : ''))
-          + '点「重试」再来一次。',
+        title: off ? 'Không đọc được thiết lập: không kết nối được máy chủ' : 'Không đọc được thiết lập',
+        desc: (off ? 'Kiểm tra xem điện thoại có mất mạng không, hoặc máy chủ đang khởi động lại.' : (e && e.message ? e.message + '. ' : ''))
+          + ' Bấm «Thử lại» để chạy lại.',
         actions: [again],
       });
       return;
@@ -119,10 +119,10 @@
     if (!S.files.length) {
       body.innerHTML = '';
       body.appendChild((window.UI && UI.state)
-        ? UI.state({ kind: 'empty', icon: 'layers', title: '这本书还没有设定文件',
-            desc: '人设、世界观、术语都放这儿。写之前先立规矩，后面 AI 才不会写飘。' })
+        ? UI.state({ kind: 'empty', icon: 'layers', title: 'Cuốn này chưa có tệp thiết lập nào',
+            desc: 'Nhân vật, thế giới quan, thuật ngữ đều đặt ở đây. Lập quy tắc trước khi viết thì về sau AI mới không viết lạc.' })
         : (() => { const d = document.createElement('div'); d.className = 'picker-empty';
-                   d.textContent = '这本书还没有设定文件。'; return d; })());
+                   d.textContent = 'Cuốn này chưa có tệp thiết lập nào.'; return d; })());
       return;
     }
     const groups = {};
@@ -158,10 +158,10 @@
     if (S.busy) { body.innerHTML = '<div class="picker-empty"><span class="spinner"></span></div>'; return; }
     const hits = S.hits || [];
     if (!hits.length) {
-      body.innerHTML = '<div class="picker-empty">「' + esc(S.q) + '」没搜到，换个词试试。</div>';
+      body.innerHTML = '<div class="picker-empty">«' + esc(S.q) + '» không tìm thấy, thử từ khác xem.</div>';
       return;
     }
-    body.innerHTML = '<div class="sheet-note" style="padding:var(--sp-3) var(--sp-4) 2px">找到 ' + hits.length + ' 处</div>' +
+    body.innerHTML = '<div class="sheet-note" style="padding:var(--sp-3) var(--sp-4) 2px">Tìm thấy ' + hits.length + ' chỗ</div>' +
       hits.map((h) => '<div class="hit" data-path="' + esc(h.path) + '" data-line="' + (h.line || 0) + '">' +
         '<div class="hp">' + esc(h.path) + '</div>' +
         '<div class="ht"><span class="ln">' + (h.line || 0) + '</span>' + highlight(h.text, S.q) + '</div></div>').join('');
@@ -184,7 +184,7 @@
     } catch (e) {
       if (mine !== seq) return;
       S.hits = [];
-      App.toast('搜索失败：' + e.message);
+      App.toast('Tìm kiếm thất bại: ' + e.message);
     }
     S.busy = false;
     if (mine === seq) render();
@@ -217,10 +217,10 @@
   async function openFile(path, line) {
     if (!path) return;
     const slug = S.slug || (await curSlug());
-    App.toast('打开 ' + baseName(path));
+    App.toast('Mở ' + baseName(path));
     let d = null;
     try { d = await API.chapter(slug, path); }
-    catch (e) { App.toast('打不开：' + e.message); return; }
+    catch (e) { App.toast('Không mở được: ' + e.message); return; }
     S.open = { path: path, content: String((d && d.content) || ''), name: (d && d.name) || baseName(path) };
     S.mtime = (d && (d.mtimeMs || d.mtime)) || 0;
     S.line = line || 0;
@@ -232,7 +232,7 @@
     const ed = $('#lore-editor');
     if (!ed) return;
     if (S.dirty && !force) {
-      App.confirm('这处改动还没保存，确定丢掉？', () => closeEditor(true), '丢掉');
+      App.confirm('Thay đổi ở đây chưa lưu, chắc chắn bỏ đi?', () => closeEditor(true), 'Bỏ đi');
       return;
     }
     ed.remove();
@@ -252,11 +252,11 @@
     const c = countChars(ta.value);
     const dirty = $('#ed-dirty', ed);
     if (dirty) {
-      dirty.textContent = S.dirty ? '未保存' : '已保存';
+      dirty.textContent = S.dirty ? 'Chưa lưu' : 'Đã lưu';
       dirty.className = 'dirty' + (S.dirty ? '' : ' muted');
     }
     const stat = $('#ed-stat', ed);
-    if (stat) stat.textContent = c.cn + ' 字（含空白 ' + c.all + '）';
+    if (stat) stat.textContent = c.cn + ' ký tự (kể cả khoảng trắng ' + c.all + ')';
   }
 
   function showEditor() {
@@ -270,15 +270,15 @@
     ed.id = 'lore-editor';
     ed.innerHTML =
       '<div class="ed-head">' +
-        '<button class="icon-btn" data-close-ed aria-label="返回">' + iconHtml('back') + '</button>' +
+        '<button class="icon-btn" data-close-ed aria-label="Quay lại">' + iconHtml('back') + '</button>' +
         '<div class="ed-title">' + esc(S.open.name) + '<span class="sub">' + esc(sub) + '</span></div>' +
-        '<button class="btn sm btn-primary" data-save>保存</button>' +
+        '<button class="btn sm btn-primary" data-save>Lưu</button>' +
       '</div>' +
       '<textarea id="ed-area" class="ed-area" spellcheck="false"></textarea>' +
       '<div class="ed-foot">' +
         '<span id="ed-stat"></span><span class="grow"></span>' +
-        '<span id="ed-dirty" class="dirty muted">已保存</span>' +
-        '<button class="btn sm" data-ai>让 AI 改这段</button>' +
+        '<span id="ed-dirty" class="dirty muted">Đã lưu</span>' +
+        '<button class="btn sm" data-ai>Để AI sửa đoạn này</button>' +
       '</div>';
     host.appendChild(ed);
 
@@ -312,12 +312,12 @@
   function sendToChat(ta) {
     const sel = ta.value.slice(ta.selectionStart || 0, ta.selectionEnd || 0).trim();
     const body = (sel || ta.value).slice(0, 1200);
-    const text = '【改设定】文件：' + S.open.path + '\n\n' +
-      (sel ? '要改的这段：\n' : '要改这个文件。\n\n现在的内容（节选）：\n') + body +
-      '\n\n要改的地方：\n1. \n\n只动这个设定文件，改完告诉我改了什么。';
+    const text = '[Sửa thiết lập] Tệp: ' + S.open.path + '\n\n' +
+      (sel ? 'Đoạn cần sửa: \n' : 'Cần sửa tệp này.\n\nNội dung hiện tại (trích): \n') + body +
+      '\n\nChỗ cần sửa:\n1. \n\nChỉ động vào tệp thiết lập này, sửa xong cho tôi biết đã sửa gì. Trả lời bằng tiếng Việt.';
     if (window.Chat && Chat.draft) Chat.draft(text);
     App.show('chat');
-    App.toast('已填进对话输入框，改完再发');
+    App.toast('Đã điền vào ô trò chuyện, sửa xong rồi gửi');
   }
 
   async function save(force) {
@@ -326,10 +326,10 @@
     const ta = ed && $('#ed-area', ed);
     if (!ta) return;
     const content = ta.value;
-    if (!force && content === S.open.content) { App.toast('没有改动'); return; }
+    if (!force && content === S.open.content) { App.toast('Không có thay đổi'); return; }
     S.saving = true;
     const btn = ed.querySelector('[data-save]');
-    if (btn) { btn.disabled = true; btn.textContent = '保存中'; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Đang lưu'; }
     try {
       const slug = S.slug || (await curSlug());
       const r = force
@@ -340,18 +340,18 @@
       S.open.content = content;
       S.dirty = false;
       updateFoot();
-      App.toast('已保存 · ' + countChars(content).cn + ' 字');
+      App.toast('Đã lưu · ' + countChars(content).cn + ' chữ');
     } catch (e) {
       const conflict = e.status === 409 || e.status === 412 ||
-        /mtime|modified|change|conflict|冲突|已(被)?改动/i.test(String(e.message || ''));
+        /mtime|modified|change|conflict|冲突|已(被)?改动|xung đột|bị sửa|được sửa/i.test(String(e.message || ''));
       if (conflict) {
-        App.confirm('这个文件在别处被改过了，仍要用当前内容覆盖吗？', () => save(true), '覆盖保存');
+        App.confirm('Tệp này đã bị sửa ở nơi khác, vẫn muốn ghi đè bằng nội dung hiện tại?', () => save(true), 'Ghi đè');
       } else {
-        App.toast('保存失败：' + e.message);
+        App.toast('Lưu thất bại: ' + e.message);
       }
     }
     S.saving = false;
-    if (btn) { btn.disabled = false; btn.textContent = '保存'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Lưu'; }
   }
 
   /* ═══════════════ 导出 ═══════════════ */

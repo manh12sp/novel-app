@@ -34,8 +34,8 @@
   }
 
   function head(d) {
-    const bits = [d.count + ' 章', '共 ' + num(d.words) + ' 字'];
-    if (d.emptyCount) bits.push('<b>' + d.emptyCount + ' 章还是空的</b>');
+    const bits = [d.count + ' chương', 'Tổng ' + num(d.words) + ' chữ'];
+    if (d.emptyCount) bits.push('<b>' + d.emptyCount + ' chương vẫn còn trống</b>');
     return '<div class="t-hint">' + bits.join(' · ') + '</div>';
   }
 
@@ -52,11 +52,11 @@
       '<div class="al-main">' +
         '<div class="al-title">' + esc(it.title) + '</div>' +
         '<div class="al-sum' + (it.mine ? ' mine' : '') + '" data-edit="' + esc(it.path) + '">' +
-          (it.summary ? esc(it.summary) : '<i>这章还没正文</i>') +
-          (it.mine ? '<b class="al-tag">我写的</b>' : '<b class="al-tag auto">自动</b>') +
+          (it.summary ? esc(it.summary) : '<i>Chương này chưa có nội dung</i>') +
+          (it.mine ? '<b class="al-tag">Tôi viết</b>' : '<b class="al-tag auto">Tự động</b>') +
         '</div>' +
       '</div>' +
-      '<div class="al-side"><span>' + (it.empty ? '空' : num(it.words) + ' 字') + '</span>' +
+      '<div class="al-side"><span>' + (it.empty ? 'Trống' : num(it.words) + ' chữ') + '</span>' +
         '<span class="al-go">' + window.iconHtml('chevron') + '</span></div>' +
       '</div>';
   }
@@ -64,17 +64,17 @@
   function capsHtml(items) {
     return items.length
       ? '<div class="al-list">' + items.map(rowHtml).join('') + '</div>'
-      : '<div class="t-empty">这本书还没有章节。</div>';
+      : '<div class="t-empty">Cuốn này chưa có chương nào.</div>';
   }
 
   /* 章节速览：读 /api/storyline（后端一个字没改），改一句话写回同一路接口 */
   async function capsHome(host, slug) {
-    U().loading(host, '读章节…');
+    U().loading(host, 'Đang đọc chương…');
     let d;
     try { d = await chapters(slug); }
-    catch (e) { U().empty(host, '读不到章节：' + e.message); return; }
+    catch (e) { U().empty(host, 'Không đọc được chương: ' + e.message); return; }
     const items = (d && d.items) || [];
-    if (!items.length) { U().empty(host, '这本书还没有章节', 'book'); return; }
+    if (!items.length) { U().empty(host, 'Cuốn này chưa có chương nào', 'book'); return; }
     host.innerHTML = head(d) + capsHtml(items);
     host.querySelectorAll('.al-row').forEach((row) => {
       row.onclick = async (e) => {
@@ -83,30 +83,30 @@
           e.stopPropagation();
           hap();
           const cur = items.find((x) => x.path === edit.dataset.edit) || {};
-          const v = await U().ask('这一章发生了什么（一句话）', cur.summary || '', {
-            placeholder: '例：主角在雪夜捡到一枚断刃，被巡夜人发现', host });
+          const v = await U().ask('Chương này xảy ra chuyện gì (một câu)', cur.summary || '', {
+            placeholder: 'VD: Nhân vật chính nhặt được một mảnh đao gãy trong đêm tuyết, bị người tuần đêm phát hiện', host });
           if (v === null || v === undefined) return;
           try {
             await post('/api/storyline', { slug, path: cur.path, summary: String(v).trim() });
-            toast('存好了');
+            toast('Đã lưu');
             capsHome(host, slug);            // 重画，让"自动/我写的"标记跟着变
-          } catch (err) { toast('存不下：' + err.message); }
+          } catch (err) { toast('Không lưu được: ' + err.message); }
           return;
         }
         hap();
         try { await window.Shelf.openBook(slug, { slug, path: row.dataset.path }); }
-        catch (err) { toast('打不开：' + err.message); }
+        catch (err) { toast('Không mở được: ' + err.message); }
       };
     });
   }
 
   async function storyHome(host, slug) {
-    if (!window.Outline) { U().empty(host, '大纲模块没加载（页面缺 js/outline.js）'); return; }
+    if (!window.Outline) { U().empty(host, 'Mô-đun dàn ý chưa tải (trang thiếu js/outline.js)'); return; }
     host.innerHTML =
       '<div class="ol-mount" data-ol></div>' +
       '<details class="acc" data-caps-acc>' +
-        '<summary><span class="acc-t">章节速览 · 一章一句话</span>' +
-          '<span class="acc-n">写到哪了，一眼看完；点一行去写那一章</span>' +
+        '<summary><span class="acc-t">Xem nhanh chương · mỗi chương một câu</span>' +
+          '<span class="acc-n">Viết tới đâu rồi, nhìn là thấy; bấm một dòng để viết chương đó</span>' +
           '<span class="acc-x">' + window.iconHtml('chevron') + '</span></summary>' +
         '<div class="acc-body" data-caps></div>' +
       '</details>';
@@ -119,31 +119,31 @@
       done = true;
       /* 读失败要说话 —— 以前这类 async 调用没人接住，界面就永远停在"读章节…"
          （自己踩的：rowHtml 没了 → ReferenceError → 一直转圈、一声不吭） */
-      capsHome(box, slug).catch((e) => { toast('速览读不到：' + ((e && e.message) || e)); });
+      capsHome(box, slug).catch((e) => { toast('Không đọc được bản xem nhanh: ' + ((e && e.message) || e)); });
     });
     return window.Outline.mount(host.querySelector('[data-ol]'), slug);
   }
 
   /* ══════════════════ ⑤ 章节顺序 ══════════════════ */
   async function orderHome(host, slug) {
-    U().loading(host, '读章节…');
+    U().loading(host, 'Đang đọc chương…');
     let d;
     try { d = await chapters(slug); }
-    catch (e) { U().empty(host, '读不到章节：' + e.message); return; }
+    catch (e) { U().empty(host, 'Không đọc được chương: ' + e.message); return; }
     const items = (d && d.items) || [];
-    if (!items.length) { U().empty(host, '这本书还没有章节', 'book'); return; }
+    if (!items.length) { U().empty(host, 'Cuốn này chưa có chương nào', 'book'); return; }
     host.innerHTML = head(d) +
-      '<div class="t-hint">上移 / 下移 会重排章节编号；插一章会插在这一章后面。' +
-      '这一章的细纲、出场角色、关键事件会跟着走，一个字不丢。</div>' +
+      '<div class="t-hint">Lên / Xuống sẽ đánh lại số chương; chèn chương sẽ chèn sau chương này. ' +
+      ' Dàn ý chi tiết, nhân vật xuất hiện, sự kiện chính của chương sẽ đi theo, không mất chữ nào.</div>' +
       '<div class="al-list">' + items.map((it, i) =>
         '<div class="al-row ord" data-path="' + esc(it.path) + '">' +
           '<div class="al-no">' + (it.no || i + 1) + '</div>' +
           '<div class="al-main"><div class="al-title">' + esc(it.title) + '</div>' +
-            '<div class="al-meta">' + (it.empty ? '还没写' : num(it.words) + ' 字') + '</div></div>' +
+            '<div class="al-meta">' + (it.empty ? 'Chưa viết' : num(it.words) + ' chữ') + '</div></div>' +
           '<div class="al-btns">' +
-            '<button class="al-btn" data-mv="up" aria-label="上移">' + window.iconHtml('chevron') + '</button>' +
-            '<button class="al-btn dn" data-mv="down" aria-label="下移">' + window.iconHtml('chevron') + '</button>' +
-            '<button class="al-btn ins" data-ins="1" aria-label="在这一章后面插一章">' +
+            '<button class="al-btn" data-mv="up" aria-label="Lên trên">' + window.iconHtml('chevron') + '</button>' +
+            '<button class="al-btn dn" data-mv="down" aria-label="Xuống dưới">' + window.iconHtml('chevron') + '</button>' +
+            '<button class="al-btn ins" data-ins="1" aria-label="Chèn một chương sau chương này">' +
               window.iconHtml('plus') + '</button>' +
           '</div></div>').join('') + '</div>';
     host.querySelectorAll('.al-row').forEach((row) => {
@@ -157,23 +157,23 @@
           e.stopPropagation();
           try {
             const r = await post('/api/chapter/move', { slug, path, dir: mv.dataset.mv });
-            if (r && r.moved === false) toast('已经到头了');
-            else toast('挪好了');
+            if (r && r.moved === false) toast('Đã ở đầu/cuối rồi');
+            else toast('Đã di chuyển');
             orderHome(host, slug);
-          } catch (err) { toast('挪不动：' + err.message); }
+          } catch (err) { toast('Không di chuyển được: ' + err.message); }
           return;
         }
         if (ins) {
           hap();
           e.stopPropagation();
-          const name = await U().ask('插在「' + it.title + '」后面的这一章叫什么', '',
-            { placeholder: '例：第007章-雪夜之后', host });
+          const name = await U().ask('Chèn sau «' + it.title + '», chương mới tên là gì', '',
+            { placeholder: 'VD: Sau đêm tuyết', host });
           if (!name) return;
           try {
-            const r = await post('/api/chapter/insert', { slug, after: path, title: String(name).trim() });
-            toast(r && r.inserted ? '插好了' : '插好了');
+            const r = await post('/api/chapter/insert', { slug, after: path, title: String((window.VI && VI.chapterName ? VI.chapterName : function (x) { return x; })(String(name).trim())).replace(/^第\s*0*\d+\s*章\s*[-—·_]?\s*/, '').trim() || 'Chưa đặt tên' });
+            toast(r && r.inserted ? 'Đã chèn' : 'Đã chèn');
             orderHome(host, slug);
-          } catch (err) { toast('插不进去：' + err.message); }
+          } catch (err) { toast('Không chèn được: ' + err.message); }
           return;
         }
         /* 这一屏只干"挪位置"这件事：点空白处不乱跳（想写正文请走「故事线」或书架） */
@@ -183,10 +183,10 @@
 
   if (window.Tools && window.Tools.add) {
     window.Tools.add([
-      { id: 'story', name: '故事线', sub: '大纲 · 这本书往哪走', icon: 'list', sec: '写作',
-        run: (host) => U().pushBook('故事线', storyHome) },
-      { id: 'order', name: '章节顺序', sub: '插一章·调顺序', icon: 'refresh', sec: '书稿',
-        run: (host) => U().pushBook('章节顺序', orderHome) },
+      { id: 'story', name: 'Tuyến truyện', sub: 'Dàn ý · cuốn sách đi về đâu', icon: 'list', sec: 'Viết',
+        run: (host) => U().pushBook('Tuyến truyện', storyHome) },
+      { id: 'order', name: 'Thứ tự chương', sub: 'Chèn chương · đổi thứ tự', icon: 'refresh', sec: 'Bản thảo',
+        run: (host) => U().pushBook('Thứ tự chương', orderHome) },
     ]);
   }
 })();

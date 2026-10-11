@@ -212,14 +212,14 @@
 
   async function upload(file) {
     const scope = st.scope;
-    if (scope === 'book' && !slugNow()) { App.toast('先在书架选一本书'); return; }
-    if (file.size > 8 * 1024 * 1024) { App.toast('图太大（超过 8MB），先压一压再传'); return; }
+    if (scope === 'book' && !slugNow()) { App.toast('Hãy chọn một cuốn sách trên giá trước'); return; }
+    if (file.size > 8 * 1024 * 1024) { App.toast('Ảnh quá lớn (trên 8MB), hãy nén bớt rồi tải lên'); return; }
     const fd = new FormData();
     fd.append('file', file);
     fd.append('scope', scope);
     fd.append('slug', scope === 'book' ? slugNow() : '');
     fd.append('mode', view().mode || 'cover');
-    App.toast('正在上传…');
+    App.toast('Đang tải lên…');
     try {
       /* 走 API.abs()：跨源/带口令这件事只有它知道（前端自己拼地址踩过 404 的坑） */
       const r = await fetch(API.abs('api/appearance/bg'), {
@@ -228,12 +228,12 @@
       });
       const txt = await r.text();
       let d = null; try { d = txt ? JSON.parse(txt) : null; } catch (e) { d = null; }
-      if (!r.ok) throw new Error((d && (d.detail || d.message)) || ('上传失败（HTTP ' + r.status + '）'));
-      App.toast('换好了');
+      if (!r.ok) throw new Error((d && (d.detail || d.message)) || ('Tải lên thất bại (HTTP ' + r.status + ')'));
+      App.toast('Đã đổi xong');
       await load(true);
       rerender();
     } catch (e) {
-      App.toast('传不上去：' + (e && e.message ? e.message : e));
+      App.toast('Không tải lên được: ' + (e && e.message ? e.message : e));
     }
   }
 
@@ -242,20 +242,20 @@
     try {
       await API.nb('api/appearance/bg?' + API.qs({
         scope, slug: scope === 'book' ? slugNow() : '' }), { method: 'DELETE' });
-      App.toast(scope === 'book' ? '这本书还原成默认底' : '还原成默认底');
+      App.toast(scope === 'book' ? 'Cuốn này đã trở về nền mặc định' : 'Đã trở về nền mặc định');
       await load(true);
       rerender();
-    } catch (e) { App.toast('移除失败：' + (e && e.message ? e.message : e)); }
+    } catch (e) { App.toast('Gỡ bỏ thất bại: ' + (e && e.message ? e.message : e)); }
   }
 
   async function setMode(mode) {
     const scope = st.scope;
-    if (!view().has) { App.toast('先传一张图再挑铺法'); return; }
+    if (!view().has) { App.toast('Hãy tải một ảnh lên trước rồi mới chọn kiểu trải'); return; }
     try {
       await API.nb('api/appearance/bg/mode', { method: 'POST', body: { scope, slug: scope === 'book' ? slugNow() : '', mode } });
       await load(true);
       rerender();
-    } catch (e) { App.toast('改不了：' + (e && e.message ? e.message : e)); }
+    } catch (e) { App.toast('Không đổi được: ' + (e && e.message ? e.message : e)); }
   }
 
   /* 设置页每次重画都调它（上传完要立刻看到新图、状态字立刻变） */
@@ -265,7 +265,7 @@
     try { Settings.onShow(); } catch (e) {}
   }
 
-  const MODE_LABEL = { cover: '铺满', tile: '平铺', center: '居中' };
+  const MODE_LABEL = { cover: 'Phủ kín', tile: 'Lát gạch', center: 'Căn giữa' };
 
   /** 大设置「背景」那一组。**只吐 HTML**，事件在 wire() 里绑。 */
   function settingsHtml() {
@@ -273,19 +273,19 @@
     const v = view();
     const seg = (key, items, cur) => '<div class="seg" data-ubg="' + key + '">' + items.map(([x, l]) =>
       '<button data-v="' + x + '" class="' + (String(cur) === x ? 'on ' : '') + (key === 'scope' ? 'wide' : '') + '">' + l + '</button>').join('') + '</div>';
-    const where = e.scope === 'book' ? '这本书自己的' : '所有书默认的';
-    const state = !e.has ? '<span class="ubg-none">现在用的是默认纸纹</span>'
-      : '<span class="ubg-on">正在用' + where + '一张图（' + (MODE_LABEL[e.mode] || '铺满') + '）</span>';
-    return '<h3>背景</h3><div class="settings-group">'
-      + '<div class="settings-row stack"><span class="k">自定义背景图<small>用自己的图换掉默认纸纹 · 正文页保持干净</small></span>'
+    const where = e.scope === 'book' ? 'riêng của cuốn này' : 'mặc định cho mọi sách';
+    const state = !e.has ? '<span class="ubg-none">Đang dùng vân giấy mặc định</span>'
+      : '<span class="ubg-on">Đang dùng ảnh ' + where + ' (' + (MODE_LABEL[e.mode] || 'Phủ kín') + ')</span>';
+    return '<h3>Hình nền</h3><div class="settings-group">'
+      + '<div class="settings-row stack"><span class="k">Ảnh nền tùy chỉnh<small>Dùng ảnh của bạn thay vân giấy mặc định · trang chính văn vẫn giữ sạch</small></span>'
       + '<div class="ubg-prev' + (v.has ? ' has' : '') + '" id="ubg-prev"></div>'
-      + '<div class="ubg-state">' + state + (st.err ? '<span class="ubg-err">（读不到：' + st.err + '）</span>' : '') + '</div>'
+      + '<div class="ubg-state">' + state + (st.err ? '<span class="ubg-err"> (không đọc được: ' + st.err + ')</span>' : '') + '</div>'
       + '<div class="ubg-acts">'
-      + '<button class="btn sm" id="ubg-up">' + (v.has ? '换一张' : '上传图片') + '</button>'
-      + (v.has ? '<button class="btn sm btn-ghost" id="ubg-del">移除</button>' : '')
+      + '<button class="btn sm" id="ubg-up">' + (v.has ? 'Đổi ảnh khác' : 'Tải ảnh lên') + '</button>'
+      + (v.has ? '<button class="btn sm btn-ghost" id="ubg-del">Gỡ bỏ</button>' : '')
       + '</div></div>'
-      + '<div class="settings-row"><span class="k">铺法</span>' + seg('mode', [['cover', '铺满'], ['tile', '平铺'], ['center', '居中']], v.mode) + '</div>'
-      + '<div class="settings-row"><span class="k">用在哪儿<small>跟"所有书默认 / 这本书"一个口径</small></span>' + seg('scope', [['global', '所有书默认'], ['book', '这本书']], st.scope) + '</div>'
+      + '<div class="settings-row"><span class="k">Kiểu trải</span>' + seg('mode', [['cover', 'Phủ kín'], ['tile', 'Lát gạch'], ['center', 'Căn giữa']], v.mode) + '</div>'
+      + '<div class="settings-row"><span class="k">Áp dụng cho<small>Cùng cách hiểu với «Mặc định mọi sách / Cuốn này»</small></span>' + seg('scope', [['global', 'Mặc định mọi sách'], ['book', 'Cuốn này']], st.scope) + '</div>'
       + '</div>';
   }
 

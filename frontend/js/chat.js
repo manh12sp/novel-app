@@ -19,24 +19,24 @@
   /* 工具名一律翻成人话再上屏 —— 界面上不许出现 promise_list 这种英文函数名。
      （多 Agent 编排那套工具也得在这儿登记，漏一个就会把原名直接甩到用户脸上。） */
   const TOOL_LABEL = {
-    bash: '执行命令', read: '读文件', write: '写文件', edit: '改文件', multi_edit: '改文件',
-    glob: '找文件', grep: '搜索', search: '检索', report_result: '汇报',
-    web_search: '联网搜索', web_fetch: '抓网页', memory: '记忆', invoke_agent: '调度',
-    lorebook: '设定', world_engine: '世界状态',
-    list_files: '列目录', read_file: '读文件', write_file: '写文件', search_book: '翻书查找',
-    world_state: '看世界状态', promise_list: '看伏笔',
+    bash: 'Chạy lệnh', read: 'Đọc tệp', write: 'Ghi tệp', edit: 'Sửa tệp', multi_edit: 'Sửa tệp',
+    glob: 'Tìm tệp', grep: 'Tìm kiếm', search: 'Truy xuất', report_result: 'Báo cáo',
+    web_search: 'Tìm trên mạng', web_fetch: 'Lấy trang web', memory: 'Trí nhớ', invoke_agent: 'Điều phối',
+    lorebook: 'Thiết lập', world_engine: 'Trạng thái thế giới',
+    list_files: 'Liệt kê thư mục', read_file: 'Đọc tệp', write_file: 'Ghi tệp', search_book: 'Lật sách tìm',
+    world_state: 'Xem trạng thái thế giới', promise_list: 'Xem phục bút',
     /* 接上来的：界面上本来就有这些能力，AI 之前够不着 —— 名字必须是**中文人话**，
        用户看「这一轮 AI 用了什么」那张卡片时要一眼看懂它干了啥。 */
-    chapter_list: '看章节表', lore_list: '看设定清单', lore_read: '查设定',
-    memory_search: '查记忆', outline_read: '看大纲', outline_write: '改大纲',
-    notes_read: '看笔记', term_list: '看术语表', material_list: '翻素材',
-    reference_list: '看参考资料', reference_read: '读参考资料',
-    lint_check: '查 AI 味', consistency_check: '查前后矛盾', pacing_check: '查节奏',
+    chapter_list: 'Xem danh sách chương', lore_list: 'Xem danh sách thiết lập', lore_read: 'Tra thiết lập',
+    memory_search: 'Tra trí nhớ', outline_read: 'Xem dàn ý', outline_write: 'Sửa dàn ý',
+    notes_read: 'Xem ghi chú', term_list: 'Xem bảng thuật ngữ', material_list: 'Lật tư liệu',
+    reference_list: 'Xem tài liệu tham khảo', reference_read: 'Đọc tài liệu tham khảo',
+    lint_check: 'Soát giọng AI', consistency_check: 'Soát mâu thuẫn trước sau', pacing_check: 'Soát nhịp truyện',
   };
   /* 结果里那些键也是英文的，一并翻过来；没登记的键保持原样（总比丢掉强）。 */
   const KEY_LABEL = {
-    promises: '没兑现的伏笔', result: '结论', files: '文件', file: '文件', path: '文件',
-    text: '内容', content: '内容', count: '条数', ok: '结果', items: '条目', error: '出错',
+    promises: 'Phục bút chưa thu hồi', result: 'Kết luận', files: 'Tệp', file: 'Tệp', path: 'Tệp',
+    text: 'Nội dung', content: 'Nội dung', count: 'Số mục', ok: 'Kết quả', items: 'Mục', error: 'Lỗi',
   };
 
   /* 只用实测可用的人格（其余建会话会 500），默认主创。 */
@@ -44,15 +44,15 @@
   /* 默认只露这三个「写小说」用的，其余收进「更多角色」里 */
   const PROFILE_CORE = ['leader.default', 'writer', 'inline.editor'];
   const PROFILE_NOTE = {
-    'leader.default': '主创 · 总管全书，改设定、排大纲、写正文都能派活（推荐）',
-    writer: '正文写作 · 专写某一章，把要求说清楚它就动笔',
-    'inline.editor': '改稿 · 润色、删水词、改语气，只动你选中的那段',
-    'rp.writer': '跑团写作 · 按剧本站位渲染正文（进阶）',
-    'rp.leader': '跑团主持 · 开局引导与剧情裁决（进阶）',
-    'simulator.leader': '世界模拟 · 推演世界状态变化（进阶）',
-    'world.engine': '世界引擎 · 维护世界观条目（进阶）',
-    researcher: '联网研究 · 上网查资料核对细节',
-    'leader.assets': '素材助手 · 整理设定与素材',
+    'leader.default': 'Tác giả chính · quản toàn bộ sách, sửa thiết lập, xếp dàn ý, viết chính văn đều giao việc được (khuyên dùng)',
+    writer: 'Viết chính văn · chuyên viết một chương, nói rõ yêu cầu là nó bắt tay viết',
+    'inline.editor': 'Sửa bản thảo · trau chuốt, bỏ chữ thừa, đổi giọng văn, chỉ động vào đoạn bạn chọn',
+    'rp.writer': 'Viết nhập vai · dựng chính văn theo vị trí trong kịch bản (nâng cao)',
+    'rp.leader': 'Quản trò nhập vai · dẫn mở đầu và phân xử cốt truyện (nâng cao)',
+    'simulator.leader': 'Mô phỏng thế giới · suy diễn biến đổi trạng thái thế giới (nâng cao)',
+    'world.engine': 'Động cơ thế giới · duy trì các mục thế giới quan (nâng cao)',
+    researcher: 'Nghiên cứu trên mạng · lên mạng tra tư liệu, đối chiếu chi tiết',
+    'leader.assets': 'Trợ lý tư liệu · sắp xếp thiết lập và tư liệu',
   };
 
   const S = {
@@ -173,7 +173,7 @@
     } catch (e) { return ''; }
   }
 
-  const toolLabel = (n) => TOOL_LABEL[n] || n || '工具';
+  const toolLabel = (n) => TOOL_LABEL[n] || n || 'Công cụ';
   const clip = (s, n) => (String(s || '').length > n ? String(s).slice(0, n) + '…' : String(s || ''));
   const two = (n) => (n < 10 ? '0' + n : '' + n);
 
@@ -183,15 +183,15 @@
     const hm = two(d.getHours()) + ':' + two(d.getMinutes());
     if (d.toDateString() === now.toDateString()) return hm;
     const y = new Date(now.getTime() - 86400000);
-    if (d.toDateString() === y.toDateString()) return '昨天 ' + hm;
+    if (d.toDateString() === y.toDateString()) return 'Hôm qua ' + hm;
     return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + hm;
   }
   function fmtAgo(ts) {
     if (!ts) return '';
     const s = (Date.now() - ts) / 1000;
-    if (s < 60) return '刚刚';
-    if (s < 3600) return Math.floor(s / 60) + ' 分钟前';
-    if (s < 86400) return Math.floor(s / 3600) + ' 小时前';
+    if (s < 60) return 'Vừa xong';
+    if (s < 3600) return Math.floor(s / 60) + ' phút trước';
+    if (s < 86400) return Math.floor(s / 3600) + ' giờ trước';
     return fmtTime(ts);
   }
 
@@ -212,7 +212,7 @@
     d.id = 'chat-drawer';
     d.innerHTML =
       '<button class="cd-head" id="chat-drawer-head" aria-expanded="false" aria-controls="chat-drawer-body">' +
-        '<span class="cd-sum" id="chat-drawer-sum">正在读…</span>' +
+        '<span class="cd-sum" id="chat-drawer-sum">Đang đọc…</span>' +
         '<span class="cd-chev" aria-hidden="true"></span>' +
       '</button>' +
       '<div class="cd-body" id="chat-drawer-body"></div>';
@@ -241,14 +241,14 @@
     const el = document.getElementById('chat-drawer-sum');
     if (!el) return;
     const m = modeOf(S.mode);
-    const bits = [m ? m.name : '讨论', shortProfile(S.profileKey)];
+    const bits = [m ? m.name : 'Thảo luận', shortProfile(S.profileKey)];
     if (S.running) {
       const st = S.run && S.run.steps && S.run.steps.length
-        ? '第 ' + Math.min((S.run.i || 0) + 1, S.run.steps.length) + '/' + S.run.steps.length + ' 棒'
-        : '回复中…';
+        ? 'Bước ' + Math.min((S.run.i || 0) + 1, S.run.steps.length) + '/' + S.run.steps.length + ' '
+        : 'Đang trả lời…';
       bits.push(st);
     }
-    bits.push(shortModel(S.modelName || '默认模型'));
+    bits.push(shortModel(S.modelName || 'Mô hình mặc định'));
     el.textContent = bits.join(' · ');
   }
 
@@ -261,27 +261,27 @@
     const el = document.createElement('div');
     el.className = 'chat-strip';
     el.innerHTML =
-      '<button class="pk" data-k="profile">' + iconHtml('spark') + '<b id="chat-pk-name">人格</b></button>' +
-      '<button class="pk" data-k="model">' + iconHtml('settings') + '<b id="chat-md-name">模型</b></button>' +
+      '<button class="pk" data-k="profile">' + iconHtml('spark') + '<b id="chat-pk-name">Nhân cách</b></button>' +
+      '<button class="pk" data-k="model">' + iconHtml('settings') + '<b id="chat-md-name">Mô hình</b></button>' +
       '<button class="pk" id="chat-stream-btn" data-k="stream">' + iconHtml('send') +
-      '<b>出字 · ' + streamLabel() + '</b></button>' +
-      '<button class="pk" data-k="setup">' + iconHtml('cpu') + '<b>渠道</b></button>' +
-      '<span class="grow"></span><span class="st" id="chat-st">就绪</span>';
+      '<b>Xuất chữ · ' + streamLabel() + '</b></button>' +
+      '<button class="pk" data-k="setup">' + iconHtml('cpu') + '<b>Kênh</b></button>' +
+      '<span class="grow"></span><span class="st" id="chat-st">Sẵn sàng</span>';
     // 模式胶囊单起一行：讨论 / 计划 / 执行（多 Agent 分工在这三种模式里真正生效）
     const row = document.createElement('div');
     row.className = 'mode-row';
-    row.innerHTML = '<span class="mode-lab">干活方式</span><span class="mode-seg" id="chat-modes"></span>';
+    row.innerHTML = '<span class="mode-lab">Cách làm việc</span><span class="mode-seg" id="chat-modes"></span>';
     S.modeRow = row;
     /* 「谁来做」单起一行 —— 跟「干活方式」挤在同一行会顶出屏幕（用户截图里的"穿模"）。
        这一行：分工 / 一个人 两枚胶囊 + 一个小小的「分工设置」跳转按钮。
        。 */
     const who = document.createElement('div');
     who.className = 'mode-row';
-    who.innerHTML = '<span class="mode-lab">谁来做</span><span class="mode-seg" id="chat-split">'
-      + '<button type="button" class="mode-btn on" data-split="1" title="多 Agent 分工：计划/取料/查证/写稿/挑刺各一个人，互相挑刺">分工</button>'
-      + '<button type="button" class="mode-btn" data-split="0" title="一个人干完：同一个 AI 从头做到尾，快">一个人</button>'
+    who.innerHTML = '<span class="mode-lab">Ai làm</span><span class="mode-seg" id="chat-split">'
+      + '<button type="button" class="mode-btn on" data-split="1" title="Phân công nhiều Agent: lập kế hoạch / lấy tư liệu / kiểm chứng / viết / bắt lỗi mỗi khâu một người, bắt lỗi lẫn nhau">Phân công</button>'
+      + '<button type="button" class="mode-btn" data-split="0" title="Một người làm hết: cùng một AI làm từ đầu tới cuối, nhanh">Một người</button>'
       + '</span>'
-      + '<button type="button" class="pk pk-mini" id="chat-goto-split" title="去调『哪一步交给谁』">分工设置</button>';
+      + '<button type="button" class="pk pk-mini" id="chat-goto-split" title="Chỉnh «bước nào giao cho ai»">Cài đặt phân công</button>';
     S.whoRow = who;
     /* 编排进度行：只在多 Agent 真跑起来时出现（讨论/计划/执行），
        写着「第 2/4 棒 · 挑刺 · 复审 正在干活」。事件来自后端的 orchestra_* 。 */
@@ -361,7 +361,7 @@
     el.classList.remove('hidden');
     const steps = r.steps || [];
     const done = r.done || {};
-    el.innerHTML = '<span class="run-lab">' + esc(r.modeName || '编排') + '</span>' +
+    el.innerHTML = '<span class="run-lab">' + esc(r.modeName || 'Điều phối') + '</span>' +
       steps.map((st, i) => {
         const n = i + 1;
         const cls = done[n] ? 'done' : (n === r.i ? 'now' : '');
@@ -390,8 +390,8 @@
     const on = S.autoWrite === true;
     b.classList.toggle('on', on);
     b.setAttribute('aria-checked', on ? 'true' : 'false');
-    b.title = on ? '自动写作：开着 —— 写完自己接着往下写，直到这一章写完（点中断可停）'
-                 : '自动写作：关着 —— 一轮写完就停';
+    b.title = on ? 'Tự động viết: BẬT — viết xong tự viết tiếp cho tới khi xong chương này (bấm Dừng để ngừng)'
+                 : 'Tự động viết: TẮT — viết xong một lượt là dừng';
   }
   function bindAuto() {
     const b = $('#chat-auto');
@@ -401,8 +401,8 @@
       e.preventDefault();
       S.autoWrite = !S.autoWrite;
       S.autoSeen = bodyEl() ? (bodyEl().innerText || '').length : 0;
-      if (S.autoWrite) { S.autoLeft = 30; App.toast('自动写作开了：写完会自己接着写'); }
-      else { App.toast('自动写作关了'); }
+      if (S.autoWrite) { S.autoLeft = 30; App.toast('Đã bật tự động viết: viết xong sẽ tự viết tiếp'); }
+      else { App.toast('Đã tắt tự động viết'); }
       paintAuto();
     });
   }
@@ -418,7 +418,7 @@
     const on = NET.on === true;
     b.classList.toggle('on', on);
     b.setAttribute('aria-checked', on ? 'true' : 'false');
-    b.title = on ? '联网搜索：开着 —— 需要资料时后台用主创的模型自己上网找' : '联网搜索：关着 —— 一个请求都不发';
+    b.title = on ? 'Tìm trên mạng: BẬT — khi cần tư liệu, chạy nền bằng mô hình của tác giả chính để tự lên mạng tìm' : 'Tìm trên mạng: TẮT — không gửi yêu cầu nào';
   }
   async function loadNet() {
     try {
@@ -437,10 +437,10 @@
       const r = await API.webSave({ enabled: want });
       NET.on = !!(r && r.enabled !== undefined ? r.enabled : want);
       try { window.WebSearch && WebSearch.invalidate && WebSearch.invalidate(); } catch (e2) {}
-      App.toast(NET.on ? '联网搜索：已开启（后台用主创的模型跑）' : '联网搜索：已关闭（不会联网）');
+      App.toast(NET.on ? 'Tìm trên mạng: đã bật (chạy nền bằng mô hình của tác giả chính)' : 'Tìm trên mạng: đã tắt (không kết nối mạng)');
       App.haptic && App.haptic();
     } catch (e) {
-      App.toast('改不了联网开关：' + (e.message || e));
+      App.toast('Không đổi được công tắc tìm trên mạng: ' + (e.message || e));
     } finally {
       NET.busy = false;
       if (b) b.disabled = false;
@@ -461,7 +461,7 @@
     const box = $('#chat-modes');
     if (!box) return;
     const list = S.modes || [
-      { key: 'discuss', name: '讨论' }, { key: 'plan', name: '计划' }, { key: 'execute', name: '执行' },
+      { key: 'discuss', name: 'Thảo luận' }, { key: 'plan', name: 'Kế hoạch' }, { key: 'execute', name: 'Thực hiện' },
     ];
     box.innerHTML = list.map((m) =>
       '<button class="mode-btn' + (m.key === S.mode ? ' on' : '') + '" data-mode="' + esc(m.key) +
@@ -476,22 +476,22 @@
   /* 切模式要**看得见地**变：说明文字 / 状态条 / 输入框提示 三处一起跟着走。
      （以前只把胶囊点成白色，此处说明"像没用"。判据：这三处必须真的变，见 tools/e2e-chatsafe.js 己） */
   const PLACEHOLDER = {
-    discuss: '想先商量什么？先说说你的想法…',
-    plan: '让它先排个计划（不会动稿子）…',
-    execute: '要改哪一章、怎么改？直接说…',
+    discuss: 'Muốn bàn gì trước? Nói ý tưởng của bạn đi…',
+    plan: 'Để nó lập kế hoạch trước (không đụng vào bản thảo)…',
+    execute: 'Sửa chương nào, sửa thế nào? Cứ nói thẳng…',
   };
   function applyMode() {
     const m = modeOf(S.mode);
     const hint = S.modeHint || document.getElementById('chat-mode-hint');
     if (hint) {
       hint.textContent = (m && m.desc ? m.desc : '') +
-        (S.modeFromPreset ? ' · 预设里给这本书定的默认方式' : '');
+        (S.modeFromPreset ? ' · Cách mặc định đặt cho cuốn này trong Preset' : '');
       hint.classList.toggle('hidden', !!S.run);
     }
     const st = document.getElementById('chat-st');
-    if (st && m) st.textContent = m.name + (m.writes ? ' · 会改稿' : ' · 不动文件');
+    if (st && m) st.textContent = m.name + (m.writes ? ' · sẽ sửa bản thảo' : ' · không đụng tệp');
     const ta = document.getElementById('chat-input');
-    if (ta && m) ta.placeholder = PLACEHOLDER[m.key] || '说点什么…';
+    if (ta && m) ta.placeholder = PLACEHOLDER[m.key] || 'Nói gì đó…';
     drawDrawerSum();
   }
 
@@ -526,7 +526,7 @@
   function shortProfile(k) {
     const note = PROFILE_NOTE[k] || '';
     const zh = note.split('·')[0].trim();
-    return zh || String(k || '').split('.').pop() || '默认';
+    return zh || String(k || '').split('.').pop() || 'Mặc định';
   }
   /* 模型名去掉渠道前缀（"[渠道]某模型-flash" → "某模型-flash"），
      再去掉结尾的 "-preview/-latest" 之类的噪音；太长的留头留尾。 */
@@ -545,10 +545,10 @@
        模型全名塞进去，两个胶囊各被切掉一半（）。
        现在显示人话中文名 / 去掉渠道前缀的模型名，全名放 title（悬停、读屏都拿得到）。 */
     if (pn) { const nm = shortProfile(S.profileKey); pn.textContent = nm; pn.title = S.profileKey; }
-    if (mn) { const nm = shortModel(S.modelName || '默认模型'); mn.textContent = nm;
-      mn.title = S.modelName || '默认模型'; }
-    if (t) t.textContent = S.title || '对话';
-    setStatus(S.running ? '回复中…' : '就绪', S.running ? 'run' : '');
+    if (mn) { const nm = shortModel(S.modelName || 'Mô hình mặc định'); mn.textContent = nm;
+      mn.title = S.modelName || 'Mô hình mặc định'; }
+    if (t) t.textContent = S.title || 'Trò chuyện';
+    setStatus(S.running ? 'Đang trả lời…' : 'Sẵn sàng', S.running ? 'run' : '');
     renderModes();
     setSendMode();
     drawDrawerSum();
@@ -561,7 +561,7 @@
     btn.dataset.icon = icon;
     setIcon(btn, icon);
     btn.classList.toggle('stop', !!S.running);
-    btn.setAttribute('aria-label', S.running ? '中断' : '发送');
+    btn.setAttribute('aria-label', S.running ? 'Dừng' : 'Gửi');
   }
 
   /* ═══════════════ 渲染消息 ═══════════════ */
@@ -690,7 +690,7 @@
       /* 一条消息**永远不许渲染成一个空泡泡**：读不出正文就明说，别让用户对着一个
          棕色椭圆猜（判据：tools/e2e-chatsafe.js 扫"有没有空气泡"）。 */
       '<div class="bubble">' + (txt.trim() ? mdHtml(txt)
-        : '<span class="dim">（这条消息的正文没能读出来）</span>') + '</div>' +
+        : '<span class="dim">(Không đọc được nội dung tin nhắn này)</span>') + '</div>' +
       '<div class="msg-meta">' + fmtTime(entry.timestamp) + '</div></div>');
   }
 
@@ -727,14 +727,14 @@
     const parts = [];
     const walk = (v, k) => {
       if (v == null) return;
-      if (Array.isArray(v)) { parts.push(label(k) + '：' + (v.length ? v.length + ' 条' : '无')); return; }
+      if (Array.isArray(v)) { parts.push(label(k) + ': ' + (v.length ? v.length + ' mục' : 'không có')); return; }
       if (typeof v === 'object') { Object.keys(v).forEach((kk) => walk(v[kk], kk)); return; }
-      parts.push((k ? label(k) + '：' : '') + String(v));
+      parts.push((k ? label(k) + ': ' : '') + String(v));
     };
     try {
       const o = JSON.parse(raw);
       if (Array.isArray(o)) walk(o, ''); else Object.keys(o).forEach((k) => walk(o[k], k));
-      return parts.join(' · ') || '（没有内容）';
+      return parts.join(' · ') || '(Không có nội dung)';
     } catch (e) {
       /* 不是合法 JSON（截断过）：至少把括号引号抠掉，别把裸 JSON 甩给用户 */
       return raw.replace(/[\{\}\[\]"]/g, ' ').replace(/[\s]+/g, ' ').trim();
@@ -755,16 +755,16 @@
     if (S.seen[id]) return;
     S.seen[id] = 1;
     const txt = [entry.content && entry.content.preview, entry.text, entry.summary]
-      .filter((x) => x && String(x).trim())[0] || '系统提示';
+      .filter((x) => x && String(x).trim())[0] || 'Thông báo hệ thống';
     const one = String(txt).replace(/\s+/g, ' ').trim();
     const node = addNode('<div class="msg center"><div class="msg-sys">' +
-      esc(clip(one, 80)) + (one.length > 80 ? '<span class="toggle">展开</span>' : '') + '</div></div>');
+      esc(clip(one, 80)) + (one.length > 80 ? '<span class="toggle">Mở rộng</span>' : '') + '</div></div>');
     if (!node || one.length <= 80) return;
     node.addEventListener('click', () => {
       const t = node.querySelector('.msg-sys');
       const open = node.dataset.open === '1';
       node.dataset.open = open ? '0' : '1';
-      t.innerHTML = open ? esc(clip(one, 80)) + '<span class="toggle">展开</span>' : esc(txt);
+      t.innerHTML = open ? esc(clip(one, 80)) + '<span class="toggle">Mở rộng</span>' : esc(txt);
     });
   }
 
@@ -777,8 +777,8 @@
   }
 
   function emptyHtml() {
-    return '<div class="chat-empty"><div class="big">和 AI 聊聊这本书</div>' +
-      '可以直接提问、让它改某一章、整理设定。<br>点左下 + 看快捷指令。</div>';
+    return '<div class="chat-empty"><div class="big">Trò chuyện với AI về cuốn sách này</div>' +
+      ' Có thể hỏi thẳng, bảo nó sửa một chương, sắp xếp thiết lập.<br>Bấm dấu + ở góc dưới trái để xem lệnh nhanh.</div>';
   }
 
   /* ═══════════════ 流式渲染 ═══════════════ */
@@ -960,9 +960,9 @@
   function liveError(messageId, msg, opts) {
     const L = (S.live && (!messageId || S.live.id === messageId)) ? S.live
       : (S.live || S.lastLive);          /* 气泡刚收尾也能写进去（agent_end 之后才报空回复） */
-    if (!L || !L.node) { App.toast(msg || '模型没有返回内容'); return; }
+    if (!L || !L.node) { App.toast(msg || 'Mô hình không trả về nội dung'); return; }
     const o = opts || {};
-    L.err = msg || L.err || '模型没有返回内容';
+    L.err = msg || L.err || 'Mô hình không trả về nội dung';
     S.turnErr = L.err;
     clearWait(); S.waitN = 0; dropWaitNote();
     flushLive(L && L.node ? L : null);      /* 出错/空回复也要先把已收到的字放完，别留半截 */
@@ -990,13 +990,13 @@
       const again = document.createElement('button');
       again.className = 'btn sm';
       again.dataset.liveRetry = '1';
-      again.textContent = '重试';
+      again.textContent = 'Thử lại';
       again.addEventListener('click', () => { const t = S.lastText; if (t) sendText(t); });
       acts.appendChild(again);
       if (o.model !== false) {
         const pick = document.createElement('button');
         pick.className = 'btn sm';
-        pick.textContent = '换个模型';
+        pick.textContent = 'Đổi mô hình';
         pick.addEventListener('click', () => modelSheet());
         acts.appendChild(pick);
       }
@@ -1030,8 +1030,8 @@
     if (!S.running || (S.turnAny && S.turnAny.trim())) { dropWaitNote(); return; }
     const waited = Math.round((n + 1) * WAIT_MS / 1000);
     const text = n === 0
-      ? '模型还没开始回答（渠道可能慢，也可能排不上队）。继续等就行。'
-      : '已经等了 ' + waited + ' 秒还没出字 —— 渠道像是卡住了。可以继续等，或者换个模型。';
+      ? 'Mô hình chưa bắt đầu trả lời (kênh có thể chậm, hoặc đang xếp hàng). Cứ chờ tiếp.'
+      : 'Đã chờ ' + waited + ' giây mà chưa ra chữ — kênh có vẻ bị kẹt. Có thể chờ tiếp, hoặc đổi mô hình.';
     /* 优先写在"正在回的那条气泡"里；还没有气泡就写在用户那条消息下面；
        都没有（SSE 都没连上）才挂到消息区末尾 —— 总之必须让用户看得见。 */
     const host = (S.live && S.live.node && S.live.node.querySelector('.bubble'))
@@ -1048,12 +1048,12 @@
       if (n >= 1 && !box.querySelector('button')) {
         const b = document.createElement('button');
         b.className = 'btn sm';
-        b.textContent = '换个模型';
+        b.textContent = 'Đổi mô hình';
         b.addEventListener('click', () => modelSheet());
         box.appendChild(b);
       }
     }
-    setStatus(n === 0 ? '等模型回答…' : '还在等模型…', 'run');
+    setStatus(n === 0 ? 'Chờ mô hình trả lời…' : 'Vẫn đang chờ mô hình…', 'run');
     S.waitN = n + 1;
     S.waitT = setTimeout(() => waitTick(S.waitN), WAIT_MS + 15000);
   }
@@ -1062,10 +1062,10 @@
   function ensureTurnSpoke(stopStatus) {
     if (S.turnAny && S.turnAny.trim()) return;
     if (S.turnErr) return;                       /* 上面已经报过错了 */
-    liveError(null, '模型没有返回内容', {
-      title: stopStatus === 'aborted' ? '这一轮被停掉了，还没出字' : '模型没有返回内容',
-      detail: '渠道这次没有吐正文（可能不支持这个模型 / 上下文太长 / 网络在中间断了）。' +
-        '点「重试」再来一次，或点「换个模型」。',
+    liveError(null, 'Mô hình không trả về nội dung', {
+      title: stopStatus === 'aborted' ? 'Lượt này đã bị dừng, chưa ra chữ' : 'Mô hình không trả về nội dung',
+      detail: 'Lần này kênh không trả về chính văn (có thể không hỗ trợ mô hình này / ngữ cảnh quá dài / mạng bị ngắt giữa chừng). ' +
+        ' Bấm «Thử lại» để chạy lại, hoặc bấm «Đổi mô hình».',
     });
   }
 
@@ -1088,7 +1088,7 @@
   function adoptSession(sess) {
     S.sid = sess.sessionId;
     S.profileKey = sess.profileKey || S.profileKey;
-    S.title = sess.title || '对话';
+    S.title = sess.title || 'Trò chuyện';
     const m = sess.model || {};
     if (m.modelId) { S.modelName = m.modelId; S.modelKey = (m.providerConfigId ? m.providerConfigId + '/' : '') + m.modelId; }
     store.set({ sid: S.sid, profileKey: S.profileKey, modelKey: S.modelKey, modelName: S.modelName });
@@ -1106,12 +1106,12 @@
     let slug = '';
     try { slug = (window.BookCtx && BookCtx.slug && BookCtx.slug()) || ''; } catch (e) {}
     slug = slug || S.bookSlug || (S.session && S.session.slug) || (S.data && S.data.slug) || '';
-    if (!slug) { App.toast('先进一本书再搜'); return; }
+    if (!slug) { App.toast('Hãy vào một cuốn sách rồi mới tìm'); return; }
     App.sheet(
       '<div class="sheet-grip"></div>'
-      + '<h3 class="sheet-h">找内容</h3>'
-      + '<p class="pfield-ds">把这本书的**正文**从头到尾搜一遍（设定、人物、大纲另外在「设定库」里搜）。</p>'
-      + '<div class="pfield-ct"><input class="pinput" id="bs-q" placeholder="输入要查的词，边打边搜" autocomplete="off"></div>'
+      + '<h3 class="sheet-h">Tìm nội dung</h3>'
+      + '<p class="pfield-ds">Tìm toàn bộ **chính văn** của cuốn này từ đầu tới cuối (thiết lập, nhân vật, dàn ý thì tìm riêng trong «Kho thiết lập»).</p>'
+      + '<div class="pfield-ct"><input class="pinput" id="bs-q" placeholder="Nhập từ cần tìm, vừa gõ vừa tìm" autocomplete="off"></div>'
       + '<div class="bs-wrap" id="bs-wrap"></div>',
       { onMount(panel) {
           const inp = panel.querySelector('#bs-q');
@@ -1119,7 +1119,7 @@
           let timer = null, last = '';
           const draw = (hits, kw) => {
             if (!hits || !hits.length) {
-              wrap.innerHTML = '<p class="pfield-ds" style="padding:var(--sp-3) 0">没找到「' + esc(kw) + '」。</p>';
+              wrap.innerHTML = '<p class="pfield-ds" style="padding:var(--sp-3) 0">Không tìm thấy «' + esc(kw) + '». </p>';
               return;
             }
             wrap.innerHTML = hits.map((h) =>
@@ -1131,7 +1131,7 @@
               b.addEventListener('click', () => {
                 try { App.closeSheet && App.closeSheet(); } catch (e) {}
                 if (window.Reader && Reader.goChapter) Reader.goChapter(b.dataset.p, 0);
-                else App.toast('打开失败：阅读器没准备好');
+                else App.toast('Mở thất bại: trình đọc chưa sẵn sàng');
               });
             });
           };
@@ -1140,12 +1140,12 @@
             if (!kw) { wrap.innerHTML = ''; return; }
             if (kw === last) return;
             last = kw;
-            wrap.innerHTML = '<p class="pfield-ds" style="padding:var(--sp-3) 0">正在找…</p>';
+            wrap.innerHTML = '<p class="pfield-ds" style="padding:var(--sp-3) 0">Đang tìm…</p>';
             try {
               const r = await API.bookSearch(slug, kw);
               draw((r && r.hits) || [], kw);
             } catch (e) {
-              wrap.innerHTML = '<p class="pfield-ds" style="padding:var(--sp-3) 0">搜不了：' + esc(String(e.message || e)) + '</p>';
+              wrap.innerHTML = '<p class="pfield-ds" style="padding:var(--sp-3) 0">Không tìm được: ' + esc(String(e.message || e)) + '</p>';
             }
           };
           inp.addEventListener('input', () => {
@@ -1161,35 +1161,35 @@
      此前的反馈—— 功能一直在（newSession），
      但界面上没入口。现在顶栏有个 ＋。**会先问一句**：正写着的时候点错就麻烦了。 */
   async function startNewChat() {
-    if (S.running) { App.toast('正在写，先点中断再开新对话'); return; }
-    if (!confirm('开一个新对话？现在这个会话会留着，随时能从「工具 → 会话」回去看。')) return;
+    if (S.running) { App.toast('Đang viết, hãy bấm Dừng trước rồi mới mở cuộc trò chuyện mới'); return; }
+    if (!confirm('Mở cuộc trò chuyện mới? Phiên hiện tại vẫn được giữ, lúc nào cũng có thể xem lại ở «Công cụ → Phiên».')) return;
     try {
       await newSession(S.profileKey);
-      App.toast('新对话开好了');
-    } catch (e) { App.toast('开不了新对话：' + (e.message || e)); }
+      App.toast('Đã mở cuộc trò chuyện mới');
+    } catch (e) { App.toast('Không mở được cuộc trò chuyện mới: ' + (e.message || e)); }
   }
 
   async function newSession(profileKey) {
     const slug = await curSlug();
     const pk = profileKey || S.profileKey || 'leader.default';
-    setStatus('新建中…', 'run');
+    setStatus('Đang tạo…', 'run');
     try {
       const sess = await API.newSession(pk, slug);
       S.profileKey = pk;
       S.seen = Object.create(null); S.lastSeq = -1; S.epoch = null;
       adoptSession(sess);
-      S.title = sess.title || '新会话';
+      S.title = sess.title || 'Phiên mới';
       refreshStrip();
       clearBody(emptyHtml());
-      setStatus('就绪', '');
+      setStatus('Sẵn sàng', '');
       if (sess.model && sess.model.modelId) S.modelName = sess.model.modelId;
       connect();
       refreshStrip();
-      if (!profileKey) App.toast('已新建会话');
+      if (!profileKey) App.toast('Đã tạo phiên mới');
       return sess;
     } catch (e) {
-      setStatus('新建失败', 'err');
-      App.toast('新建会话失败：' + e.message);
+      setStatus('Tạo thất bại', 'err');
+      App.toast('Tạo phiên thất bại: ' + e.message);
       throw e;
     }
   }
@@ -1201,10 +1201,10 @@
     S.turnCtx = null;                                  /* 上一轮的账不许跟到这一条会话来 */
     store.set({ sid: id });
     clearBody('<div class="chat-empty"><span class="spinner"></span></div>');
-    setStatus('载入中…');
+    setStatus('Đang tải…');
     let snap = null;
     try { snap = await API.snapshot(id); }
-    catch (e) { setStatus('载入失败', 'err'); clearBody('<div class="chat-empty">会话打不开：' + esc(e.message) + '</div>'); return; }
+    catch (e) { setStatus('Tải thất bại', 'err'); clearBody('<div class="chat-empty">Không mở được phiên: ' + esc(e.message) + '</div>'); return; }
     applySnapshot(snap);
     connect();
     if (opts && opts.focus) setTimeout(() => { const ta = $('#chat-input'); ta && ta.focus(); }, 120);
@@ -1214,7 +1214,7 @@
     if (!snap) return;
     runReset();
     const s = snap.summary || {};
-    S.title = s.title || snap.title || '对话';
+    S.title = s.title || snap.title || 'Trò chuyện';
     S.profileKey = s.profileKey || snap.profileKey || S.profileKey;
     const m = snap.model || s.model || {};
     if (m.modelId) { S.modelName = m.modelId; S.modelKey = (m.providerConfigId ? m.providerConfigId + '/' : '') + m.modelId; }
@@ -1229,7 +1229,7 @@
     entries.forEach(renderEntry);
     store.set({ profileKey: S.profileKey, modelKey: S.modelKey, modelName: S.modelName });
     refreshStrip();
-    setStatus(S.running ? '回复中…' : '就绪', S.running ? 'run' : '');
+    setStatus(S.running ? 'Đang trả lời…' : 'Sẵn sàng', S.running ? 'run' : '');
     scrollDown(true);
   }
 
@@ -1254,7 +1254,7 @@
       after,
       onEvent: (data) => handleEvent(data),
       onError: () => {
-        if (!S.running) setStatus('连接中断', 'err');
+        if (!S.running) setStatus('Mất kết nối', 'err');
       },
     });
   }
@@ -1270,7 +1270,7 @@
       if (typeof data.seq === 'number') S.lastSeq = data.seq;
     }
 
-    if (type === 'connected') { setStatus(S.running ? '回复中…' : '就绪', S.running ? 'run' : ''); return; }
+    if (type === 'connected') { setStatus(S.running ? 'Đang trả lời…' : 'Sẵn sàng', S.running ? 'run' : ''); return; }
     if (type === 'snapshot_required') { refreshSnapshot(); return; }
     if (type === 'session_state_changed') {
       const st = (ev.state && ev.state.summary) || {};
@@ -1282,8 +1282,8 @@
       /* 当前这一轮的 id：重放的历史事件里也有 message_start，
          只认"这一轮"的才不会给上一轮再建一遍空气泡（见 e2e-chatmsg 丙）。 */
       S.invId = S.running ? (data.invocationId || S.invId || null) : null;
-      if (S.running) setStatus('回复中…', 'run');
-      else { liveFinish(); setStatus('就绪', ''); }
+      if (S.running) setStatus('Đang trả lời…', 'run');
+      else { liveFinish(); setStatus('Sẵn sàng', ''); }
       refreshStrip();
       return;
     }
@@ -1291,7 +1291,7 @@
     if (type === 'orchestra_run_start') {
       S.run = { modeName: ev.modeName, steps: ev.steps || [], i: 0, done: {} };
       renderRun();
-      setStatus('编排 · ' + (ev.modeName || '') + ' · ' + (ev.steps || []).length + ' 棒', 'run');
+      setStatus('Điều phối · ' + (ev.modeName || '') + ' · ' + (ev.steps || []).length + ' ', 'run');
       return;
     }
     if (type === 'orchestra_step_start') {
@@ -1299,9 +1299,9 @@
         S.run.i = ev.seq || 0;
         const total = (S.run.steps || []).length || 4;
         renderRun();
-        setStatus('第 ' + (ev.seq || '?') + '/' + total + ' 棒 · ' + (ev.roleName || '') +
-                  (ev.title ? ' · ' + ev.title : '') + ' 正在干活' +
-                  (ev.handoffFrom ? '（接 ' + ev.handoffFrom + ' 的结论）' : ''), 'run');
+        setStatus('Bước ' + (ev.seq || '?') + '/' + total + '  · ' + (ev.roleName || '') +
+                  (ev.title ? ' · ' + ev.title : '') + ' đang làm việc ' +
+                  (ev.handoffFrom ? ' (tiếp nối kết luận của ' + ev.handoffFrom + ' )' : ''), 'run');
       }
       return;
     }
@@ -1312,8 +1312,8 @@
     if (type === 'orchestra_run_end') {
       if (S.run) {
         setStatus(ev.status === 'done'
-          ? ('编排跑完' + ((ev.wrote || []).length ? ' · 改了 ' + ev.wrote.length + ' 个文件' : ' · 这次没有改动'))
-          : ('编排结束（' + ev.status + '）'), ev.status === 'done' ? '' : 'err');
+          ? ('Điều phối xong ' + ((ev.wrote || []).length ? ' · đã sửa ' + ev.wrote.length + ' tệp' : ' · lần này không có thay đổi'))
+          : ('Điều phối kết thúc (' + ev.status + ')'), ev.status === 'done' ? '' : 'err');
         S.run.i = 999; (S.run.steps || []).forEach((x, i) => { (S.run.done = S.run.done || {})[i + 1] = true; });
         renderRun();
       }
@@ -1348,8 +1348,8 @@
       else if (u.type === 'error') {
         /* 后端把"模型调用失败"包在 message_update 里（type=error）——
            以前这里没分支，**这种更新会被直接丢掉**，用户只看到干等。 */
-        const why = String(u.message || '没有说明');
-        liveError(ev.messageId, /^(模型|渠道|连)/.test(why) ? why : ('模型调用失败：' + why));
+        const why = String(u.message || 'Không có giải thích');
+        liveError(ev.messageId, /^(模型|渠道|连|Mô hình|Kênh|Không kết nối|Kết nối|Gọi mô hình)/.test(why) ? why : ('Gọi mô hình thất bại: ' + why));
       }
       else if (u.type === 'thinking_delta') { /* 思考不展示 */ }
       else if (u.type === 'toolcall_start' || u.type === 'tool_call_start') {
@@ -1363,7 +1363,7 @@
       if (!S.running) return;                 /* 同上：重放的历史事件不许再画一遍 */
       const msg = S.live ? S.live.id : null;
       liveChip(msg, ev.toolCallId, ev.toolName, argLine(ev.args), 'run');
-      setStatus('调用 ' + toolLabel(ev.toolName) + '…', 'run');
+      setStatus('Đang gọi ' + toolLabel(ev.toolName) + '…', 'run');
       return;
     }
     if (type === 'tool_execution_end') {
@@ -1373,11 +1373,11 @@
         const txt = reportTextFromArgs(ev.args) || toolResultText(ev);
         if (txt && S.live && !S.live.text) { liveBulk(S.live, txt); scrollDown(); }
       }
-      setStatus('回复中…', 'run');
+      setStatus('Đang trả lời…', 'run');
       return;
     }
     if (type === 'agent_end') {
-      if (ev.status && ev.status !== 'completed') setStatus('已结束(' + ev.status + ')', 'err');
+      if (ev.status && ev.status !== 'completed') setStatus('Đã kết thúc(' + ev.status + ')', 'err');
       S.running = false;
       liveFinish();
       ensureTurnSpoke(ev.status);
@@ -1393,15 +1393,15 @@
         S.autoSeen = n;
         if (grow < 40) {                       // 没写新东西 = 已经写完了，别空转
           S.autoWrite = false; paintAuto();
-          App.toast('自动写作：这一轮没新增内容，停了');
+          App.toast('Tự động viết: lượt này không có nội dung mới, đã dừng');
         } else if ((S.autoLeft == null ? 30 : S.autoLeft) <= 0) {
           S.autoWrite = false; paintAuto();
-          App.toast('自动写作：到上限了（30 轮），先停下');
+          App.toast('Tự động viết: đã tới giới hạn (30 lượt), tạm dừng');
         } else {
           S.autoLeft = (S.autoLeft == null ? 30 : S.autoLeft) - 1;
-          setStatus('自动写作：接着写（还剩 ' + S.autoLeft + ' 轮，点中断可停）');
+          setStatus('Tự động viết: viết tiếp (còn ' + S.autoLeft + ' lượt, bấm Dừng để ngừng)');
           setTimeout(() => {
-            if (S.autoWrite && !S.running) sendText('接着上一段继续往下写。不要重复已经写过的内容，不要写总结，不要问我，直接写正文。');
+            if (S.autoWrite && !S.running) sendText('Viết tiếp từ đoạn trước. Không lặp lại nội dung đã viết, không viết tổng kết, không hỏi tôi, viết thẳng chính văn bằng tiếng Việt.');
           }, 1500);
         }
       }
@@ -1457,23 +1457,23 @@
   }
   function streamLabel() {
     const v = (window.Prefs && Prefs.get('chatStream')) || 'auto';
-    return v === 'stream' ? '流式' : (v === 'off' ? '整段' : '自动');
+    return v === 'stream' ? 'Luồng' : (v === 'off' ? 'Cả đoạn' : 'Tự động');
   }
   function cycleStream() {
     const v = (window.Prefs && Prefs.get('chatStream')) || 'auto';
     const next = v === 'auto' ? 'stream' : (v === 'stream' ? 'off' : 'auto');
     Prefs.set('chatStream', next);
     const b = $('#chat-stream-btn');
-    if (b) b.querySelector('b').textContent = '出字 · ' + streamLabel();
-    App.toast('出字方式：' + (next === 'stream' ? '流式（逐字出）'
-      : next === 'off' ? '整段（一次出完）' : '自动（先流式，渠道不支持就整段）'));
+    if (b) b.querySelector('b').textContent = 'Xuất chữ · ' + streamLabel();
+    App.toast('Cách xuất chữ: ' + (next === 'stream' ? 'Luồng (ra từng chữ)'
+      : next === 'off' ? 'Cả đoạn (ra một lần)' : 'Tự động (ưu tiên luồng, kênh không hỗ trợ thì ra cả đoạn)'));
   }
 
   /* ═══════════════ 发送 ═══════════════ */
   function pendingUser(text) {
     const node = addNode('<div class="msg me sending" data-id="p">' +
       '<div class="bubble">' + mdHtml(text) + '</div>' +
-      '<div class="msg-meta">发送中…</div></div>');
+      '<div class="msg-meta">Đang gửi…</div></div>');
     S.pending = { el: node, text: text, done: false };
     scrollDown(true);
     return node;
@@ -1485,14 +1485,14 @@
     if (!S.sid) {
       try { await ensureSession(); } catch (e) { return; }
     }
-    if (S.running) { App.toast('AI 正在回复，先停一下再发'); return; }
+    if (S.running) { App.toast('AI đang trả lời, hãy dừng trước rồi gửi'); return; }
     const ta = $('#chat-input');
     if (ta) { ta.value = ''; autoGrow(ta); }
     S.lastText = t;
     S.turnAny = ''; S.turnErr = ''; S.lastLive = null; S.turnCtx = null;
     pendingUser(t);
     S.running = true;
-    setStatus('已发出…', 'run');
+    setStatus('Đã gửi…', 'run');
     clearWait(); dropWaitNote(); S.waitN = 0;
     S.waitT = setTimeout(() => waitTick(0), WAIT_MS);
     setSendMode();
@@ -1510,16 +1510,16 @@
       if (S.pending && S.pending.el) {
         S.pending.el.classList.add('err');
         const meta = S.pending.el.querySelector('.msg-meta');
-        if (meta) meta.textContent = '发送失败：' + e.message;
+        if (meta) meta.textContent = 'Gửi thất bại: ' + e.message;
         S.pending = null;
       }
-      App.toast('发送失败：' + e.message);
+      App.toast('Gửi thất bại: ' + e.message);
     }
   }
 
   async function abortRun() {
     if (!S.sid) return;
-    try { await API.abort(S.sid); App.toast('已请求中断'); } catch (e) { App.toast('中断失败：' + e.message); }
+    try { await API.abort(S.sid); App.toast('Đã yêu cầu dừng'); } catch (e) { App.toast('Dừng thất bại: ' + e.message); }
   }
 
   async function ensureSession() {
@@ -1537,34 +1537,34 @@
 
   /* ═══════════════ 抽屉：会话列表 ═══════════════ */
   async function sessionsSheet() {
-    App.sheet('<div class="sheet-head"><h3>会话</h3>' +
-      '<button class="btn sm" data-close>关闭</button></div><div class="picker-empty"><span class="spinner"></span></div>');
+    App.sheet('<div class="sheet-head"><h3>Phiên</h3>' +
+      '<button class="btn sm" data-close>Đóng</button></div><div class="picker-empty"><span class="spinner"></span></div>');
     let list = [];
     try { list = await loadSessions(); } catch (e) {
-      App.sheet('<div class="sheet-head"><h3>会话</h3><button class="btn sm" data-close>关闭</button></div>' +
-        '<div class="picker-empty">读不到会话列表：' + esc(e.message) + '</div>');
+      App.sheet('<div class="sheet-head"><h3>Phiên</h3><button class="btn sm" data-close>Đóng</button></div>' +
+        '<div class="picker-empty">Không đọc được danh sách phiên: ' + esc(e.message) + '</div>');
       return;
     }
     const rows = list.map((s) => {
       const on = s.sessionId === S.sid;
       const archived = s.archived || s.status === 'archived';
       return '<div class="sess' + (on ? ' on' : '') + '" data-id="' + s.sessionId + '">' +
-        '<div class="main"><div class="t">' + esc(s.title || '未命名') + '</div>' +
-        '<div class="s">' + esc(clip(s.lastMessagePreview || '', 46) || '（空会话）') +
+        '<div class="main"><div class="t">' + esc(s.title || 'Chưa đặt tên') + '</div>' +
+        '<div class="s">' + esc(clip(s.lastMessagePreview || '', 46) || '(Phiên trống)') +
         ' · ' + esc(fmtAgo(s.updatedAt)) + '</div></div>' +
-        (archived ? '<span class="tag">已归档</span>' : '') +
-        (s.status === 'running' ? '<span class="tag run">进行中</span>' : '') +
+        (archived ? '<span class="tag">Đã lưu trữ</span>' : '') +
+        (s.status === 'running' ? '<span class="tag run">Đang chạy</span>' : '') +
         '<button class="more" data-more="' + s.sessionId + '">' + iconHtml('more') + '</button></div>';
     }).join('');
     const html =
-      '<div class="sheet-head"><h3>会话</h3><button class="btn sm" data-close>关闭</button></div>' +
+      '<div class="sheet-head"><h3>Phiên</h3><button class="btn sm" data-close>Đóng</button></div>' +
       '<div class="sheet-acts">' +
-      '<button class="btn sm btn-primary" data-new="1">新建会话</button>' +
-      '<button class="btn sm" data-scope="1">' + (S.scopeAll ? '只看本书' : '看全部') + '</button>' +
-      '<button class="btn sm" data-profile="1">换人格</button>' +
-      '<button class="btn sm" data-model="1">换模型</button>' +
+      '<button class="btn sm btn-primary" data-new="1">Tạo phiên mới</button>' +
+      '<button class="btn sm" data-scope="1">' + (S.scopeAll ? 'Chỉ xem cuốn này' : 'Xem tất cả') + '</button>' +
+      '<button class="btn sm" data-profile="1">Đổi nhân cách</button>' +
+      '<button class="btn sm" data-model="1">Đổi mô hình</button>' +
       '</div>' +
-      (rows || '<div class="picker-empty">还没有会话，点「新建会话」开始。</div>');
+      (rows || '<div class="picker-empty">Chưa có phiên nào, bấm «Tạo phiên mới» để bắt đầu.</div>');
     App.sheet(html, {
       onMount(p) {
         p.querySelector('[data-new]') && p.querySelector('[data-new]').addEventListener('click', () => { profileSheet(true); });
@@ -1590,37 +1590,37 @@
   async function sessionActions(id) {
     const s = S.sessions.filter((x) => x.sessionId === id)[0] || {};
     const archived = s.archived || s.status === 'archived';
-    App.sheet('<div class="sheet-head"><h3>' + esc(clip(s.title || '会话', 18)) + '</h3>' +
-      '<button class="btn sm" data-close>关闭</button></div>' +
+    App.sheet('<div class="sheet-head"><h3>' + esc(clip(s.title || 'Phiên', 18)) + '</h3>' +
+      '<button class="btn sm" data-close>Đóng</button></div>' +
       '<div class="quick">' +
-      '<button data-a="rename">' + iconHtml('edit') + '<span class="qt"><b>重命名</b><span>给这个会话起个名字</span></span></button>' +
+      '<button data-a="rename">' + iconHtml('edit') + '<span class="qt"><b>Đổi tên</b><span>Đặt tên cho phiên này</span></span></button>' +
       (archived
-        ? '<button data-a="restore">' + iconHtml('refresh') + '<span class="qt"><b>恢复</b><span>移出归档</span></span></button>'
-        : '<button data-a="archive">' + iconHtml('trash') + '<span class="qt"><b>归档</b><span>收起来，不再出现在列表里</span></span></button>') +
+        ? '<button data-a="restore">' + iconHtml('refresh') + '<span class="qt"><b>Khôi phục</b><span>Bỏ khỏi lưu trữ</span></span></button>'
+        : '<button data-a="archive">' + iconHtml('trash') + '<span class="qt"><b>Lưu trữ</b><span>Cất đi, không hiện trong danh sách nữa</span></span></button>') +
       '</div>', {
       onMount(p) {
         p.querySelectorAll('[data-a]').forEach((b) => b.addEventListener('click', async () => {
           const a = b.dataset.a;
           /* rename 要接着弹一个输入框：走 closeSheet(回调) —— 同一拍"关完立刻弹"会让两层动画打架 */
           if (a === 'rename') App.closeSheet(() => {
-            App.modal('<div style="font-size:var(--t-base);margin-bottom:var(--sp-3)">会话名字</div>' +
+            App.modal('<div style="font-size:var(--t-base);margin-bottom:var(--sp-3)">Tên phiên</div>' +
               '<input id="rn" class="input" value="' + esc(s.title || '') + '">' +
               '<div style="display:flex;gap:var(--sp-3);margin-top:var(--sp-4)">' +
-              '<button class="btn btn-block" data-close>取消</button>' +
-              '<button class="btn btn-primary btn-block" id="rn-ok">保存</button></div>', {
+              '<button class="btn btn-block" data-close>Hủy</button>' +
+              '<button class="btn btn-primary btn-block" id="rn-ok">Lưu</button></div>', {
               onMount(mp) {
                 const inp = mp.querySelector('#rn');
                 inp.focus(); inp.select();
                 mp.querySelector('#rn-ok').addEventListener('click', async () => {
                   const v = inp.value.trim();
-                  if (!v) return App.toast('名字不能为空');
+                  if (!v) return App.toast('Tên không được để trống');
                   App.closeModal();
                   try {
                     await API.command(id, { command: 'rename', title: v });
                     if (id === S.sid) { S.title = v; refreshStrip(); }
-                    App.toast('已重命名');
+                    App.toast('Đã đổi tên');
                     await loadSessions();
-                  } catch (e) { App.toast('重命名失败：' + e.message); }
+                  } catch (e) { App.toast('Đổi tên thất bại: ' + e.message); }
                 });
               },
             });
@@ -1629,10 +1629,10 @@
           App.closeSheet();
           try {
             await API.command(id, { command: a === 'archive' ? 'archive' : 'restore' });
-            App.toast(a === 'archive' ? '已归档' : '已恢复');
+            App.toast(a === 'archive' ? 'Đã lưu trữ' : 'Đã khôi phục');
             if (a === 'archive' && id === S.sid) { S.sid = null; store.set({ sid: null }); await ensureSession(); }
             await loadSessions();
-          } catch (e) { App.toast('操作失败：' + e.message); }
+          } catch (e) { App.toast('Thao tác thất bại: ' + e.message); }
         }));
       },
     });
@@ -1640,8 +1640,8 @@
 
   /* ═══════════════ 抽屉：人格 / 模型 ═══════════════ */
   async function profileSheet(forNew, showAll) {
-    App.sheet('<div class="sheet-head"><h3>选人格</h3><button class="btn sm" data-close>关闭</button></div>' +
-      '<div class="sheet-note">' + (forNew ? '选一个角色，然后新建会话。' : '下次新建会话时用这个人格。') + '</div>' +
+    App.sheet('<div class="sheet-head"><h3>Chọn nhân cách</h3><button class="btn sm" data-close>Đóng</button></div>' +
+      '<div class="sheet-note">' + (forNew ? 'Chọn một vai, rồi tạo phiên mới.' : 'Lần tạo phiên tới sẽ dùng nhân cách này.') + '</div>' +
       '<div class="picker-empty"><span class="spinner"></span></div>');
     let list = [];
     try {
@@ -1659,19 +1659,19 @@
         };
       });
     } catch (e) {
-      App.sheet('<div class="sheet-head"><h3>选人格</h3><button class="btn sm" data-close>关闭</button></div>' +
-        '<div class="picker-empty">读不到人格列表：' + esc(e.message) + '</div>');
+      App.sheet('<div class="sheet-head"><h3>Chọn nhân cách</h3><button class="btn sm" data-close>Đóng</button></div>' +
+        '<div class="picker-empty">Không đọc được danh sách nhân cách: ' + esc(e.message) + '</div>');
       return;
     }
     const cur = forNew ? (store.get().profileKey || S.profileKey) : S.profileKey;
     const items = list.map((p) => '<div class="picker-item' + (p.profileKey === cur ? ' on' : '') + '" data-k="' + esc(p.profileKey) + '">' +
       '<div class="nm"><b>' + esc(p.name || p.profileKey) + '</b><div class="desc">' + esc(p.description || '') + '</div></div>' +
-      (p.profileKey === cur ? '<span class="ck">当前</span>' : '') + '</div>').join('');
-    App.sheet('<div class="sheet-head"><h3>选人格</h3><button class="btn sm" data-close>关闭</button></div>' +
-      '<div class="sheet-note">' + (forNew ? '选一个角色，然后新建会话。' : '下次新建会话时用这个人格。') + '</div>' +
+      (p.profileKey === cur ? '<span class="ck">Hiện tại</span>' : '') + '</div>').join('');
+    App.sheet('<div class="sheet-head"><h3>Chọn nhân cách</h3><button class="btn sm" data-close>Đóng</button></div>' +
+      '<div class="sheet-note">' + (forNew ? 'Chọn một vai, rồi tạo phiên mới.' : 'Lần tạo phiên tới sẽ dùng nhân cách này.') + '</div>' +
       '<div class="sheet-acts"><button class="btn sm" data-toggle-all="1">' +
-      (showAll ? '收起，只看写作角色' : '更多角色（跑团 / 世界引擎等）') + '</button></div>' +
-      (items || '<div class="picker-empty">没有可用人格</div>'), {
+      (showAll ? 'Thu gọn, chỉ xem vai viết' : 'Thêm vai (nhập vai / động cơ thế giới…)') + '</button></div>' +
+      (items || '<div class="picker-empty">Không có nhân cách khả dụng</div>'), {
       onMount(p) {
         p.querySelector('[data-toggle-all]') && p.querySelector('[data-toggle-all]')
           .addEventListener('click', () => profileSheet(forNew, !showAll));
@@ -1679,7 +1679,7 @@
           const k = it.dataset.k;
           App.closeSheet();
           if (forNew) { S.profileKey = k; store.set({ profileKey: k }); await newSession(k); }
-          else { S.profileKey = k; store.set({ profileKey: k }); refreshStrip(); App.toast('已选人格：' + k); }
+          else { S.profileKey = k; store.set({ profileKey: k }); refreshStrip(); App.toast('Đã chọn nhân cách: ' + k); }
         }));
       },
     });
@@ -1689,8 +1689,8 @@
   async function modelSheet(q) {
     const cur = S.modelKey;
     if (q === undefined) {
-      App.sheet('<div class="sheet-head"><h3>选模型</h3><button class="btn sm" data-close>关闭</button></div>' +
-        '<div class="picker-search"><input id="md-q" class="input" type="search" placeholder="搜模型名 / 渠道"></div>' +
+      App.sheet('<div class="sheet-head"><h3>Chọn mô hình</h3><button class="btn sm" data-close>Đóng</button></div>' +
+        '<div class="picker-search"><input id="md-q" class="input" type="search" placeholder="Tìm tên mô hình / kênh"></div>' +
         '<div id="md-list" class="picker-empty"><span class="spinner"></span></div>', {
         onMount(p) {
           const inp = p.querySelector('#md-q');
@@ -1726,20 +1726,20 @@
     box.innerHTML = '<span class="spinner"></span>';
     let d = null;
     try { d = await API.appModels(q || ''); }
-    catch (e) { box.innerHTML = '读不到模型列表：' + esc(e.message); return; }
+    catch (e) { box.innerHTML = 'Không đọc được danh sách mô hình: ' + esc(e.message); return; }
     const list = (d && d.models) || [];
-    if (!list.length) { box.className = 'picker-empty'; box.innerHTML = '没找到匹配的模型'; return; }
+    if (!list.length) { box.className = 'picker-empty'; box.innerHTML = 'Không tìm thấy mô hình phù hợp'; return; }
     const top = list.slice(0, 80);
     box.className = '';
     box.innerHTML = top.map((m) => '<div class="picker-item' + (m.key === S.modelKey ? ' on' : '') + '" data-k="' + esc(m.key) + '">' +
       '<div class="nm"><b>' + esc(fullModelName(m)) + '</b><div class="desc">' + esc(m.source || m.provider || '') + ' · ' + esc(m.id || m.key || '') + '</div></div>' +
-      (m.key === S.modelKey ? '<span class="ck">当前</span>' : '') +
+      (m.key === S.modelKey ? '<span class="ck">Hiện tại</span>' : '') +
       /* 每行右侧的「⋯」：调这个模型自己的参数（上下文 1M/256K、推理、高级 JSON）。
          "三个点要放的就是这个地方" —— 就是这张「选模型」列表。
          面板复用预设页那一个（Preset.modelParams），不写第二套。 */
       '<button type="button" class="md-more" data-more="' + esc(m.key) + '" data-src="' + esc(m.provider || '')
-      + '" aria-label="这个模型的参数">\u22ef</button>' + '</div>').join('') +
-      (list.length > top.length ? '<div class="picker-empty">还有 ' + (list.length - top.length) + ' 个，输入关键词再筛</div>' : '');
+      + '" aria-label="Tham số của mô hình này">\u22ef</button>' + '</div>').join('') +
+      (list.length > top.length ? '<div class="picker-empty">Còn ' + (list.length - top.length) + ' mô hình nữa, nhập từ khóa để lọc</div>' : '');
     $$('.md-more', box).forEach((b) => b.addEventListener('click', (e) => {
       e.stopPropagation();                      // 别让它顺带把模型切了
       try { window.Preset.modelParams(b.dataset.more, b.dataset.src); } catch (err) {}
@@ -1764,12 +1764,12 @@
        POST /api/config/models/fallback    —— 备用模型（主模型不出字时自动换）
        POST /api/config/models/book        —— 这本书用哪个模型
      ⚠ 密钥**只往后端送、从不回显**（回显等于泄漏）。 */
-  const ROLE_NAME = { def: '默认模型', fb: '备用模型', book: '这本书用' };
+  const ROLE_NAME = { def: 'Mô hình mặc định', fb: 'Mô hình dự phòng', book: 'Dùng cho cuốn này' };
   let MS = { role: '', slug: '', book: '' };
 
   function msHead(title) {
     return '<div class="sheet-head"><h3>' + esc(title) + '</h3>' +
-      '<button class="btn sm" data-close>关闭</button></div>';
+      '<button class="btn sm" data-close>Đóng</button></div>';
   }
 
   async function modelsSetupSheet(role, key) {
@@ -1777,10 +1777,10 @@
       await applyModelRole(role, key);
       return modelsSetupSheet();
     }
-    App.sheet(msHead('模型与渠道') +
+    App.sheet(msHead('Mô hình và kênh') +
       '<div class="sheet-note" style="margin:0 var(--sp-4) var(--sp-3)">' +
-      '默认模型给所有会话用；备用模型在主模型这一轮没出字时自动顶上；' +
-      '「这本书用」只影响当前打开的书。密钥只存在服务器上，界面不回显。</div>' +
+      ' Mô hình mặc định dùng cho mọi phiên; mô hình dự phòng tự thay khi mô hình chính không ra chữ ở lượt đó; ' +
+      ' «Dùng cho cuốn này» chỉ ảnh hưởng cuốn đang mở. Khóa API chỉ lưu trên máy chủ, giao diện không hiển thị lại.</div>' +
       '<div id="ms-setup-body"><div class="picker-empty"><span class="spinner"></span></div></div>' +
       /* 联网搜索跟"用哪个模型"是同一件事的两半（用哪个脑子 / 能不能上网），
          所以放在同一张设置里；这一块跟大设置页共用同一份实现（js/websearch.js）。 */
@@ -1795,7 +1795,7 @@
     if (!box) return;
     let d = null;
     try { d = await WebCfg.load(true); }
-    catch (e) { box.innerHTML = '<div class="picker-empty">读不到联网设置：' + esc(e.message) + '</div>'; return; }
+    catch (e) { box.innerHTML = '<div class="picker-empty">Không đọc được cài đặt mạng: ' + esc(e.message) + '</div>'; return; }
     box.innerHTML = WebCfg.groupHtml(d, { id: 'webcfg', test: true });
     WebCfg.wire(box, { data: d, redraw: () => modelsSetupSheet() });
   }
@@ -1807,7 +1807,7 @@
     MS.slug = slug;
     let d = null;
     try { d = await API.modelsProviders(); }
-    catch (e) { box.innerHTML = '<div class="picker-empty">读不到渠道：' + esc(e.message) + '</div>'; return; }
+    catch (e) { box.innerHTML = '<div class="picker-empty">Không đọc được kênh: ' + esc(e.message) + '</div>'; return; }
     const provs = (d && d.providers) || [];
     const cur = S.modelKey || '';
     let bookKey = '';
@@ -1818,59 +1818,59 @@
       '<div class="settings-row" style="display:flex;align-items:center;gap:var(--sp-2)">' +
       '<span class="k" style="flex:0 0 auto"><b>' + esc(label) + '</b><small>' + esc(sub) + '</small></span>' +
       '<span class="grow" style="flex:1;min-width:0;text-align:right;color:var(--ink-3);font-size:var(--t-sm);' +
-      'overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(value || '（没设）') + '</span>' +
-      '<button class="btn sm" data-role="' + role + '">换</button></div>';
+      'overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(value || '(chưa đặt)') + '</span>' +
+      '<button class="btn sm" data-role="' + role + '">Đổi</button></div>';
     box.innerHTML =
-      '<h3>这台机器现在用哪个</h3><div class="settings-group">' +
-      row('def', ROLE_NAME.def, d && d.default, '所有会话的兜底') +
-      row('fb', ROLE_NAME.fb, d && d.fallback, '主模型没出字时自动顶上') +
-      row('book', ROLE_NAME.book, bookKey, slug ? ('当前书：' + slug.slice(0, 16)) : '还没选书') +
-      row('session', '这条会话', cur, '只影响正在聊的这一条') +
+      '<h3>Máy này hiện đang dùng cái nào</h3><div class="settings-group">' +
+      row('def', ROLE_NAME.def, d && d.default, 'Mặc định cho mọi phiên') +
+      row('fb', ROLE_NAME.fb, d && d.fallback, 'Tự thay khi mô hình chính không ra chữ') +
+      row('book', ROLE_NAME.book, bookKey, slug ? ('Sách hiện tại: ' + slug.slice(0, 16)) : 'Chưa chọn sách') +
+      row('session', 'Phiên này', cur, 'Chỉ ảnh hưởng phiên đang trò chuyện') +
       '</div>' +
-      '<h3>渠道（' + provs.length + ' 个）</h3><div class="settings-group" id="ms-prov"></div>' +
+      '<h3>Kênh (' + provs.length + ' )</h3><div class="settings-group" id="ms-prov"></div>' +
       '<div class="sheet-acts" style="margin-top:var(--sp-3)">' +
-      '<button class="btn sm btn-primary" data-act="add-prov">加一个渠道</button>' +
-      '<button class="btn sm" data-act="refresh">刷新</button></div>' +
+      '<button class="btn sm btn-primary" data-act="add-prov">Thêm một kênh</button>' +
+      '<button class="btn sm" data-act="refresh">Làm mới</button></div>' +
       '<div id="ms-prov-out" class="sheet-note" style="margin:var(--sp-3) var(--sp-4)"></div>';
     const list = box.querySelector('#ms-prov');
-    if (!provs.length) list.innerHTML = '<div class="picker-empty">还没有渠道，点下面「加一个渠道」</div>';
+    if (!provs.length) list.innerHTML = '<div class="picker-empty">Chưa có kênh nào, bấm «Thêm một kênh» bên dưới</div>';
     else {
       list.innerHTML = provs.map((x) =>
         '<div class="sess" style="cursor:default" data-pid="' + x.id + '">' +
-        '<div class="main"><div class="t">' + esc(x.name) + (x.enabled ? '' : ' · 已停用') + '</div>' +
-        '<div class="s">' + esc([x.modelApi, (x.models || 0) + ' 个模型',
-          x.keyConfigured ? ('密钥 ' + esc(x.keyTail || '已配')) : '没配密钥'].join(' · ')) + '</div></div>' +
-        '<button class="btn sm" data-pull="' + x.id + '">获取模型</button>' +
-        '<button class="more" data-del="' + x.id + '" aria-label="删除渠道">' + iconHtml('close') + '</button></div>'
+        '<div class="main"><div class="t">' + esc(x.name) + (x.enabled ? '' : ' · Đã tắt') + '</div>' +
+        '<div class="s">' + esc([x.modelApi, (x.models || 0) + ' mô hình',
+          x.keyConfigured ? ('Khóa ' + esc(x.keyTail || 'đã cấu hình')) : 'Chưa có khóa'].join(' · ')) + '</div></div>' +
+        '<button class="btn sm" data-pull="' + x.id + '">Lấy mô hình</button>' +
+        '<button class="more" data-del="' + x.id + '" aria-label="Xóa kênh">' + iconHtml('close') + '</button></div>'
       ).join('');
     }
     box.querySelectorAll('[data-role]').forEach((b) => b.addEventListener('click', () => {
       MS.role = b.dataset.role;
-      if (b.dataset.role === 'book' && !MS.slug) { App.toast('先打开一本书再设「这本书用」'); return; }
+      if (b.dataset.role === 'book' && !MS.slug) { App.toast('Hãy mở một cuốn sách trước rồi mới đặt «Dùng cho cuốn này»'); return; }
       pickModelFor(b.dataset.role);
     }));
     box.querySelectorAll('[data-pull]').forEach((b) => b.addEventListener('click', async () => {
       const pid = b.dataset.pull;
       const out = box.querySelector('#ms-prov-out');
-      b.disabled = true; b.textContent = '获取中…';
-      out.textContent = '正在问这家服务有哪些模型…（最多 25 秒）';
+      b.disabled = true; b.textContent = 'Đang lấy…';
+      out.textContent = 'Đang hỏi dịch vụ này có những mô hình nào… (tối đa 25 giây)';
       let r = null;
       try { r = await API.modelsPull({ providerId: Number(pid) }); }
-      catch (e) { out.textContent = '没取到：' + e.message; }
+      catch (e) { out.textContent = 'Không lấy được: ' + e.message; }
       if (r) {
         out.textContent = r.ok
-          ? ('找到 ' + r.found + ' 个模型，存了 ' + r.saved + ' 个' + (r.note ? '（' + r.note + '）' : ''))
-          : ('没取到：' + (r.error || '') + (r.hint ? '；' + r.hint : ''));
+          ? ('Tìm thấy ' + r.found + ' mô hình, đã lưu ' + r.saved + ' ' + (r.note ? '(' + r.note + ')' : ''))
+          : ('Không lấy được: ' + (r.error || '') + (r.hint ? '; ' + r.hint : ''));
       }
-      b.disabled = false; b.textContent = '获取模型';
+      b.disabled = false; b.textContent = 'Lấy mô hình';
       drawSetup(box.closest('.sheet-panel') || document);
     }));
     box.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', () => {
       const id = Number(b.dataset.del);
-      App.confirm('删掉这个渠道？用它跑过的会话会退回默认模型。', async () => {
-        try { await API.providerDelete(id); App.toast('已删掉渠道'); } catch (e) { App.toast('删不掉：' + e.message); }
+      App.confirm('Xóa kênh này? Các phiên từng chạy bằng nó sẽ quay về mô hình mặc định.', async () => {
+        try { await API.providerDelete(id); App.toast('Đã xóa kênh'); } catch (e) { App.toast('Không xóa được: ' + e.message); }
         modelsSetupSheet();
-      }, '删掉');
+      }, 'Xóa');
     }));
     const add = box.querySelector('[data-act="add-prov"]');
     if (add) add.addEventListener('click', () => addProviderSheet());
@@ -1878,32 +1878,32 @@
     if (rf) rf.addEventListener('click', () => modelsSetupSheet());
   }
 
-  const API_TYPES = [['openai-completions', 'OpenAI 兼容（/chat/completions）'],
-    ['openai-responses', 'Responses 接口（/responses）']];
+  const API_TYPES = [['openai-completions', 'OpenAI tương thích (/chat/completions)'],
+    ['openai-responses', 'Responses API (/responses)']];
 
   async function addProviderSheet() {
     let tpls = [];
     try { tpls = ((await API.providerTemplates()) || {}).templates || []; } catch (e) { /* 模板读不到就手填 */ }
-    App.sheet(msHead('加一个渠道') +
+    App.sheet(msHead('Thêm một kênh') +
       '<div class="sheet-note" style="margin:0 var(--sp-4) var(--sp-3)">' +
-      '地址要写到 /v1 那一层（例：https://api.deepseek.com/v1）。密钥只发给服务器，不回显。</div>' +
+      ' Địa chỉ phải ghi tới tầng /v1 (VD: https://api.deepseek.com/v1). Khóa chỉ gửi lên máy chủ, không hiển thị lại.</div>' +
       '<div class="settings-group">' +
-      '<div class="settings-row stack"><span class="k">常用服务商</span>' +
+      '<div class="settings-row stack"><span class="k">Nhà cung cấp phổ biến</span>' +
       '<div class="seg grid" id="ap-tpl">' + tpls.map((t) =>
         '<button data-t="' + esc(t.id) + '">' + esc(t.name) + '</button>').join('') + '</div></div>' +
-      '<div class="settings-row"><span class="k">名字</span>' +
-      '<input class="input" id="ap-name" placeholder="随便起，比如 我的deepseek"></div>' +
-      '<div class="settings-row"><span class="k">地址</span>' +
+      '<div class="settings-row"><span class="k">Tên</span>' +
+      '<input class="input" id="ap-name" placeholder="Đặt tùy ý, ví dụ của-tôi-deepseek"></div>' +
+      '<div class="settings-row"><span class="k">Địa chỉ</span>' +
       '<input class="input" id="ap-base" placeholder="https://…/v1"></div>' +
-      '<div class="settings-row"><span class="k">密钥</span>' +
+      '<div class="settings-row"><span class="k">Khóa</span>' +
       '<input class="input" id="ap-key" type="password" placeholder="sk-…"></div>' +
-      '<div class="settings-row"><span class="k">接口类型</span>' +
+      '<div class="settings-row"><span class="k">Loại API</span>' +
       '<select class="input" id="ap-api">' + API_TYPES.map(([v, l]) =>
         '<option value="' + v + '">' + esc(l) + '</option>').join('') + '</select></div>' +
       '</div>' +
       '<div id="ap-out" class="sheet-note" style="margin:var(--sp-3) var(--sp-4)"></div>' +
-      '<div class="sheet-acts"><button class="btn sm btn-primary" data-act="save">保存</button>' +
-      '<button class="btn sm" data-act="save-pull">保存并获取模型</button></div>', {
+      '<div class="sheet-acts"><button class="btn sm btn-primary" data-act="save">Lưu</button>' +
+      '<button class="btn sm" data-act="save-pull">Lưu và lấy mô hình</button></div>', {
       onMount(p) {
         const out = p.querySelector('#ap-out');
         p.querySelectorAll('#ap-tpl button').forEach((b) => b.addEventListener('click', () => {
@@ -1920,20 +1920,20 @@
             baseUrl: p.querySelector('#ap-base').value.trim(),
             apiKey: p.querySelector('#ap-key').value.trim(),
             modelApi: p.querySelector('#ap-api').value };
-          if (!body.name || !body.baseUrl) { out.textContent = '名字和地址都要填'; return; }
-          out.textContent = '保存中…';
+          if (!body.name || !body.baseUrl) { out.textContent = 'Phải điền cả tên và địa chỉ'; return; }
+          out.textContent = 'Đang lưu…';
           let r = null;
           try { r = await API.providerSave(body); }
-          catch (e) { out.textContent = '保存失败：' + e.message; return; }
-          out.textContent = '已保存渠道「' + body.name + '」';
+          catch (e) { out.textContent = 'Lưu thất bại: ' + e.message; return; }
+          out.textContent = 'Đã lưu kênh «' + body.name + '»';
           if (!thenPull) { modelsSetupSheet(); return; }
-          out.textContent += '，正在获取模型…';
+          out.textContent += ', đang lấy mô hình…';
           let pr = null;
           try { pr = await API.modelsPull({ providerId: r.id }); }
-          catch (e) { out.textContent += ' 没取到：' + e.message; return; }
+          catch (e) { out.textContent += ' Không lấy được: ' + e.message; return; }
           out.textContent += pr.ok
-            ? ('找到 ' + pr.found + ' 个模型，存了 ' + pr.saved + ' 个')
-            : ('没取到：' + (pr.error || '') + (pr.hint ? '；' + pr.hint : ''));
+            ? ('Tìm thấy ' + pr.found + ' mô hình, đã lưu ' + pr.saved + ' ')
+            : ('Không lấy được: ' + (pr.error || '') + (pr.hint ? '; ' + pr.hint : ''));
           setTimeout(() => modelsSetupSheet(), 1200);
         };
         p.querySelector('[data-act="save"]').addEventListener('click', () => save(false));
@@ -1944,21 +1944,21 @@
 
   async function applyModelRole(role, key) {
     try {
-      if (role === 'def') { await API.modelsDefault(key); App.toast('默认模型已换'); }
-      else if (role === 'fb') { await API.modelsFallback(key); App.toast('备用模型已换'); }
-      else if (role === 'book') { await API.modelsBook(MS.slug, key); App.toast('这本书的模型已换'); }
+      if (role === 'def') { await API.modelsDefault(key); App.toast('Đã đổi mô hình mặc định'); }
+      else if (role === 'fb') { await API.modelsFallback(key); App.toast('Đã đổi mô hình dự phòng'); }
+      else if (role === 'book') { await API.modelsBook(MS.slug, key); App.toast('Đã đổi mô hình của cuốn này'); }
       else await setModel(key);
-    } catch (e) { App.toast('没换成：' + e.message); }
+    } catch (e) { App.toast('Không đổi được: ' + e.message); }
   }
 
   /** 选模型（带"选了之后写到哪"的角色）。跟会话换模型复用同一套列表渲染。 */
   async function pickModelFor(role) {
-    const title = role === 'session' ? '这条会话用哪个' : (ROLE_NAME[role] || '选模型');
+    const title = role === 'session' ? 'Phiên này dùng mô hình nào' : (ROLE_NAME[role] || 'Chọn mô hình');
     App.sheet(msHead(title) +
-      '<div class="picker-search"><input id="md-q" class="input" type="search" placeholder="搜模型名 / 渠道"></div>' +
+      '<div class="picker-search"><input id="md-q" class="input" type="search" placeholder="Tìm tên mô hình / kênh"></div>' +
       '<div id="md-list" class="picker-empty"><span class="spinner"></span></div>' +
-      '<div class="sheet-acts"><button class="btn sm" data-act="back">返回设置</button>' +
-      (role === 'book' || role === 'fb' ? '<button class="btn sm" data-act="clear">取消指定</button>' : '') +
+      '<div class="sheet-acts"><button class="btn sm" data-act="back">Quay lại cài đặt</button>' +
+      (role === 'book' || role === 'fb' ? '<button class="btn sm" data-act="clear">Bỏ chỉ định</button>' : '') +
       '</div>', {
       onMount(p) {
         const inp = p.querySelector('#md-q');
@@ -1982,21 +1982,21 @@
       S.modelName = key.split('/').slice(1).join('/') || key;
       store.set({ modelKey: key, modelName: S.modelName });
       refreshStrip();
-      App.toast('已换模型');
-    } catch (e) { App.toast('换模型失败：' + e.message); }
+      App.toast('Đã đổi mô hình');
+    } catch (e) { App.toast('Đổi mô hình thất bại: ' + e.message); }
   }
 
   /* ═══════════════ 抽屉：快捷指令 ═══════════════ */
   async function quickSheet() {
-    App.sheet('<div class="sheet-head"><h3>快捷指令</h3><button class="btn sm" data-close>关闭</button></div>' +
-      '<div class="sheet-note">先填进输入框，你改完再点发送。</div>' +
+    App.sheet('<div class="sheet-head"><h3>Lệnh nhanh</h3><button class="btn sm" data-close>Đóng</button></div>' +
+      '<div class="sheet-note">Điền sẵn vào ô nhập, bạn sửa xong rồi bấm Gửi.</div>' +
       '<div class="quick">' +
-      '<button data-q="chapter">' + iconHtml('edit') + '<span class="qt"><b>改当前章节</b><span>带上正在看的这一章，说明要改什么</span></span></button>' +
-      '<button data-q="next">' + iconHtml('spark') + '<span class="qt"><b>续写下一段</b><span>接着最新一章往下写</span></span></button>' +
-      '<button data-q="polish">' + iconHtml('text') + '<span class="qt"><b>润色一段</b><span>贴一段文字让它改顺</span></span></button>' +
-      '<button data-q="typo">' + iconHtml('check') + '<span class="qt"><b>校对错别字</b><span>检查当前章节的错字与标点</span></span></button>' +
-      '<button data-q="summary">' + iconHtml('list') + '<span class="qt"><b>本章小结</b><span>概括当前章节写了什么</span></span></button>' +
-      '<button data-q="ask">' + iconHtml('search') + '<span class="qt"><b>问设定</b><span>就本书设定提问</span></span></button>' +
+      '<button data-q="chapter">' + iconHtml('edit') + '<span class="qt"><b>Sửa chương hiện tại</b><span>Kèm chương đang xem, nói rõ cần sửa gì</span></span></button>' +
+      '<button data-q="next">' + iconHtml('spark') + '<span class="qt"><b>Viết tiếp đoạn sau</b><span>Viết tiếp từ chương mới nhất</span></span></button>' +
+      '<button data-q="polish">' + iconHtml('text') + '<span class="qt"><b>Trau chuốt một đoạn</b><span>Dán một đoạn văn để nó sửa cho mượt</span></span></button>' +
+      '<button data-q="typo">' + iconHtml('check') + '<span class="qt"><b>Soát lỗi chính tả</b><span>Kiểm tra lỗi chính tả và dấu câu của chương hiện tại</span></span></button>' +
+      '<button data-q="summary">' + iconHtml('list') + '<span class="qt"><b>Tóm tắt chương</b><span>Tóm lược chương hiện tại viết gì</span></span></button>' +
+      '<button data-q="ask">' + iconHtml('search') + '<span class="qt"><b>Hỏi về thiết lập</b><span>Đặt câu hỏi về thiết lập của cuốn này</span></span></button>' +
       '</div>', {
       onMount(p) {
         p.querySelectorAll('[data-q]').forEach((b) => b.addEventListener('click', async () => {
@@ -2026,25 +2026,25 @@
     if (!ta) return;
     let text = '';
     if (kind === 'chapter' || kind === 'typo' || kind === 'summary') {
-      setStatus('找当前章节…');
+      setStatus('Đang tìm chương hiện tại…');
       const ch = await curChapter();
-      setStatus('就绪');
-      const ref = ch ? '《' + ch.name + '》（' + ch.path + '）' : '当前章节';
-      if (kind === 'chapter') text = '【改当前章节】请修改' + ref + '：\n\n要改的地方：\n1. \n2. \n\n要求：只动这一章，保持既有设定与文风。';
-      if (kind === 'typo') text = '【校对】请检查' + ref + '里的错别字、标点和不通顺的句子，只列出问题和建议，先不要改文件。';
-      if (kind === 'summary') text = '【小结】请用 5 条要点概括' + ref + '写了什么，并指出埋下的伏笔。';
+      setStatus('Sẵn sàng');
+      const ref = ch ? '«' + ch.name + '» (' + ch.path + ')' : 'chương hiện tại';
+      if (kind === 'chapter') text = '[Sửa chương hiện tại] Hãy sửa ' + ref + ':\n\nChỗ cần sửa:\n1. \n2. \n\nYêu cầu: chỉ động vào chương này, giữ nguyên thiết lập và văn phong đã có. Viết bằng tiếng Việt.';
+      if (kind === 'typo') text = '[Soát lỗi] Hãy kiểm tra ' + ref + ' tìm lỗi chính tả, dấu câu và câu văn không trôi chảy, chỉ liệt kê vấn đề và đề xuất, tạm thời chưa sửa tệp. Trả lời bằng tiếng Việt.';
+      if (kind === 'summary') text = '[Tóm tắt] Hãy tóm lược bằng 5 ý chính ' + ref + ' viết những gì, và chỉ ra các phục bút đã gài. Trả lời bằng tiếng Việt.';
     } else if (kind === 'next') {
-      text = '【续写】请接着最新一章往下写下一段（300 字左右），保持同一视角与文风。先给草稿，我确认后再写进正文。';
+      text = '[Viết tiếp] Hãy viết tiếp đoạn sau từ chương mới nhất (khoảng 300 chữ), giữ cùng góc nhìn và văn phong, viết bằng tiếng Việt. Đưa bản nháp trước, tôi xác nhận rồi mới ghi vào chính văn.';
     } else if (kind === 'polish') {
-      text = '【润色】下面这段帮我改顺（不改情节，只改表达）：\n\n';
+      text = '[Trau chuốt] Sửa đoạn dưới đây cho mượt (không đổi tình tiết, chỉ sửa cách diễn đạt, giữ tiếng Việt): \n\n';
     } else if (kind === 'ask') {
-      text = '【问设定】关于本书的设定：\n';
+      text = '[Hỏi thiết lập] Về thiết lập của cuốn này: \n';
     }
     ta.value = text;
     autoGrow(ta);
     ta.focus();
     try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch (e) {}
-    App.toast('已填入，改完再发');
+    App.toast('Đã điền sẵn, sửa xong rồi gửi');
   }
 
   /* ═══════════════ 输入框 ═══════════════ */
@@ -2113,7 +2113,7 @@
       const d = await API.nb('api/quick?slug=' + encodeURIComponent(slug));
       quickItems = (d && d.items) || [];
     } catch (e) {
-      el.innerHTML = '<span class="cq-hint">读不到常用指令：' + esc(e.message) + '</span>';
+      el.innerHTML = '<span class="cq-hint">Không đọc được lệnh thường dùng: ' + esc(e.message) + '</span>';
       return;
     }
     paintQuick();
@@ -2124,7 +2124,7 @@
        （判据不再拿 overflow-x:auto 猜，见 tools/e2e-uicheck.js）。 */
     el.innerHTML = '<div class="cq-scroll" data-hscroll>' +
       quickItems.map((c, i) => '<button class="cq-chip" data-i="' + i + '">' + esc(c.text) + '</button>').join('') +
-      '<button class="cq-chip add" data-add="1">' + iconHtml('plus') + '<span>加一条</span></button>' +
+      '<button class="cq-chip add" data-add="1">' + iconHtml('plus') + '<span>Thêm một mục</span></button>' +
       '</div>';
     el.querySelectorAll('.cq-chip').forEach((b) => {
       let lp = null, fired = false;
@@ -2135,14 +2135,14 @@
           const i = Number(b.dataset.i);
           const cmd = quickItems[i];
           if (!cmd) return;
-          const yes = await App.confirm('删掉「' + cmd.text + '」？', () => {}, '删掉');
+          const yes = await App.confirm('Xóa «' + cmd.text + '»? ', () => {}, 'Xóa');
           if (!yes) return;
           try {
             await API.nb('api/quick?slug=' + encodeURIComponent(quickSlug) + '&id=' + cmd.id,
               { method: 'DELETE', body: {} });
-            App.toast('删了');
+            App.toast('Đã xóa');
             refreshQuick();
-          } catch (e) { App.toast('删不掉：' + e.message); }
+          } catch (e) { App.toast('Không xóa được: ' + e.message); }
         }, 520);
       });
       const cancel = () => { if (lp) { clearTimeout(lp); lp = null; } };
@@ -2160,14 +2160,14 @@
     });
   }
   async function addQuick() {
-    if (!quickSlug) { App.toast('先选一本书'); return; }
-    const v = await App.ask('加一条常用指令', '', { placeholder: '例：接着写 800 字，别赶进度' });
+    if (!quickSlug) { App.toast('Hãy chọn một cuốn sách trước'); return; }
+    const v = await App.ask('Thêm một lệnh thường dùng', '', { placeholder: 'VD: Viết tiếp 800 chữ, đừng đẩy nhanh tiến độ' });
     if (!v || !String(v).trim()) return;
     try {
       await API.nb('api/quick', { method: 'POST', body: { slug: quickSlug, text: String(v).trim() } });
-      App.toast('加好了');
+      App.toast('Đã thêm');
       refreshQuick();
-    } catch (e) { App.toast('加不上：' + e.message); }
+    } catch (e) { App.toast('Không thêm được: ' + e.message); }
   }
 
   /* ═══════════════ 导出 ═══════════════ */
@@ -2178,7 +2178,7 @@
     S.sid = null; S.inited = false; S.title = '';
     S.seen = Object.create(null); S.lastSeq = -1; S.epoch = null;
     clearBody('');
-    setStatus('换书了…');
+    setStatus('Đã đổi sách…');
   }
   function switchBook() {
     const slug = (window.BookCtx && BookCtx.slug()) || '';
@@ -2188,8 +2188,8 @@
     store.migrate();
     resetForBook();
     S.inited = true;
-    setStatus('载入会话…');
-    ensureSession().then(() => setStatus('就绪')).catch(() => setStatus('就绪'));
+    setStatus('Đang tải phiên…');
+    ensureSession().then(() => setStatus('Sẵn sàng')).catch(() => setStatus('Sẵn sàng'));
   }
 
   window.Chat = {
@@ -2209,8 +2209,8 @@
       if (saved.profileKey && PROFILES.indexOf(saved.profileKey) >= 0) S.profileKey = saved.profileKey;
       else S.profileKey = 'leader.default';
       if (saved.modelKey) { S.modelKey = saved.modelKey; S.modelName = saved.modelName || saved.modelKey.split('/').pop(); }
-      setStatus('载入会话…');
-      ensureSession().then(() => setStatus('就绪')).catch(() => {});
+      setStatus('Đang tải phiên…');
+      ensureSession().then(() => setStatus('Sẵn sàng')).catch(() => {});
     },
     /* 判据专用入口：**跟气泡走的是同一条渲染管线**（mdHtml → stripAgentNoise），
        不是另写一套。为什么要它：会话里一条消息都没有时（比如刚开的新会话），

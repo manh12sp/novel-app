@@ -35,17 +35,17 @@ async def peer_sync(request: Request, payload: dict = Body(...)):
     password = payload.get("password") or ""
     direction = (payload.get("direction") or "both").strip()
     if not base:
-        raise HTTPException(400, "先填服务器地址")
+        raise HTTPException(400, "Hãy điền địa chỉ máy chủ trước")
     if not base.startswith(("http://", "https://")):
         base = "http://" + base
     if direction not in ("pull", "push", "both"):
-        raise HTTPException(400, "direction 只能是 pull / push / both")
+        raise HTTPException(400, "direction chỉ có thể là pull / push / both")
     try:
         cookie = peer.login(base, password)
         # 「首次进 App」：手机上还没有这本书时，先照服务器建一本再拉（否则只能干瞪眼）
         wanted = (payload.get("slug") or "").strip()
         if not wanted:
-            raise HTTPException(400, "得说清同步哪本书")
+            raise HTTPException(400, "Phải nói rõ đồng bộ cuốn sách nào")
         if direction in ("pull", "both"):
             made = peer.ensure_local_book(wanted, base, cookie)
             slug = made["slug"]
@@ -91,7 +91,7 @@ async def peer_conflict(request: Request, id: int):
     current_user(request)
     r = dbm.db().one("SELECT * FROM sync_conflict WHERE id=?", (int(id),))
     if not r:
-        raise HTTPException(404, "没有这条冲突")
+        raise HTTPException(404, "Không có xung đột này")
     return {"id": r["id"], "slug": r["slug"], "path": r["path"], "status": r["status"],
             "baseMtimeMs": r["base_mtime"], "localMtimeMs": r["local_mtime"],
             "serverMtimeMs": r["server_mtime"], "createdAt": r["created_at"],
@@ -105,13 +105,13 @@ async def peer_resolve(request: Request, payload: dict = Body(...)):
     挑完只动**本地**；要推给服务器时前端再点一次"推给服务器"（或者在这里带 base+password）。
     """
     current_user(request)
-    cid = num(payload.get("id"), 0, name="冲突号")
+    cid = num(payload.get("id"), 0, name="Mã xung đột")
     pick = (payload.get("pick") or "").strip()          # local | server | merged
     if pick not in ("local", "server", "merged"):
-        raise HTTPException(400, "pick 只能是 local / server / merged")
+        raise HTTPException(400, "pick chỉ có thể là local / server / merged")
     r = dbm.db().one("SELECT * FROM sync_conflict WHERE id=?", (cid,))
     if not r:
-        raise HTTPException(404, "没有这条冲突")
+        raise HTTPException(404, "Không có xung đột này")
     slug, path = r["slug"], r["path"]
     if pick == "local":
         text = payload.get("text")
@@ -122,8 +122,8 @@ async def peer_resolve(request: Request, payload: dict = Body(...)):
     else:
         text = payload.get("text")
         if text is None:
-            raise HTTPException(400, "挑合并稿就得把合并后的正文给我")
-    write_text(slug, path, text or "", origin="peer", note="同步冲突挑完了")
+            raise HTTPException(400, "Chọn bản hợp nhất thì phải đưa cho tôi chính văn sau khi hợp nhất")
+    write_text(slug, path, text or "", origin="peer", note="Đã chọn xong xung đột đồng bộ")
     dbm.db().execute("UPDATE sync_conflict SET status=?, resolved_at=? WHERE id=?",
                      (pick, now_ms(), cid))
     base = (payload.get("base") or "").strip()

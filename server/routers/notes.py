@@ -58,25 +58,25 @@ async def note_save(request: Request, payload: dict = Body(...)):
     text = str(payload.get("text") or "").strip()
     quote = str(payload.get("quote") or "").strip()
     if not text and not quote:
-        raise HTTPException(400, "笔记是空的，写点什么再存")
+        raise HTTPException(400, "Ghi chú đang trống, viết gì đó rồi hãy lưu")
     n = now_ms()
     d = dbm.db()
-    nid = num(payload.get("id"), 0, name="笔记号")
+    nid = num(payload.get("id"), 0, name="Mã ghi chú")
     if nid:
         row = d.one("SELECT * FROM note WHERE id=? AND slug=?", (nid, s))
         if not row:
-            raise HTTPException(404, "没有这条笔记")
+            raise HTTPException(404, "Không có ghi chú này")
         d.execute("UPDATE note SET path=?, percent=?, quote=?, text=?, updated_at=? WHERE id=?",
                   (str(payload.get("path") or row["path"]),
                    num(payload.get("percent"), row["percent"] or 0, kind=float, lo=0, hi=100,
-                       name="进度"),
+                       name="Tiến độ"),
                    quote, text, n, nid))
     else:
         nid = d.execute(
             "INSERT INTO note(slug,path,percent,quote,text,created_at,updated_at)"
             " VALUES(?,?,?,?,?,?,?)",
             (s, str(payload.get("path") or ""),
-             num(payload.get("percent"), 0.0, kind=float, lo=0, hi=100, name="进度"),
+             num(payload.get("percent"), 0.0, kind=float, lo=0, hi=100, name="Tiến độ"),
              quote, text, n, n))
     from .misc import _audit
     _audit("note.save", s, str(payload.get("path") or ""), id=nid)
@@ -89,7 +89,7 @@ async def note_delete(request: Request, id: int, slug: str):
     s = _slug(slug)
     row = dbm.db().one("SELECT * FROM note WHERE id=? AND slug=?", (int(id), s))
     if not row:
-        raise HTTPException(404, "没有这条笔记")
+        raise HTTPException(404, "Không có ghi chú này")
     # 笔记是用户自己写的东西：删之前先留一份到回收目录，能在「数据」里找回
     from ..paths import Paths
     from ..config import CFG

@@ -159,7 +159,7 @@
     host.innerHTML = '';
     const box = h('div', { class: 'ui-loading', 'data-state': 'loading' });
     box.appendChild(skeleton('text', 3));
-    box.appendChild(h('div', { class: 'ui-loading-hint', text: msg || '读取中…' }));
+    box.appendChild(h('div', { class: 'ui-loading-hint', text: msg || 'Đang đọc…' }));
     host.appendChild(box);
     return box;
   }
@@ -173,16 +173,16 @@
     const off = !!(e && (e.offline || e.status === 0));
     const acts = [];
     if (again) {
-      const b = btn(o.retryText || '重试', { variant: 'primary', act: 'retry' });
+      const b = btn(o.retryText || 'Thử lại', { variant: 'primary', act: 'retry' });
       b.onclick = () => { haptic(); again(); };
       acts.push(b);
     }
     return paintState(host, {
       kind: 'error', icon: o.icon || 'refresh',
-      title: what + (off ? '：连不上服务器' : '：读不出来'),
-      desc: (off ? '看看手机是不是断网了，或者服务器在重启。'
-        : ((e && e.message) ? e.message + '。' : '') + '这一块这次没取回来。')
-        + '点「重试」再来一次。',
+      title: what + (off ? ': không kết nối được máy chủ' : ': không đọc được'),
+      desc: (off ? 'Kiểm tra xem điện thoại có mất mạng không, hoặc máy chủ đang khởi động lại.'
+        : ((e && e.message) ? e.message + '. ' : '') + ' Lần này không lấy được phần này.')
+        + ' Bấm «Thử lại» để chạy lại.',
       actions: acts,
     });
   }
@@ -202,7 +202,7 @@
        它们分别体现在「这次是谁在说话」与下面「它能用的工具」里，
        混在一起会让卡片变成流水账。 */
     const secs = (Array.isArray(c.sections) ? c.sections : [])
-      .filter((x) => x && x.name && x.name !== '人设' && x.name !== '工具清单');
+      .filter((x) => x && x.name && x.name !== '人设' && x.name !== '工具清单' && x.name !== 'Nhân thiết' && x.name !== 'Danh sách công cụ');
     const tools = c.tools || {};
     const allowed = Array.isArray(tools.allowed) ? tools.allowed : [];
     const called = Array.isArray(tools.called) ? tools.called : [];
@@ -212,13 +212,13 @@
     const head = h('button', { class: 'uc-head', type: 'button' });
     head.setAttribute('aria-expanded', o.open ? 'true' : 'false');
     head.appendChild(icon('layers', 'uc-ico'));
-    head.appendChild(h('span', { class: 'uc-t', text: '这一轮 AI 用了什么' }));
+    head.appendChild(h('span', { class: 'uc-t', text: 'Lượt này AI đã dùng gì' }));
     const bits = [];
-    if (secs.length) bits.push('看了 ' + secs.length + ' 样');
-    if (allowed.length) bits.push(allowed.length + ' 个工具可用');
-    if (called.length) bits.push('调了 ' + called.length + ' 次');
-    if (files.length) bits.push('改了 ' + files.length + ' 个文件');
-    head.appendChild(h('span', { class: 'uc-s', text: bits.join(' · ') || '这轮只聊天，没读也没改' }));
+    if (secs.length) bits.push('Đã xem ' + secs.length + ' mục');
+    if (allowed.length) bits.push(allowed.length + ' công cụ khả dụng');
+    if (called.length) bits.push('Đã gọi ' + called.length + ' lần');
+    if (files.length) bits.push('đã sửa ' + files.length + ' tệp');
+    head.appendChild(h('span', { class: 'uc-s', text: bits.join(' · ') || 'Lượt này chỉ trò chuyện, không đọc cũng không sửa' }));
     head.appendChild(icon('chevron', 'uc-chev'));
 
     const body = h('div', { class: 'uc-body' });
@@ -229,24 +229,24 @@
 
     /* ① 它看了这些 —— 每条带上"有多大"（字数），用户一眼知道喂了多少料 */
     if (secs.length) {
-      body.appendChild(sec('它看了这些', secs.map((x) => item(
-        x.name, (x.facts || []).join(' · ') + (x.chars ? '（' + x.chars + ' 字）' : '')))));
+      body.appendChild(sec('Nó đã xem những thứ này', secs.map((x) => item(
+        x.name, (x.facts || []).join(' · ') + (x.chars ? '(' + x.chars + ' chữ)' : '')))));
     }
     /* ② 它能用的工具 —— 中文名，全站同一份对照 */
     if (allowed.length) {
-      body.appendChild(sec('它能用的工具', [h('div', { class: 'uc-tags' },
+      body.appendChild(sec('Công cụ nó dùng được', [h('div', { class: 'uc-tags' },
         allowed.map((n) => h('span', { class: 'uc-tag', text: label(n) })))]));
     }
     /* ③ 它真调了这些 —— 失败的一眼能看出来（不让用户以为 AI 干成了） */
     if (called.length) {
-      body.appendChild(sec('它调了这些', called.map((t) => item(
-        label(t.name), t.arg || '（没带参数）', t.ok === false ? 'uc-bad' : ''))));
+      body.appendChild(sec('Nó đã gọi những thứ này', called.map((t) => item(
+        label(t.name), t.arg || '(không có tham số)', t.ok === false ? 'uc-bad' : ''))));
     }
     /* ④ 它改了这些文件 */
     if (files.length) {
-      body.appendChild(sec('它改了这些文件', files.map((f) => item('文件', f))));
+      body.appendChild(sec('Nó đã sửa các tệp này', files.map((f) => item('Tệp', f))));
     }
-    if (!has) body.appendChild(h('div', { class: 'uc-empty', text: '这一轮没有读资料、也没有调工具。' }));
+    if (!has) body.appendChild(h('div', { class: 'uc-empty', text: 'Lượt này không đọc tư liệu, cũng không gọi công cụ.' }));
     body.hidden = !o.open;
 
     const card = h('div', { class: 'usage-card' + (o.open ? ' open' : ''), 'data-usage': '1' }, [head, body]);
@@ -282,8 +282,8 @@
     /** 23.6 万字 / 8,120 字 */
     words(n) {
       const v = Number(n || 0);
-      if (v >= 10000) return (v / 10000).toFixed(1).replace(/\.0$/, '') + ' 万字';
-      return this.num(v) + ' 字';
+      if (v >= 10000) return (v / 10000).toFixed(1).replace(/\.0$/, '') + ' vạn chữ';
+      return this.num(v) + ' chữ';
     },
     /** 0~100 的整数 */
     pct(n) { return Math.max(0, Math.min(100, Math.round(Number(n) || 0))) + '%'; },
@@ -292,12 +292,12 @@
       const t = Number(ts || 0);
       if (!t) return '';
       const now = Date.now(), d = now - t;
-      if (d < 60000) return '刚刚';
-      if (d < 3600000) return Math.floor(d / 60000) + ' 分钟前';
-      if (d < 86400000) return Math.floor(d / 3600000) + ' 小时前';
-      if (d < 172800000) return '昨天';
+      if (d < 60000) return 'Vừa xong';
+      if (d < 3600000) return Math.floor(d / 60000) + ' phút trước';
+      if (d < 86400000) return Math.floor(d / 3600000) + ' giờ trước';
+      if (d < 172800000) return 'Hôm qua';
       const dt = new Date(t);
-      return (dt.getMonth() + 1) + '月' + dt.getDate() + '日';
+      return dt.getDate() + '/' + (dt.getMonth() + 1);
     },
   };
 

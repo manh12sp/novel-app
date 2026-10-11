@@ -25,24 +25,24 @@ from ..store import chapter_files, read_text
 
 # ── 档案字段（前端照这个渲染表单，后端照这个清洗，只有一份定义）────────────
 VOICE_FIELDS: list[dict] = [
-    {"key": "tone", "label": "腔调", "kind": "text",
-     "hint": "一句话说清他怎么说话。例：冷硬、短促、爱用书面语、满嘴江湖话"},
-    {"key": "sentence", "label": "句长偏好", "kind": "choice",
-     "options": ["短促", "中等", "绵长", "长短交替"],
-     "hint": "他说话是短句砍人，还是长句绕人。写手会照这个写。"},
-    {"key": "catchphrases", "label": "口头禅", "kind": "lines",
-     "hint": "他常挂嘴边的话，一行一条。正文里出现次数会被核对。"},
-    {"key": "lexicon", "label": "常用词", "kind": "lines",
-     "hint": "他爱用的词（称呼、脏话、行业话），一行一条。"},
-    {"key": "banned", "label": "忌用词", "kind": "lines",
-     "hint": "他不会说出口的话，一行一条。说了就是写串了。"},
-    {"key": "addresses", "label": "称呼别人", "kind": "pairs",
-     "hint": "一行一个：对谁=怎么叫。例：沈岩=岩哥"},
-    {"key": "emotion", "label": "情绪外露", "kind": "scale",
-     "hint": "0 到 10。0 = 天塌了也只说「嗯」；10 = 什么都写在脸上。"},
-    {"key": "samples", "label": "代表台词", "kind": "lines",
-     "hint": "最有辨识度的两三句，一行一条。这是照着他写的锚点。"},
-    {"key": "note", "label": "备注", "kind": "text", "hint": "还有别的说话习惯就写这儿。"},
+    {"key": "tone", "label": "Giọng điệu", "kind": "text",
+     "hint": "Một câu nói rõ người này nói chuyện thế nào. VD: lạnh cứng, cộc lốc, thích dùng văn viết, mở miệng là giọng giang hồ"},
+    {"key": "sentence", "label": "Độ dài câu ưa dùng", "kind": "choice",
+     "options": ["Ngắn gọn", "Vừa phải", "Dài dòng", "Xen kẽ dài ngắn"],
+     "hint": "Người này nói câu ngắn như chém, hay câu dài vòng vo. Người viết sẽ viết theo điều này."},
+    {"key": "catchphrases", "label": "Câu cửa miệng", "kind": "lines",
+     "hint": "Câu người này hay treo trên miệng, mỗi dòng một câu. Số lần xuất hiện trong chính văn sẽ được đối chiếu."},
+    {"key": "lexicon", "label": "Từ hay dùng", "kind": "lines",
+     "hint": "Từ người này thích dùng (xưng hô, chửi thề, tiếng nghề), mỗi dòng một từ."},
+    {"key": "banned", "label": "Từ kiêng dùng", "kind": "lines",
+     "hint": "Câu người này sẽ không bao giờ nói ra, mỗi dòng một câu. Nói ra tức là viết lẫn giọng."},
+    {"key": "addresses", "label": "Cách gọi người khác", "kind": "pairs",
+     "hint": "Mỗi dòng một mục: đối với ai=gọi thế nào. VD: Thẩm Nham=anh Nham"},
+    {"key": "emotion", "label": "Bộc lộ cảm xúc", "kind": "scale",
+     "hint": "0 đến 10. 0 = trời sập cũng chỉ nói「ừ」; 10 = cái gì cũng viết lên mặt."},
+    {"key": "samples", "label": "Lời thoại tiêu biểu", "kind": "lines",
+     "hint": "Hai ba câu dễ nhận diện nhất, mỗi dòng một câu. Đây là cái neo để viết theo người này."},
+    {"key": "note", "label": "Ghi chú", "kind": "text", "hint": "Còn thói quen nói chuyện nào khác thì ghi ở đây."},
 ]
 FIELD_KEYS = [f["key"] for f in VOICE_FIELDS]
 _LINES = ("catchphrases", "lexicon", "banned", "samples")
@@ -293,46 +293,46 @@ def check_one(name: str, prof: dict, fp: dict, lines: list[dict]) -> list[dict]:
     voice = prof.get("voice") or {}
     if not voice:
         issues.append({"level": "info", "key": "no_profile",
-                       "text": "还没建声音档案：写手只能靠通用套路，容易和别人一个腔",
-                       "advice": "填「腔调 + 句长偏好 + 口头禅」，三条就够用"})
+                       "text": "Chưa có hồ sơ giọng nói: người viết chỉ có thể dựa vào lối viết chung, dễ trùng giọng với người khác",
+                       "advice": "Điền「Giọng điệu + Độ dài câu ưa dùng + Câu cửa miệng」, ba mục là đủ dùng"})
         return issues
     if not lines:
         issues.append({"level": "info", "key": "no_lines",
-                       "text": "正文里找不到他的台词（或台词没写是谁说的）",
-                       "advice": "对话后面加一句「XX说」，既清楚又好读"})
+                       "text": "Không tìm thấy lời thoại của người này trong chính văn (hoặc lời thoại không ghi ai nói)",
+                       "advice": "Sau lời thoại thêm một câu「XX nói」, vừa rõ vừa dễ đọc"})
         return issues
     cps = voice.get("catchphrases") or []
     if cps:
         hit = [c for c in cps if any(c in l["line"] for l in lines)]
         if not hit:
             issues.append({"level": "warn", "key": "catch_missing",
-                           "text": "档案里的口头禅「%s」在 %d 句台词里一次都没出现" % (cps[0], len(lines)),
-                           "advice": "要么让他说一次，要么承认这条口头禅是你一厢情愿，改档案"})
+                           "text": "Câu cửa miệng「%s」trong hồ sơ không xuất hiện lần nào trong %d câu thoại" % (cps[0], len(lines)),
+                           "advice": "Hoặc cho người này nói một lần, hoặc thừa nhận câu cửa miệng này là bạn tự nghĩ, sửa hồ sơ"})
     elif len(lines) >= 8:
         issues.append({"level": "info", "key": "catch_empty",
-                       "text": "有 %d 句台词，但档案里一条口头禅都没写" % len(lines),
-                       "advice": "从下面的「常出现的词」里挑一个填进去，他马上就有辨识度了"})
+                       "text": "Có %d câu thoại, nhưng hồ sơ chưa ghi câu cửa miệng nào" % len(lines),
+                       "advice": "Chọn một từ trong「Từ hay xuất hiện」bên dưới điền vào, người này lập tức có bản sắc"})
     for w in (voice.get("banned") or []):
         for l in lines:
             if w in l["line"]:
                 issues.append({"level": "warn", "key": "banned_used",
-                               "text": "他说了忌用词「%s」：%s（%s 第 %d 行）" % (w, l["line"][:40], l["path"], l["lineNo"]),
-                               "advice": "改成他的说法，或者把这条从他档案里去掉"})
+                               "text": "Người này đã nói từ kiêng dùng「%s」: %s (%s dòng %d)" % (w, l["line"][:40], l["path"], l["lineNo"]),
+                               "advice": "Đổi sang cách nói của người này, hoặc bỏ mục này khỏi hồ sơ"})
                 break
     want = voice.get("sentence")
     if want and fp.get("lines", 0) >= 6:
         avg = fp["avgLen"]
-        real = "短促" if avg <= 9 else ("绵长" if avg >= 26 else "中等")
-        if want in ("短促", "绵长") and real != want:
+        real = "Ngắn gọn" if avg <= 9 else ("Dài dòng" if avg >= 26 else "Vừa phải")
+        if want in ("Ngắn gọn", "Dài dòng") and real != want:
             issues.append({"level": "warn", "key": "sentence_mismatch",
-                           "text": "档案写「%s」，实际平均每句 %.1f 字，读起来是「%s」" % (want, avg, real),
-                           "advice": "按档案改台词，或者把档案改成实际的"})
+                           "text": "Hồ sơ ghi「%s」, thực tế trung bình mỗi câu %.1f chữ, đọc lên là「%s」" % (want, avg, real),
+                           "advice": "Sửa lời thoại theo hồ sơ, hoặc sửa hồ sơ theo thực tế"})
     for other, call in (voice.get("addresses") or {}).items():
         mine = [l for l in lines if l["line"]]
         if mine and not any(call in l["line"] for l in lines):
             issues.append({"level": "info", "key": "address_unused",
-                           "text": "档案写他对「%s」叫「%s」，但台词里没这么叫过" % (other, call),
-                           "advice": "让他叫一次（称呼是关系最省事的提示），或删掉这条"})
+                           "text": "Hồ sơ ghi người này gọi「%s」là「%s」, nhưng trong lời thoại chưa từng gọi như vậy" % (other, call),
+                           "advice": "Cho người này gọi một lần (xưng hô là gợi ý quan hệ tiết kiệm nhất), hoặc xóa mục này"})
             break
     return issues
 
@@ -374,7 +374,7 @@ def report(slug: str) -> dict:
                 pairs.append({"a": a["name"], "b": b["name"], "similarity": sim,
                               "shared": sorted(set(a["fingerprint"].get("topWords") or []) &
                                                set(b["fingerprint"].get("topWords") or []))[:8],
-                              "why": "平均句长 %.1f / %.1f 字，用词重叠 %d 个" % (
+                              "why": "Độ dài câu trung bình %.1f / %.1f chữ, trùng %d từ" % (
                                   a["fingerprint"].get("avgLen", 0), b["fingerprint"].get("avgLen", 0),
                                   len(set(a["fingerprint"].get("topWords") or []) &
                                       set(b["fingerprint"].get("topWords") or [])))})
@@ -404,19 +404,19 @@ def report(slug: str) -> dict:
 def _advice(people: list[dict], pairs: list[dict]) -> list[str]:
     out = []
     if not people:
-        return ["这本书还没有角色实体，也没有可归属的台词。先在世界面板建几个角色。"]
+        return ["Cuốn sách này chưa có thực thể nhân vật, cũng chưa có lời thoại xác định được người nói. Hãy tạo vài nhân vật trong bảng Thế giới trước."]
     no_prof = [p["name"] for p in people if not p["hasProfile"]]
     if no_prof:
-        out.append("还没建声音档案：" + "、".join(no_prof[:6]) + "（写手只能靠通用套路）")
+        out.append("Chưa có hồ sơ giọng nói: " + "、".join(no_prof[:6]) + "(người viết chỉ có thể dựa vào lối viết chung)")
     if pairs:
         p = pairs[0]
-        out.append("「%s」和「%s」像一个模子刻的（像度 %.0f%%）：%s" % (
+        out.append("「%s」và「%s」như đúc từ một khuôn (độ giống %.0f%%): %s" % (
             p["a"], p["b"], p["similarity"] * 100, p["why"]))
     thin = [p["name"] for p in people if 0 < (p["fingerprint"].get("lines") or 0) < 4]
     if thin:
-        out.append("台词太少、指纹不可信：" + "、".join(thin[:6]))
+        out.append("Lời thoại quá ít, dấu vân giọng không đáng tin: " + "、".join(thin[:6]))
     if not out:
-        out.append("每个角色的说话方式都分得开，声音这块没发现问题。")
+        out.append("Cách nói chuyện của mỗi nhân vật đều phân biệt được, phần giọng nói không phát hiện vấn đề.")
     return out
 
 
@@ -450,25 +450,25 @@ def voice_brief(slug: str, names: list[str], *, limit: int = 6) -> str:
             continue
         bits = []
         if v.get("tone"):
-            bits.append("腔调：" + v["tone"])
+            bits.append("Giọng điệu: " + v["tone"])
         if v.get("sentence"):
-            bits.append("句长：" + v["sentence"])
+            bits.append("Độ dài câu: " + v["sentence"])
         if v.get("catchphrases"):
-            bits.append("口头禅：" + "／".join(v["catchphrases"][:4]))
+            bits.append("Câu cửa miệng: " + "／".join(v["catchphrases"][:4]))
         if v.get("lexicon"):
-            bits.append("常用词：" + "／".join(v["lexicon"][:6]))
+            bits.append("Từ hay dùng: " + "／".join(v["lexicon"][:6]))
         if v.get("banned"):
-            bits.append("忌用：" + "／".join(v["banned"][:4]))
+            bits.append("Kiêng dùng: " + "／".join(v["banned"][:4]))
         if v.get("addresses"):
-            bits.append("称呼：" + "，".join(f"{k}叫「{x}」" for k, x in list(v["addresses"].items())[:5]))
+            bits.append("Xưng hô: " + "，".join(f"{k} gọi là「{x}」" for k, x in list(v["addresses"].items())[:5]))
         if v.get("emotion") is not None:
-            bits.append("情绪外露：%s/10" % v["emotion"])
+            bits.append("Bộc lộ cảm xúc: %s/10" % v["emotion"])
         if v.get("samples"):
-            bits.append("代表台词：" + "／".join("「%s」" % s for s in v["samples"][:2]))
+            bits.append("Lời thoại tiêu biểu: " + "／".join("「%s」" % s for s in v["samples"][:2]))
         if v.get("note"):
-            bits.append("备注：" + v["note"])
+            bits.append("Ghi chú: " + v["note"])
         if bits:
             blocks.append("· " + p["name"] + "：" + "；".join(bits))
     if not blocks:
         return ""
-    return ("【出场角色的说话方式（台词要照这个分得开，别所有人一个腔）】\n" + "\n".join(blocks))
+    return ("【Cách nói chuyện của các nhân vật xuất hiện (lời thoại phải phân biệt được theo đây, đừng để ai cũng một giọng)】\n" + "\n".join(blocks))

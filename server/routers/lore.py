@@ -58,8 +58,8 @@ def _categories(slug: str) -> list[dict]:
     return out
 
 
-_CN = {"character": "角色", "world": "世界", "faction": "势力", "event": "事件",
-       "item": "物品", "system": "体系", "note": "随记", "location": "地点", "term": "术语"}
+_CN = {"character": "Nhân vật", "world": "Thế giới", "faction": "Thế lực", "event": "Sự kiện",
+       "item": "Vật phẩm", "system": "Hệ thống", "note": "Ghi chép", "location": "Địa điểm", "term": "Thuật ngữ"}
 
 
 def _cat_name(k: str) -> str:
@@ -94,7 +94,7 @@ async def lore_entry(slug: str, path: str, request: Request):
     try:
         return {"path": path, "content": read_text(s, path)}
     except FileNotFoundError:
-        raise HTTPException(404, "没有这条设定")
+        raise HTTPException(404, "Không có thiết lập này")
     except (ValueError, OSError) as e:
         raise HTTPException(400, str(e))
 
@@ -103,18 +103,18 @@ async def lore_entry(slug: str, path: str, request: Request):
 async def lore_entry_save(request: Request, payload: dict = Body(...)):
     current_user(request)
     s = _book(payload.get("slug") or "")
-    path = args.s(payload.get("path"), name="设定路径").strip()
-    content = args.s(payload.get("content"), name="正文")
+    path = args.s(payload.get("path"), name="Đường dẫn thiết lập").strip()
+    content = args.s(payload.get("content"), name="Nội dung")
     new = bool(payload.get("create"))
     if not path:
-        raise HTTPException(400, "缺少设定路径")
+        raise HTTPException(400, "Thiếu đường dẫn thiết lập")
     try:
         if new:
             create_file(s, path, content)
         else:
-            write_text(s, path, content, origin="user", note="编辑设定")
+            write_text(s, path, content, origin="user", note="Sửa thiết lập")
     except FileExistsError:
-        raise HTTPException(400, "同名条目已经存在")
+        raise HTTPException(400, "Đã có mục cùng tên")
     except (ValueError, OSError) as e:
         raise HTTPException(400, str(e))
     return {"ok": True, "path": path, "mtimeMs": now_ms()}
@@ -127,5 +127,5 @@ async def lore_entry_delete(slug: str, path: str, request: Request):
     try:
         out = delete_path(s, path)
     except FileNotFoundError:
-        raise HTTPException(404, "没有这条设定")
+        raise HTTPException(404, "Không có thiết lập này")
     return out

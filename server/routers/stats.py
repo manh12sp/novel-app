@@ -105,7 +105,7 @@ async def cost(request: Request, slug: str = "", days: int = 30):
         out_price = float(p.get("output") or p.get("outputPerM") or 0)
         c = (r["inp"] or 0) / 1e6 * inp_price + (r["outp"] or 0) / 1e6 * out_price
         total_cost += c
-        items.append({"model": r["model"] or "(未知)", "input": r["inp"] or 0,
+        items.append({"model": r["model"] or "(không rõ)", "input": r["inp"] or 0,
                       "output": r["outp"] or 0, "cacheRead": r["cr"] or 0,
                       "cacheWrite": r["cw"] or 0, "calls": r["calls"],
                       "ms": r["ms"] or 0, "cost": round(c, 4),
@@ -115,27 +115,27 @@ async def cost(request: Request, slug: str = "", days: int = 30):
                     " SUM(input_tokens) AS inp, SUM(output_tokens) AS outp FROM trace "
                     + where + " GROUP BY day ORDER BY day DESC LIMIT ?", params + [days])
     return {"items": items, "totalCost": round(total_cost, 4), "days": days,
-            "daily": list(reversed(daily)), "currency": "元"}
+            "daily": list(reversed(daily)), "currency": "tệ"}
 
 
 # ── 成就 ────────────────────────────────────────────────────────────────────
 ACHIEVEMENTS = [
-    {"key": "first_chapter", "title": "第一章", "hint": "写下一章", "kind": "chapters", "at": 1},
-    {"key": "ten_chapters", "title": "十章", "hint": "写到十章", "kind": "chapters", "at": 10},
-    {"key": "fifty_chapters", "title": "五十章", "hint": "写到五十章", "kind": "chapters", "at": 50},
-    {"key": "hundred_chapters", "title": "百章", "hint": "写到一百章", "kind": "chapters", "at": 100},
-    {"key": "words_10k", "title": "一万字", "hint": "全书一万字", "kind": "words", "at": 10000},
-    {"key": "words_50k", "title": "五万字", "hint": "全书五万字", "kind": "words", "at": 50000},
-    {"key": "words_100k", "title": "十万字", "hint": "全书十万字", "kind": "words", "at": 100000},
-    {"key": "words_500k", "title": "五十万字", "hint": "全书五十万字", "kind": "words", "at": 500000},
-    {"key": "words_1m", "title": "百万字", "hint": "全书一百万字", "kind": "words", "at": 1000000},
-    {"key": "streak_3", "title": "连写三天", "hint": "连续三天动笔", "kind": "streak", "at": 3},
-    {"key": "streak_7", "title": "连写一周", "hint": "连续七天动笔", "kind": "streak", "at": 7},
-    {"key": "streak_30", "title": "连写一月", "hint": "连续三十天动笔", "kind": "streak", "at": 30},
-    {"key": "day_3000", "title": "一天三千", "hint": "单日写满三千字", "kind": "dayWords", "at": 3000},
-    {"key": "world_10", "title": "世界成形", "hint": "世界引擎里攒够 10 个实体", "kind": "entities", "at": 10},
-    {"key": "promise_keeper", "title": "伏笔不欠", "hint": "至少兑现一条伏笔，且没有欠着的", "kind": "promises", "at": 1},
-    {"key": "clean_hand", "title": "干净的手", "hint": "有一章质检 90 分以上", "kind": "lint", "at": 90},
+    {"key": "first_chapter", "title": "Chương đầu tiên", "hint": "Viết xong một chương", "kind": "chapters", "at": 1},
+    {"key": "ten_chapters", "title": "Mười chương", "hint": "Viết đến chương mười", "kind": "chapters", "at": 10},
+    {"key": "fifty_chapters", "title": "Năm mươi chương", "hint": "Viết đến chương năm mươi", "kind": "chapters", "at": 50},
+    {"key": "hundred_chapters", "title": "Trăm chương", "hint": "Viết đến chương một trăm", "kind": "chapters", "at": 100},
+    {"key": "words_10k", "title": "Mười nghìn chữ", "hint": "Cả sách mười nghìn chữ", "kind": "words", "at": 10000},
+    {"key": "words_50k", "title": "Năm mươi nghìn chữ", "hint": "Cả sách năm mươi nghìn chữ", "kind": "words", "at": 50000},
+    {"key": "words_100k", "title": "Trăm nghìn chữ", "hint": "Cả sách một trăm nghìn chữ", "kind": "words", "at": 100000},
+    {"key": "words_500k", "title": "Năm trăm nghìn chữ", "hint": "Cả sách năm trăm nghìn chữ", "kind": "words", "at": 500000},
+    {"key": "words_1m", "title": "Triệu chữ", "hint": "Cả sách một triệu chữ", "kind": "words", "at": 1000000},
+    {"key": "streak_3", "title": "Viết liền ba ngày", "hint": "Ba ngày liên tục đặt bút", "kind": "streak", "at": 3},
+    {"key": "streak_7", "title": "Viết liền một tuần", "hint": "Bảy ngày liên tục đặt bút", "kind": "streak", "at": 7},
+    {"key": "streak_30", "title": "Viết liền một tháng", "hint": "Ba mươi ngày liên tục đặt bút", "kind": "streak", "at": 30},
+    {"key": "day_3000", "title": "Ba nghìn một ngày", "hint": "Một ngày viết đủ ba nghìn chữ", "kind": "dayWords", "at": 3000},
+    {"key": "world_10", "title": "Thế giới thành hình", "hint": "Động cơ thế giới tích đủ 10 thực thể", "kind": "entities", "at": 10},
+    {"key": "promise_keeper", "title": "Không nợ phục bút", "hint": "Thu hồi ít nhất một phục bút, và không còn cái nào nợ", "kind": "promises", "at": 1},
+    {"key": "clean_hand", "title": "Bàn tay sạch", "hint": "Có một chương kiểm tra chất lượng trên 90 điểm", "kind": "lint", "at": 90},
 ]
 
 
@@ -191,7 +191,7 @@ async def achievements(request: Request, slug: str):
                  dbm.Database.jdumps({"at": a["at"], "cur": cur})))
             dbm.db().execute("INSERT INTO notification(kind,title,body,slug,created_at)"
                              " VALUES('achievement',?,?,?,?)",
-                             ("解锁成就：" + a["title"], a["hint"], s, now))
+                             ("Mở khóa thành tựu: " + a["title"], a["hint"], s, now))
         elif row and not got:
             dbm.db().execute("UPDATE achievement SET progress=? WHERE id=?", (cur, row["id"]))
         out.append({"key": a["key"], "title": a["title"], "hint": a["hint"],
@@ -212,22 +212,22 @@ async def report(request: Request, slug: str, kind: str = "week"):
     hist = _days(s, days)
     written = [h for h in hist if (h["net_words"] or 0) > 0]
     total = sum(h["net_words"] or 0 for h in hist)
-    label = {"day": "今天", "week": "这一周", "month": "这个月"}.get(kind, f"最近 {days} 天")
+    label = {"day": "Hôm nay", "week": "Tuần này", "month": "Tháng này"}.get(kind, f"{days} ngày gần đây")
     head = (f"《{dbm.db().scalar('SELECT title FROM book WHERE slug=?', (s,)) or s}》"
             f"{label}")
     if not written:
-        body = f"{label}还没有动笔。全书现在 {m['words']} 字、{m['chapters']} 章。"
+        body = f"{label} chưa đặt bút. Cả sách hiện có {m['words']} chữ, {m['chapters']} chương."
     else:
         best = max(written, key=lambda h: h["net_words"] or 0)
-        body = (f"{len(written)} 天有写，共 {total} 字，平均每天 "
-                f"{round(total / len(written))} 字；最多的一天是 {best['date_key']}"
-                f"（{best['net_words']} 字）。全书现在 {m['words']} 字、{m['chapters']} 章，"
-                f"连续写作 {m['streak']} 天。")
+        body = (f"Có {len(written)} ngày viết, tổng {total} chữ, trung bình mỗi ngày "
+                f"{round(total / len(written))} chữ; ngày nhiều nhất là {best['date_key']}"
+                f" ({best['net_words']} chữ). Cả sách hiện có {m['words']} chữ, {m['chapters']} chương, "
+                f"viết liên tục {m['streak']} ngày.")
     d = dbm.db()
     at = d.one("SELECT * FROM promise WHERE slug=? AND status IN ('open','advanced')"
                " ORDER BY id LIMIT 5", (s,))
     if at:
-        body += f"\n还欠着读者：{at['name']}。"
+        body += f"\nCòn nợ người đọc: {at['name']}."
     return {"kind": kind, "markdown": f"## {head}\n\n{body}", "text": body,
             "days": [{"date": h["date_key"], "words": h["net_words"] or 0} for h in hist],
             "measured": m}

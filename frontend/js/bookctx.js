@@ -64,7 +64,7 @@
       const d = await API.shelf();
       ((d && d.projects) || []).forEach((b) => out.push({
         slug: b.slug, title: b.title || b.slug,
-        sub: ((b.raw && b.raw.wordCount) || 0) + ' 字',
+        sub: ((b.raw && b.raw.wordCount) || 0) + ' chữ',
         words: (b.raw && b.raw.wordCount) || 0, ts: b.updatedAt || 0,
         cover: b.hasCover ? API.media('api/cover?slug=' + encodeURIComponent(b.slug)) : '',
       }));
@@ -154,30 +154,30 @@
     sheet(opts) {
       const o = opts || {};
       App.sheet('<div class="sheet-grip"></div>' +
-        '<div class="sheet-head"><h3>' + (o.title || '切到哪本书') + '</h3>' +
-        '<button class="icon-btn" data-close aria-label="关闭">' + window.iconHtml('close') + '</button></div>' +
+        '<div class="sheet-head"><h3>' + (o.title || 'Chuyển sang sách nào') + '</h3>' +
+        '<button class="icon-btn" data-close aria-label="Đóng">' + window.iconHtml('close') + '</button></div>' +
         '<div class="bk-note">' + (o.global
-          ? '一键切换：预设 / 设定 / 对话 / 写作台 / 世界 / 剧情 / 质检 / 统计 / 素材 / 术语 / 笔记 / 听书，' +
-            '全站一次性换成这本的，跟另一本完全隔开。'
+          ? 'Chuyển một chạm: Preset / Thiết lập / Trò chuyện / Bàn viết / Thế giới / Cốt truyện / Soát lỗi / Thống kê / Tư liệu / Thuật ngữ / Ghi chú / Nghe truyện, ' +
+            ' toàn bộ đổi sang cuốn này, tách biệt hoàn toàn với cuốn khác.'
           /* 文案规矩（）：沉稳、中性、专业。原来这句是「切过去之后：这本自己的…」
              一路念下来，像口头说明；改成两句陈述，句子也短了。 */
-          : '切换后，预设 / 设定 / 对话 / 写作台 / 世界 / 剧情 / 质检 / 统计 / 素材 / 术语' +
-            '全部换成这一本的，全站的「当前书」同步跟着变。') + '</div>' +
+          : 'Sau khi chuyển, Preset / Thiết lập / Trò chuyện / Bàn viết / Thế giới / Cốt truyện / Soát lỗi / Thống kê / Tư liệu / Thuật ngữ ' +
+            ' đều đổi sang cuốn này, «sách hiện tại» trên toàn ứng dụng cũng đổi theo.') + '</div>' +
         '<div id="bk-list" class="bk-list"><div class="t-load"><i></i></div></div>',
         {
           onMount(p) {
             const box = p.querySelector('#bk-list');
             list(true).then((all) => {
-              if (!all.length) { box.innerHTML = '<div class="t-empty">还没有作品</div>'; return; }
+              if (!all.length) { box.innerHTML = '<div class="t-empty">Chưa có tác phẩm</div>'; return; }
               box.innerHTML = all.map((b) => {
                 const on = b.slug === BookCtx.slug();
                 return '<div class="bk-row' + (on ? ' on' : '') + '" data-slug="' + esc(b.slug) + '">' +
                   '<span class="bk-cover">' + (b.cover
                     ? '<img src="' + esc(b.cover) + '" alt="">'
-                    : '<span class="bk-cover-ph">' + esc(window.hanzi ? window.hanzi(b.title) : (b.title || '书').slice(0, 1)) + '</span>') +
+                    : '<span class="bk-cover-ph">' + esc(window.hanzi ? window.hanzi(b.title) : (b.title || 'B').slice(0, 1)) + '</span>') +
                   '</span>' +
                   '<span class="bk-main"><b>' + esc(b.title) + '</b><i>' + esc(b.sub || '') + '</i></span>' +
-                  (on ? '<span class="bk-on">正在写</span>' : '<span class="bk-go">切过来</span>') +
+                  (on ? '<span class="bk-on">Đang viết</span>' : '<span class="bk-go">Chuyển sang</span>') +
                   '</div>';
               }).join('');
               box.querySelectorAll('[data-slug]').forEach((r) => {
@@ -185,13 +185,13 @@
                   const b = all.find((x) => x.slug === r.dataset.slug) || { slug: r.dataset.slug };
                   BookCtx.set(b.slug, b.title);
                   App.closeSheet();
-                  App.toast('已切到《' + (b.title || b.slug) + '》');
+                  App.toast('Đã chuyển sang «' + (b.title || b.slug) + '»');
                   if (o.onPick) o.onPick(b.slug, b.title);
                 };
               });
               const hit = box.querySelector('.bk-row.on');
               if (hit) hit.scrollIntoView({ block: 'center' });
-            }).catch((e) => { box.innerHTML = '<div class="t-empty">读不到书单：' + esc(e.message) + '</div>'; });
+            }).catch((e) => { box.innerHTML = '<div class="t-empty">Không đọc được danh sách sách: ' + esc(e.message) + '</div>'; });
           },
         });
     },
@@ -221,19 +221,19 @@
       el.className = 'bk-bar' + (o.global ? ' bk-bar-global' : '') + (slug ? '' : ' is-empty-bar');
       const name = slug
         ? ((cur && cur.slug === slug && cur.title) ? cur.title : (o.title || slug))
-        : (o.emptyName || '还没有作品');
+        : (o.emptyName || 'Chưa có tác phẩm');
       /* ：小方块（`.bk-mini`，里面是书名首字 `first`）按删掉了，
          "是不是当前这本"这个状态改由**副行**说清楚 —— 它原来就是 `.bk-mini .bk-dot` 那个小红点的意思。 */
       const isCur = !!(slug && cur && cur.slug === slug);
       const sub = slug
-        ? (o.sub || (o.global ? '切一下就全站跟着换' : (isCur ? '正在写这本 · 点这里换一本' : '点这里切过来')))
-        : '先去书架建一本';
+        ? (o.sub || (o.global ? 'Chuyển một lần là toàn ứng dụng đổi theo' : (isCur ? 'Đang viết cuốn này · bấm để đổi cuốn khác' : 'Bấm để chuyển sang')))
+        : 'Hãy tạo một cuốn trên giá sách trước';
       el.innerHTML =
         /* 只有长条这一态（用户：「让它永久变成长条的」） */
         '<button class="bk-chip" data-book-pick>' +
         '<span class="bk-ico">' + window.iconHtml('book') + '</span>' +
         '<span class="bk-txt"><b>' + esc(name) + '</b><i>' + esc(sub) + '</i></span>' +
-        '<span class="bk-pick">' + esc(o.pick || '切换') + '</span>' +
+        '<span class="bk-pick">' + esc(o.pick || 'Chuyển') + '</span>' +
         '<span class="bk-chev">' + window.iconHtml('chevron') + '</span>' +
         '</button>';
       el.querySelector('[data-book-pick]').onclick = () => {

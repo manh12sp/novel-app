@@ -119,7 +119,7 @@ def create_backup(note: str = "", name: str = "", with_db: bool = True) -> dict:
             i += 1
             zip_path = P.backups / f"{base}-{i}.zip"
         tmp = zip_path.with_suffix(".zip.tmp")
-        meta = {"createdAt": now_ms(), "app": "novel-app", "version": CFG.get("app_name", "小说"),
+        meta = {"createdAt": now_ms(), "app": "novel-app", "version": CFG.get("app_name", "Tiểu thuyết"),
                 "note": note, "withDb": bool(with_db),
                 "books": [p.name for p in P.books.iterdir() if p.is_dir()] if P.books.exists() else []}
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
@@ -163,12 +163,12 @@ async def passport_status(request: Request):
     current_user(request)
     items = _list()
     auto = _read_auto()
-    return {"linked": True, "mode": "local", "label": "本机备份",
-            "hint": "备份打在这台机器上（data/backups），可以直接下载走。",
+    return {"linked": True, "mode": "local", "label": "Sao lưu trên máy này",
+            "hint": "Bản sao lưu được tạo trên máy này (data/backups), có thể tải thẳng về.",
             "backupDir": str(P.backups), "auto": auto,
             "lastBackup": items[0] if items else None, "count": len(items),
             # 旧平台是云账号体系；这几个字段前端老代码会读，给上（内容是实情：本机账号）
-            "account": {"kind": "local", "name": "本机", "displayName": "本机备份",
+            "account": {"kind": "local", "name": "Máy này", "displayName": "Sao lưu trên máy này",
                         "username": (dbm.db().scalar("SELECT username FROM user ORDER BY id")
                                      or "admin")},
             "scopes": ["backup:read", "backup:write", "backup:restore"],
@@ -179,7 +179,7 @@ async def passport_status(request: Request):
 async def passport_keys(request: Request):
     current_user(request)
     st = P.backups.stat() if P.backups.exists() else None
-    keys = [{"id": "local", "name": "本机存储", "kind": "local",
+    keys = [{"id": "local", "name": "Bộ nhớ máy này", "kind": "local",
              "path": str(P.backups),
              "createdAt": int((st.st_mtime * 1000) if st else now_ms()),
              "writable": bool(st and os.access(P.backups, os.W_OK))}]
@@ -197,10 +197,10 @@ async def passport_backups(request: Request):
 async def passport_backup_now(request: Request, payload: dict = Body(default={})):
     current_user(request)
     try:
-        rec = create_backup(note=str((payload or {}).get("note") or "手动备份"),
+        rec = create_backup(note=str((payload or {}).get("note") or "Sao lưu thủ công"),
                             with_db=bool((payload or {}).get("withDb", True)))
     except Exception as e:
-        raise HTTPException(500, f"备份失败：{e}")
+        raise HTTPException(500, f"Sao lưu thất bại: {e}")
     return {"ok": True, "backup": rec}
 
 
@@ -225,11 +225,11 @@ async def backup_list(request: Request):
 async def backup_create(request: Request, payload: dict = Body(default={})):
     current_user(request)
     try:
-        rec = create_backup(note=str((payload or {}).get("note") or "手动备份"),
+        rec = create_backup(note=str((payload or {}).get("note") or "Sao lưu thủ công"),
                             name=str((payload or {}).get("name") or ""),
                             with_db=bool((payload or {}).get("withDb", True)))
     except Exception as e:
-        raise HTTPException(500, f"备份失败：{e}")
+        raise HTTPException(500, f"Sao lưu thất bại: {e}")
     dbm.db().execute("INSERT INTO audit(at,actor,action,slug,detail_json) VALUES(?,?,?,?,?)",
                      (now_ms(), "user", "backup.create", "",
                       dbm.Database.jdumps({"name": rec["name"], "size": rec["size"]})))
@@ -240,11 +240,11 @@ async def backup_create(request: Request, payload: dict = Body(default={})):
 async def backup_delete(request: Request, name: str = ""):
     current_user(request)
     if not name:
-        raise HTTPException(400, "要删哪一份？")
+        raise HTTPException(400, "Xóa bản nào?")
     safe = Path(name).name
     f = P.backups / (safe if safe.endswith(".zip") else safe + ".zip")
     if not f.exists():
-        raise HTTPException(404, "没有这份备份")
+        raise HTTPException(404, "Không có bản sao lưu này")
     f.unlink()
     dbm.db().execute("DELETE FROM backup WHERE name=?", (f.stem,))
     return {"ok": True, "deleted": f.name}
@@ -256,7 +256,7 @@ async def backup_download(request: Request, name: str):
     safe = Path(name).name
     f = P.backups / (safe if safe.endswith(".zip") else safe + ".zip")
     if not f.exists():
-        raise HTTPException(404, "没有这份备份")
+        raise HTTPException(404, "Không có bản sao lưu này")
     return FileResponse(str(f), media_type="application/zip", filename=f.name)
 
 
@@ -278,16 +278,16 @@ async def backup_restore(request: Request, payload: dict = Body(...)):
     current_user(request)
     name = str((payload or {}).get("name") or "")
     if not name:
-        raise HTTPException(400, "要恢复哪一份？")
+        raise HTTPException(400, "Khôi phục bản nào?")
     safe = Path(name).name
     f = P.backups / (safe if safe.endswith(".zip") else safe + ".zip")
     if not f.exists():
-        raise HTTPException(404, "没有这份备份")
+        raise HTTPException(404, "Không có bản sao lưu này")
     if not (payload or {}).get("confirm"):
-        raise HTTPException(400, "恢复会覆盖当前书稿，请确认（confirm=true）")
+        raise HTTPException(400, "Khôi phục sẽ ghi đè bản thảo hiện tại, hãy xác nhận (confirm=true)")
     with_db = bool((payload or {}).get("withDb"))
     # 1) 恢复前先自动打一份快照（有它就能退回来）
-    pre = create_backup(note=f"恢复 {f.stem} 之前的自动快照", with_db=True)
+    pre = create_backup(note=f"Ảnh chụp tự động trước khi khôi phục {f.stem}", with_db=True)
     # 2) 铺开
     stamp = time.strftime("%Y%m%d-%H%M%S")
     moved = P.trash / f"restore-{stamp}"
@@ -297,7 +297,7 @@ async def backup_restore(request: Request, payload: dict = Body(...)):
         with zipfile.ZipFile(f) as z:
             names = z.namelist()
             if "meta.json" not in names and not any(n.startswith("books/") for n in names):
-                raise HTTPException(400, "这个压缩包不是本 App 的备份")
+                raise HTTPException(400, "File nén này không phải bản sao lưu của App này")
             for n in names:
                 if n.startswith("books/"):
                     rel = n[len("books/"):]
@@ -316,7 +316,7 @@ async def backup_restore(request: Request, payload: dict = Body(...)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(500, f"恢复失败：{e}")
+        raise HTTPException(500, f"Khôi phục thất bại: {e}")
     if with_db:
         dbm.init(P.data / "app.db")            # 重开连接，换掉内存里的旧句柄
     _rescan()
@@ -325,7 +325,7 @@ async def backup_restore(request: Request, payload: dict = Body(...)):
                       dbm.Database.jdumps({"name": f.stem, "files": restored_books,
                                            "preBackup": pre["name"]})))
     return {"ok": True, "restoredFiles": restored_books, "withDb": with_db,
-            "preBackup": pre["name"], "note": "恢复前的快照留在备份列表里，随时能退回去"}
+            "preBackup": pre["name"], "note": "Ảnh chụp trước khi khôi phục vẫn nằm trong danh sách sao lưu, lúc nào cũng quay lại được"}
 
 
 @router.post("/backup/upload")
@@ -334,9 +334,9 @@ async def backup_upload(request: Request, file: UploadFile = File(...)):
     current_user(request)
     raw = await file.read()
     if len(raw) > 4 * 1024 ** 3:
-        raise HTTPException(400, "太大了")
+        raise HTTPException(400, "Quá lớn")
     if raw[:2] != b"PK":
-        raise HTTPException(400, "这不是一个 zip 压缩包")
+        raise HTTPException(400, "Đây không phải file nén zip")
     name = Path(file.filename or "uploaded.zip").name
     if not name.endswith(".zip"):
         name += ".zip"
@@ -348,14 +348,14 @@ async def backup_upload(request: Request, file: UploadFile = File(...)):
         with zipfile.ZipFile(dst) as z:
             if not any(n.startswith("books/") for n in z.namelist()):
                 dst.unlink()
-                raise HTTPException(400, "包里没有 books/ 目录，不是本 App 的备份")
+                raise HTTPException(400, "Trong gói không có thư mục books/, không phải bản sao lưu của App này")
     except zipfile.BadZipFile:
         dst.unlink(missing_ok=True)
-        raise HTTPException(400, "压缩包坏了")
+        raise HTTPException(400, "File nén bị hỏng")
     dbm.db().execute(
         "INSERT INTO backup(name,path,size,note,created_at) VALUES(?,?,?,?,?)"
         " ON CONFLICT(name) DO UPDATE SET path=excluded.path, size=excluded.size",
-        (dst.stem, str(dst), dst.stat().st_size, "从别处传回来的", now_ms()))
+        (dst.stem, str(dst), dst.stat().st_size, "Gửi về từ nơi khác", now_ms()))
     return {"ok": True, "name": dst.stem, "size": dst.stat().st_size}
 
 
@@ -383,22 +383,22 @@ async def backup_doctor(request: Request):
         row = d.one("SELECT * FROM book WHERE slug=?", (slug,))
         if not row:
             issues.append({"kind": "orphan-book", "slug": slug,
-                           "hint": "磁盘上有这本书，库里没登记（下次访问会自动补）"})
+                           "hint": "Trên đĩa có cuốn sách này, nhưng chưa đăng ký trong kho (lần truy cập sau sẽ tự bổ sung)"})
         files = chapter_files(slug)
         real = sum(c["words"] for c in files)
         if row and int(row["word_count"] or 0) != real:
             issues.append({"kind": "word-mismatch", "slug": slug,
                            "db": row["word_count"], "file": real,
-                           "hint": "数据库字数与文件不一致（自动同步会修）"})
+                           "hint": "Số chữ trong cơ sở dữ liệu không khớp với file (đồng bộ tự động sẽ sửa)"})
         known = {c["path"] for c in files}
         for r in d.query("SELECT DISTINCT path FROM chapter WHERE slug=?", (slug,)):
             if r["path"] not in known:
                 issues.append({"kind": "missing-file", "slug": slug, "path": r["path"],
-                               "hint": "数据库里有这一章，磁盘上找不到"})
+                               "hint": "Trong cơ sở dữ liệu có chương này, nhưng trên đĩa không tìm thấy"})
     for r in d.query("SELECT DISTINCT slug,path FROM revision"):
         if r["slug"] not in slugs:
             issues.append({"kind": "orphan-revision", "slug": r["slug"], "path": r["path"],
-                           "hint": "这本书已经不在了，改动记录还在"})
+                           "hint": "Cuốn sách này không còn nữa, lịch sử thay đổi vẫn còn"})
     broken = [b["name"] for b in _list() if not (P.backups / b["file"]).exists()]
     return {"books": len(slugs), "issues": issues, "count": len(issues),
             "clean": not issues, "brokenBackups": broken,
@@ -415,7 +415,7 @@ def maybe_auto() -> dict | None:
     if items and now_ms() - (items[0]["createdAt"] or 0) < every:
         return None
     try:
-        rec = create_backup(note="自动备份", with_db=bool(cfg.get("withDb", True)))
+        rec = create_backup(note="Sao lưu tự động", with_db=bool(cfg.get("withDb", True)))
         dbm.db().execute("INSERT INTO audit(at,actor,action,slug,detail_json) VALUES(?,?,?,?,?)",
                          (now_ms(), "system", "backup.auto", "",
                           dbm.Database.jdumps({"name": rec["name"]})))

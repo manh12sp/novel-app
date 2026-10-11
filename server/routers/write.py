@@ -26,13 +26,13 @@ from ..store import hanzi, now_ms, read_text, write_text
 router = APIRouter(tags=["write"])
 
 MODES = {
-    "chapter": "把这一章的正文写出来。",
-    "scene": "把这一段场景写出来。",
-    "continue": "接着上文往下写。",
-    "rewrite": "按下面的要求改这段文字。",
-    "polish": "润色这段文字：删掉水词和解释句，把抽象换成具体的动作和感官，不改变原意。",
-    "outline": "给这一章写细纲。",
-    "summary": "给这一章写一段两句话的摘要。",
+    "chapter": "Viết ra chính văn của chương này.",
+    "scene": "Viết ra cảnh này.",
+    "continue": "Viết tiếp nối theo phần trên.",
+    "rewrite": "Sửa đoạn văn này theo yêu cầu bên dưới.",
+    "polish": "Trau chuốt đoạn văn này: bỏ chữ thừa và câu giải thích, đổi cái trừu tượng thành hành động và giác quan cụ thể, không đổi ý gốc.",
+    "outline": "Viết đề cương chi tiết cho chương này.",
+    "summary": "Viết một đoạn tóm tắt hai câu cho chương này.",
 }
 
 
@@ -142,9 +142,9 @@ def _chapter_cast(slug: str, path: str) -> str:
     events = dbm.Database.jloads(row["events_json"], []) or []
     bits = []
     if cast:
-        bits.append("出场角色（这一章必须写到的人）：" + "、".join(str(c) for c in cast))
+        bits.append("Nhân vật xuất hiện (người chương này bắt buộc phải viết tới): " + "、".join(str(c) for c in cast))
     if events:
-        bits.append("这一章要发生的事：\n" + "\n".join("- " + str(e) for e in events))
+        bits.append("Chuyện sẽ xảy ra trong chương này:\n" + "\n".join("- " + str(e) for e in events))
     return "\n".join(bits)
 
 
@@ -235,7 +235,7 @@ def _memory_bits(slug: str, path: str, instruction: str, limit: int = 6) -> str:
             if key in seen:
                 continue
             seen.add(key)
-            src = f"（来自 {it['source']}）" if it.get("source") else ""
+            src = f"(từ {it['source']})" if it.get("source") else ""
             lines.append(f"- {it.get('subject')}／{it.get('topic')}："
                          f"{str(it.get('text') or '')[:160]}{src}")
             if len(lines) >= limit:
@@ -247,7 +247,7 @@ def build_prompt(slug: str, payload: dict) -> tuple[str, list[dict]]:
     """返回 (system, messages)。前端「看看到底喂了什么」也调它。"""
     mode = str(payload.get("mode") or "chapter")
     if mode not in MODES:
-        raise HTTPException(400, f"不认识的模式：{mode}")
+        raise HTTPException(400, f"Không nhận ra chế độ: {mode}")
     path = str(payload.get("path") or "")
     profile_key = payload.get("profileKey") or ("inline.editor" if mode in ("rewrite", "polish")
                                                 else "writer")
@@ -256,42 +256,42 @@ def build_prompt(slug: str, payload: dict) -> tuple[str, list[dict]]:
     system = build_system(profile_key, slug, values, with_tools=False)
     bits: list[str] = []
     if path:
-        bits.append(f"【当前章节】{path}")
+        bits.append(f"【Chương hiện tại】{path}")
         out = _chapter_outline(slug, path)
         if out:
-            bits.append("【这一章的细纲】\n" + out)
+            bits.append("【Đề cương chi tiết của chương này】\n" + out)
         cast_bits = _chapter_cast(slug, path)
         if cast_bits:
-            bits.append("【这一章挂的角色与事件】\n" + cast_bits)
+            bits.append("【Nhân vật và sự kiện gắn với chương này】\n" + cast_bits)
         cast_facts = _cast_facts(slug, path)
         if cast_facts:
-            bits.append("【出场角色的既有设定（别写反）】\n" + cast_facts)
+            bits.append("【Thiết lập sẵn có của nhân vật xuất hiện (đừng viết ngược)】\n" + cast_facts)
         voice_bits = _voice_bits(slug, path)
         if voice_bits:
             bits.append(voice_bits)
         prev, nxt = _neighbours(slug, path)
         if prev:
-            bits.append(f"【上一章 {prev} 的结尾】\n" + _tail(slug, prev, 1200))
+            bits.append(f"【Đoạn kết của chương trước {prev}】\n" + _tail(slug, prev, 1200))
         if mode in ("continue", "rewrite", "polish"):
-            bits.append("【这一章已写的内容】\n" + _tail(slug, path, 2500))
+            bits.append("【Nội dung đã viết của chương này】\n" + _tail(slug, path, 2500))
         if nxt:
-            bits.append(f"【下一章是 {nxt}（别把下一章的内容提前写掉）】")
+            bits.append(f"【Chương sau là {nxt} (đừng viết trước nội dung của chương sau)】")
     else:
-        bits.append("【全书现状】\n" + book_context(slug, tail_chars=800))
+        bits.append("【Hiện trạng cả sách】\n" + book_context(slug, tail_chars=800))
     if mode == "outline":
-        bits.append("【要求】只输出细纲本身：分 6~12 条，每条一行，写清「谁、在哪、做了什么、"
-                    "结果如何、留下什么钩子」。不要写成正文，不要解释。")
+        bits.append("【Yêu cầu】Chỉ xuất bản thân đề cương chi tiết: chia 6~12 mục, mỗi mục một dòng, viết rõ「ai, ở đâu, làm gì, "
+                    "kết quả ra sao, để lại móc câu gì」. Đừng viết thành chính văn, đừng giải thích. Viết bằng tiếng Việt.")
     elif mode == "summary":
-        bits.append("【要求】只输出摘要本身，两句话以内，不要小标题。")
+        bits.append("【Yêu cầu】Chỉ xuất bản thân bản tóm tắt, trong vòng hai câu, không có tiêu đề nhỏ. Viết bằng tiếng Việt.")
     target = payload.get("targetWords")
     if target and mode in ("chapter", "scene", "continue", "outline"):
-        bits.append(f"【篇幅】大约 {int(target)} 字。")
+        bits.append(f"【Độ dài】Khoảng {int(target)} chữ.")
     inst = str(payload.get("instruction") or payload.get("prompt") or "").strip()
     if inst:
-        bits.append("【用户这次的要求】\n" + inst)
+        bits.append("【Yêu cầu lần này của người dùng】\n" + inst)
     mem = _memory_bits(slug, path, inst)
     if mem:
-        bits.append("【相关记忆（写过的事，别自相矛盾）】\n" + mem)
+        bits.append("【Ký ức liên quan (chuyện đã viết, đừng tự mâu thuẫn)】\n" + mem)
     ref_ids = payload.get("refs") or []
     if ref_ids:
         rows = []
@@ -305,13 +305,13 @@ def build_prompt(slug: str, payload: dict) -> tuple[str, list[dict]]:
         except Exception:
             rows = []
         if rows:
-            bits.append("【参考写法（你自己挑的范文：学它的手法与节奏，**不要抄句子**）】\n" +
+            bits.append("【Cách viết tham khảo (văn mẫu bạn tự chọn: học thủ pháp và nhịp điệu của nó, **đừng chép câu**)】\n" +
                         "\n\n".join(_ref_bit(r) for r in rows))
     selection = str(payload.get("selection") or "").strip()
     if selection:
-        bits.append("【需要处理的文字】\n" + selection)
+        bits.append("【Văn bản cần xử lý】\n" + selection)
     if mode in ("chapter", "scene", "continue"):
-        bits.append("【输出】直接给正文，不要小标题、不要「好的」「以下是」，不要解释你的写法。")
+        bits.append("【Đầu ra】Đưa thẳng chính văn bằng tiếng Việt, không tiêu đề nhỏ, không「vâng」「dưới đây là」, đừng giải thích cách viết của bạn.")
     messages = [{"role": "user", "content": "\n\n".join(bits)}]
     return system, messages
 
@@ -352,7 +352,7 @@ def _apply(slug: str, path: str, text: str, payload: dict, note: str) -> dict:
     if not payload.get("apply"):
         return {"applied": False}
     if not path:
-        raise HTTPException(400, "要落盘就得给 path（哪一章）")
+        raise HTTPException(400, "Muốn ghi file thì phải cho path (chương nào)")
     if payload.get("mode") == "continue" or payload.get("append"):
         try:
             old = read_text(slug, path)
@@ -360,7 +360,7 @@ def _apply(slug: str, path: str, text: str, payload: dict, note: str) -> dict:
             old = ""
         text = _strip_echo(old, _strip_head(text))
         if not text:
-            return {"applied": False, "hint": "模型没写出新内容"}
+            return {"applied": False, "hint": "Mô hình không viết ra nội dung mới"}
         sep = "" if (not old or old.endswith("\n")) else "\n\n"
         out = write_text(slug, path, old + sep + text, origin="model", note=note)
     else:
@@ -368,7 +368,7 @@ def _apply(slug: str, path: str, text: str, payload: dict, note: str) -> dict:
     from .books import sync_book
     sync_book(slug)
     return {"applied": True, "mtimeMs": out["mtimeMs"], "words": out["words"],
-            "pending": True, "hint": "已写进「改动」收件箱，去那儿接受或退回"}
+            "pending": True, "hint": "Đã ghi vào hộp thư「Thay đổi」, vào đó để chấp nhận hoặc trả lại"}
 
 
 def _other_models(tried: list[str]) -> list[str]:
@@ -390,7 +390,7 @@ async def _run(slug: str, payload: dict, mode: str):
     """
     model_key = _resolve_model(slug, payload, mode)
     if not model_key:
-        raise HTTPException(400, "还没配模型：去「工具 → 模型」里加一个，或在预设里选一个")
+        raise HTTPException(400, "Chưa cấu hình mô hình: vào「Công cụ → Mô hình」thêm một cái, hoặc chọn một cái trong cài đặt sẵn")
     system, messages = build_prompt(slug, {**payload, "mode": mode})
     allow_fallback = payload.get("allowFallback") is not False
     tried: list[str] = []
@@ -405,9 +405,9 @@ async def _run(slug: str, payload: dict, mode: str):
         try:
             async for ev in stream_chat(provider, mid, messages, system=system,
                                        temperature=num(payload.get("temperature"), 0.85,
-                                                       kind=float, lo=0, hi=2, name="温度"),
+                                                       kind=float, lo=0, hi=2, name="Nhiệt độ"),
                                        max_tokens=num(payload.get("maxTokens"), 0, lo=0,
-                                                      name="最大 token") or None):
+                                                      name="Token tối đa") or None):
                 if ev["type"] == "delta":
                     if not usage.get("ttft"):
                         usage["ttft"] = now_ms() - t0
@@ -428,7 +428,7 @@ async def _run(slug: str, payload: dict, mode: str):
             err = e.detail if isinstance(e, HTTPException) else str(e)
         except Exception as e:                  # 兜底：不许把半截流甩给前端
             stop = "error"
-            err = f"调用模型出错了：{str(e)[:200]}"
+            err = f"Gọi mô hình bị lỗi: {str(e)[:200]}"
         if err:
             usage["ms"] = now_ms() - t0
             alts = _other_models(tried)[:1] if (allow_fallback and not buf) else []
@@ -436,7 +436,7 @@ async def _run(slug: str, payload: dict, mode: str):
                 # 这一次失败也记一笔（统计页要能看出「哪个模型老挂」）
                 _record_trace(slug, mode, model_key, usage, t0 / 1000.0, "error", "")
                 yield {"type": "notice",
-                       "notice": "%s 没连上（%s），已自动换 %s 重试" % (mid or model_key, err[:120], alts[0])}
+                       "notice": "%s không kết nối được (%s), đã tự đổi sang %s để thử lại" % (mid or model_key, err[:120], alts[0])}
                 model_key = alts[0]
                 continue
             yield {"type": "error", "error": err}
@@ -455,10 +455,10 @@ async def _run(slug: str, payload: dict, mode: str):
 
 
 async def _respond(slug: str, payload: dict, mode: str):
-    note = str(payload.get("note") or ("AI " + {"chapter": "写正文", "continue": "续写",
-                                                "rewrite": "改写", "polish": "润色",
-                                                "outline": "写细纲", "summary": "写摘要",
-                                                "scene": "写场景"}.get(mode, mode)))
+    note = str(payload.get("note") or ("AI " + {"chapter": "viết chính văn", "continue": "viết tiếp",
+                                                "rewrite": "viết lại", "polish": "trau chuốt",
+                                                "outline": "viết đề cương chi tiết", "summary": "viết tóm tắt",
+                                                "scene": "viết cảnh"}.get(mode, mode)))
     if payload.get("stream"):
         async def gen():
             text = ""
@@ -474,7 +474,7 @@ async def _respond(slug: str, payload: dict, mode: str):
                 yield "data: " + json.dumps({"type": "error", "error": msg},
                                             ensure_ascii=False) + "\n\n"
             except Exception as e:                       # 兜底：不留一个断掉的流
-                yield "data: " + json.dumps({"type": "error", "error": f"出错了：{e}"[:300]},
+                yield "data: " + json.dumps({"type": "error", "error": f"Có lỗi: {e}"[:300]},
                                             ensure_ascii=False) + "\n\n"
         return StreamingResponse(gen(), media_type="text/event-stream",
                                  headers={"cache-control": "no-cache",
@@ -503,16 +503,16 @@ def _ref_bit(r: dict) -> str:
     所以这里写成「【参考图】文件名」+ 用户写的那段说明，并在没写说明时明说"用户没写说明"，
     免得模型对着一个空标题自己编。
     """
-    title = r["title"] or "参考"
+    title = r["title"] or "Tham khảo"
     src = ("／" + r["source"]) if r.get("source") else ""
     kind = (r.get("kind") or "excerpt")
     text = (r["text"] or "").strip()
     if kind in ("image", "file"):
         fn = r.get("file") or ""
-        what = "参考图" if kind == "image" else "参考文件"
+        what = "Ảnh tham khảo" if kind == "image" else "File tham khảo"
         head = "—— 【%s】%s%s%s" % (what, title, ("（%s）" % fn) if fn else "", src)
         if not text:
-            return head + "\n（用户放了这个文件但还没写说明；不要假装你看得到它，按标题理解即可。）"
+            return head + "\n(Người dùng đã đặt file này nhưng chưa viết mô tả; đừng giả vờ bạn nhìn thấy nó, hiểu theo tiêu đề là được.)"
         return head + "\n" + text[:1200]
     return "—— 《%s》%s\n%s" % (title, src, text[:1200])
 
@@ -542,7 +542,7 @@ async def write_preview(request: Request, payload: dict = Body(...)):
     system, messages = build_prompt(s, payload)
     text = "\n\n".join(str(m.get("content") or "") for m in messages)
     return {"system": system, "messages": messages, "chars": len(system) + len(text),
-            "hasRefs": "参考写法" in text, "hasVoice": "说话方式" in text}
+            "hasRefs": "Cách viết tham khảo" in text, "hasVoice": "Cách nói chuyện" in text}
 
 
 @router.get("/write/status")
@@ -555,7 +555,7 @@ async def write_status(request: Request, slug: str):
     mk = _resolve_model(s, {})
     ok, why = True, ""
     if not mk:
-        ok, why = False, "还没有选模型"
+        ok, why = False, "Chưa chọn mô hình"
     else:
         try:
             provider_of(mk)
@@ -585,7 +585,7 @@ async def write_continue(request: Request, payload: dict = Body(...)):
     current_user(request)
     s = _slug(payload.get("slug"))
     if not payload.get("path"):
-        raise HTTPException(400, "续写得知道是哪一章")
+        raise HTTPException(400, "Viết tiếp thì phải biết là chương nào")
     return await _respond(s, {**payload, "append": True}, "continue")
 
 
@@ -594,7 +594,7 @@ async def write_rewrite(request: Request, payload: dict = Body(...)):
     current_user(request)
     s = _slug(payload.get("slug"))
     if not (payload.get("selection") or payload.get("path")):
-        raise HTTPException(400, "要改哪段？给 selection 或者 path")
+        raise HTTPException(400, "Sửa đoạn nào? Hãy cho selection hoặc path")
     return await _respond(s, payload, "rewrite")
 
 

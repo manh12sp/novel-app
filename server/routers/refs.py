@@ -87,7 +87,7 @@ async def get_ref(request: Request, slug: str, id: int):
     s = _slug(slug)
     r = dbm.db().one("SELECT * FROM reference WHERE slug=? AND id=?", (s, id))
     if not r:
-        raise HTTPException(404, "书架里没有这一条")
+        raise HTTPException(404, "Trên giá không có mục này")
     out = _row(r)
     out["text"] = r["text"]
     out["tags"] = dbm.Database.jloads(r["tags_json"], []) or []
@@ -99,12 +99,12 @@ async def save_ref(request: Request, payload: dict = Body(...)):
     """新增或改一条。`id` 给了就是改。文本超长会被拒（不是静默截断 —— 静默截断最坑人）。"""
     current_user(request)
     s = _slug(payload.get("slug") or "")
-    title = args.s(payload.get("title"), name="标题").strip()
-    text = args.s(payload.get("text"), name="正文")
+    title = args.s(payload.get("title"), name="Tiêu đề").strip()
+    text = args.s(payload.get("text"), name="Nội dung")
     if not title:
-        raise HTTPException(400, "给这条起个名字（以后才搜得到）")
+        raise HTTPException(400, "Đặt tên cho mục này (sau này mới tìm được)")
     if len(text) > MAX_TEXT:
-        raise HTTPException(400, f"这段太长（{len(text)} 字），上限 {MAX_TEXT} 字；拆成几条更好用")
+        raise HTTPException(400, f"Đoạn này quá dài ({len(text)} chữ), giới hạn {MAX_TEXT} chữ; tách thành vài mục sẽ dễ dùng hơn")
     tags = payload.get("tags")
     if tags is None:
         tags = []
@@ -112,7 +112,7 @@ async def save_ref(request: Request, payload: dict = Body(...)):
         tags = [x.strip() for x in re.split(r"[，,;；\s]+", tags) if x.strip()]
     elif not isinstance(tags, (list, tuple)):
         # tags=[数字/布尔/对象] 以前会撞 `'int' object is not iterable` → 500
-        raise HTTPException(400, f"标签要么是文字、要么是一个数组（收到 {type(tags).__name__}）")
+        raise HTTPException(400, f"Thẻ phải là chữ hoặc một mảng (nhận được {type(tags).__name__})")
     tags = [str(t)[:24] for t in tags][:12]
     d = dbm.db()
     now = dbm.now_ms()
@@ -121,11 +121,11 @@ async def save_ref(request: Request, payload: dict = Body(...)):
     if rid:
         cur = d.one("SELECT id FROM reference WHERE slug=? AND id=?", (s, int(rid)))
         if not cur:
-            raise HTTPException(404, "要改的这条不在了")
+            raise HTTPException(404, "Mục cần sửa không còn nữa")
         d.execute("UPDATE reference SET title=?,author=?,source=?,kind=?,tags_json=?,text=?,"
                   "words=?,updated_at=? WHERE slug=? AND id=?",
                   (title, str(payload.get("author") or ""), str(payload.get("source") or ""),
-                   str(payload.get("kind") or "excerpt"), d.jdumps(tags), text, words, now, s, num(rid, name="条目号")))
+                   str(payload.get("kind") or "excerpt"), d.jdumps(tags), text, words, now, s, num(rid, name="Mã mục")))
         return {"ok": True, "id": int(rid), "updated": True, "words": words}
     new_id = d.execute(
         "INSERT INTO reference(slug,title,author,source,kind,tags_json,text,words,created_at,updated_at)"
@@ -140,12 +140,12 @@ async def del_ref(request: Request, slug: str = "", id: int = 0):
     current_user(request)
     s = _slug(slug)
     if not id:
-        raise HTTPException(400, "要删哪一条（id 不能空）")
+        raise HTTPException(400, "Xóa mục nào (id không được trống)")
     # 先把磁盘上那份记下来：删了库里的行就再也找不到文件名了
     r = dbm.db().one("SELECT file FROM reference WHERE slug=? AND id=?", (s, id))
     n = dbm.db().rowcount("DELETE FROM reference WHERE slug=? AND id=?", (s, id))
     if not n:
-        raise HTTPException(404, "这条已经不在了")
+        raise HTTPException(404, "Mục này không còn nữa")
     gone = ""
     fn = ""
     try:
@@ -177,29 +177,29 @@ async def upload_refs(request: Request, slug: str = Form(""), title: str = Form(
     current_user(request)
     s = _slug(slug)
     if not files:
-        raise HTTPException(400, "没收到文件（选一张图或一个文件再传）")
+        raise HTTPException(400, "Không nhận được file (chọn một ảnh hoặc một file rồi tải lên)")
     if len(files) > 6:
-        raise HTTPException(400, f"一次最多 6 个（收到 {len(files)} 个）；分批传更好管")
+        raise HTTPException(400, f"Mỗi lần tối đa 6 file (nhận được {len(files)}); chia đợt tải sẽ dễ quản lý hơn")
     tag_list = [x.strip() for x in re.split(r"[，,;；\\s]+", tags or "") if x.strip()][:12]
-    note_txt = args.s(note, name="说明").strip()
+    note_txt = args.s(note, name="Mô tả").strip()
     if len(note_txt) > MAX_TEXT:
-        raise HTTPException(400, f"说明太长（{len(note_txt)} 字），上限 {MAX_TEXT} 字")
+        raise HTTPException(400, f"Mô tả quá dài ({len(note_txt)} chữ), giới hạn {MAX_TEXT} chữ")
     if kind and kind not in ("image", "file"):
-        raise HTTPException(400, "类型要么是 image、要么是 file")
+        raise HTTPException(400, "Loại phải là image hoặc file")
     d = dbm.db()
     out = []
     multi = len(files) > 1
     for i, up in enumerate(files, 1):
         data = await up.read()
         if not data:
-            raise HTTPException(400, f"第 {i} 个是空文件")
+            raise HTTPException(400, f"File thứ {i} trống")
         ext = Path(up.filename or "").suffix.lower()
         ctype = (up.content_type or "").split(";")[0].strip().lower()
         is_img = ext in IMAGE_CT or ctype.startswith("image/")
         if is_img and len(data) > MAX_IMG:
-            raise HTTPException(413, f"图太大（{len(data) // 1024 // 1024}MB），单张上限 {MAX_IMG // 1024 // 1024}MB")
+            raise HTTPException(413, f"Ảnh quá lớn ({len(data) // 1024 // 1024}MB), mỗi ảnh tối đa {MAX_IMG // 1024 // 1024}MB")
         if not is_img and len(data) > MAX_FILE:
-            raise HTTPException(413, f"文件太大（{len(data) // 1024 // 1024}MB），单个上限 {MAX_FILE // 1024 // 1024}MB")
+            raise HTTPException(413, f"File quá lớn ({len(data) // 1024 // 1024}MB), mỗi file tối đa {MAX_FILE // 1024 // 1024}MB")
         if is_img:
             if ext not in IMAGE_CT:
                 # 手机相册导出来的有时候没有扩展名（或写着 .jpg 其实是 png）—— 按文件头认
@@ -218,22 +218,22 @@ async def upload_refs(request: Request, slug: str = Form(""), title: str = Form(
             rk = "image"
         else:
             if ext not in DOC_EXT:
-                raise HTTPException(400, f"认不出这个文件（{ext or '没有扩展名'}）；"
-                                         f"文字类只能是 {'/'.join(sorted(DOC_EXT))}，图片类 png/jpg/webp/gif/avif")
+                raise HTTPException(400, f"Không nhận ra file này ({ext or 'không có phần mở rộng'}); "
+                                         f"loại văn bản chỉ có thể là {'/'.join(sorted(DOC_EXT))}, loại ảnh png/jpg/webp/gif/avif")
             mime = DOC_EXT[ext]
             rk = "file"
         if kind:
             rk = kind
         name = uuid.uuid4().hex + ext
         _refs_dir(s).joinpath(name).write_bytes(data)
-        base = title.strip() or (up.filename or "参考").strip() or "参考"
+        base = title.strip() or (up.filename or "Tham khảo").strip() or "Tham khảo"
         base = re.sub(r"\.[A-Za-z0-9]{1,6}$", "", base)          # 标题里不留扩展名
         t = f"{base} {i}/{len(files)}" if multi else base
         text = note_txt
         if not text and rk == "image":
             # 用户没写说明就先留一句占位 —— 空正文会让"搜得到"这件事失效；
             # 并**明确**告诉用户"图本身模型看不到，看到的是你写的字"，不装。
-            text = f"（{up.filename or '这张图'}：还没写说明。图上表达的意思写在这里，写正文时才会带上。）"
+            text = f"({up.filename or 'ảnh này'}: chưa viết mô tả. Ý mà bức ảnh muốn diễn đạt hãy viết ở đây, khi viết chính văn mới được mang theo.)"
         now = dbm.now_ms()
         rid = d.execute(
             "INSERT INTO reference(slug,title,author,source,kind,tags_json,text,words,file,mime,"
@@ -259,10 +259,10 @@ async def refs_file(request: Request, slug: str, id: int):
     except Exception:
         fn = ""
     if not r or not fn:
-        raise HTTPException(404, "这一条没有文件（可能只是文字摘抄）")
+        raise HTTPException(404, "Mục này không có file (có thể chỉ là đoạn trích văn bản)")
     f = _refs_dir(s) / Path(fn).name                  # 只认我们自己生成的文件名，别让 file 指到别处
     if not f.is_file():
-        raise HTTPException(404, "文件不在了（可能在书目录里被手工删掉了）")
+        raise HTTPException(404, "File không còn nữa (có thể đã bị xóa tay trong thư mục sách)")
     return FileResponse(str(f),
                         media_type=mime or IMAGE_CT.get(f.suffix.lower(), "application/octet-stream"),
                         filename=None if mime.startswith("image/") else fn,

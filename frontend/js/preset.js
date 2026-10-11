@@ -13,7 +13,7 @@
 
   /* 置顶规则单独一张卡——它优先级最高，是 AI 的总开关 */
   const TOP_PATH = 'customTopSystemPrompt';
-  const EFFORT = [['', '跟随默认'], ['off', '关'], ['low', '低'], ['medium', '中'], ['high', '高'], ['xhigh', '很高'], ['max', '拉满']];
+  const EFFORT = [['', 'Theo mặc định'], ['off', 'Tắt'], ['low', 'Thấp'], ['medium', 'Vừa'], ['high', 'Cao'], ['xhigh', 'Rất cao'], ['max', 'Tối đa']];
 
   const S = { data: null, key: null, draft: null, dirty: false, busy: false, loaded: false,
               scope: 'global', slug: '', hasOwn: false };
@@ -29,7 +29,7 @@
     const btn = q('#preset-save [data-save]');
     if (btn) btn.disabled = !dirty;
     const msg = q('#preset-save .msg');
-    if (msg) msg.textContent = dirty ? '有改动，还没保存' : '和平台一致';
+    if (msg) msg.textContent = dirty ? 'Có thay đổi, chưa lưu' : 'Khớp với nền tảng';
     const top = q('#preset-save-top');
     if (top) top.classList.toggle('has-dot', !!dirty);
   }
@@ -80,15 +80,15 @@
     const v = vals()[f.path];
     const hit = (f.options || []).find((o) => o.value === v);
     const empty = v === '' || v == null;
-    const sub = empty ? '点一下从预设库里挑一个' : String(v).split('/').pop();
+    const sub = empty ? 'Bấm để chọn một mục từ kho preset' : String(v).split('/').pop();
     return '<button type="button" class="ppick' + (empty ? ' empty' : '') + '" data-pick="' + esc(f.path) + '">'
-      + '<span class="txt"><b>' + esc(hit ? hit.label : (empty ? '未指定 · 用平台默认' : v)) + '</b>'
+      + '<span class="txt"><b>' + esc(hit ? hit.label : (empty ? 'Chưa chỉ định · dùng mặc định nền tảng' : v)) + '</b>'
       + '<span>' + esc(sub) + '</span></span><span class="chev">' + CHEV + '</span></button>';
   }
 
   function fieldHtml(f) {
-    const tags = f.component === 'resource-preset' ? '<span class="tag">预设库</span>'
-      : (f.component === 'textarea' ? '<span class="tag">长文本</span>' : '');
+    const tags = f.component === 'resource-preset' ? '<span class="tag">Kho preset</span>'
+      : (f.component === 'textarea' ? '<span class="tag">Văn bản dài</span>' : '');
     return '<div class="pfield"><div class="pfield-lb">' + esc(f.label) + tags + '</div>'
       + (f.description ? '<p class="pfield-ds">' + esc(f.description) + '</p>' : '')
       + '<div class="pfield-ct">' + ctrl(f) + '</div></div>';
@@ -98,24 +98,24 @@
     const m = mdl();
     const hit = (S.data.models || []).find((x) => x.key === m.modelKey);
     const row = (k, c) => '<div class="pfield"><div class="pfield-lb">' + k + '</div><div class="pfield-ct">' + c + '</div></div>';
-    return '<div class="pcard"><div class="pcard-hd"><h3>模型与手感</h3><span class="hint">改完点右下角保存</span></div>'
+    return '<div class="pcard"><div class="pcard-hd"><h3>Mô hình và cảm giác</h3><span class="hint">Sửa xong bấm Lưu ở góc dưới phải</span></div>'
       + '<div class="pcard-bd">'
-      + row('用哪个模型', '<button type="button" class="ppick' + (m.modelKey ? '' : ' empty') + '" data-pick="__model">'
-        + '<span class="txt"><b>' + esc(hit ? hit.label : (m.modelKey || '跟随平台默认')) + '</b>'
-        + '<span>' + esc(m.modelKey || '点一下挑一个模型') + '</span></span><span class="chev">' + CHEV + '</span></button>')
-      + row('温度 <span class="hint">越高越发散，留空=默认</span>',
+      + row('Dùng mô hình nào', '<button type="button" class="ppick' + (m.modelKey ? '' : ' empty') + '" data-pick="__model">'
+        + '<span class="txt"><b>' + esc(hit ? hit.label : (m.modelKey || 'Theo mặc định nền tảng')) + '</b>'
+        + '<span>' + esc(m.modelKey || 'Bấm để chọn một mô hình') + '</span></span><span class="chev">' + CHEV + '</span></button>')
+      + row('Nhiệt độ <span class="hint">càng cao càng phân tán, để trống = mặc định</span>',
         '<input class="pinput" inputmode="decimal" data-model="temperature" value="'
-        + esc(m.temperature == null ? '' : m.temperature) + '" placeholder="默认（留空）">')
-      + row('TopK <span class="hint">候选范围，留空=默认</span>',
+        + esc(m.temperature == null ? '' : m.temperature) + '" placeholder="Mặc định (để trống)">')
+      + row('TopK <span class="hint">phạm vi ứng viên, để trống = mặc định</span>',
         '<input class="pinput" inputmode="numeric" data-model="topK" value="'
-        + esc(m.topK == null ? '' : m.topK) + '" placeholder="默认（留空）">')
-      + row('思考强度', '<button type="button" class="ppick" data-pick="__effort">'
+        + esc(m.topK == null ? '' : m.topK) + '" placeholder="Mặc định (để trống)">')
+      + row('Cường độ suy nghĩ', '<button type="button" class="ppick" data-pick="__effort">'
         + '<span class="txt"><b>' + esc((EFFORT.find((e) => e[0] === (m.reasoningEffort || '')) || EFFORT[0])[1]) + '</b>'
-        + '<span>' + esc(m.reasoningEffort || '跟随平台默认设置') + '</span></span>'
+        + '<span>' + esc(m.reasoningEffort || 'Theo cài đặt mặc định của nền tảng') + '</span></span>'
         + '<span class="chev">' + CHEV + '</span></button>')
-      + row('流式输出', '<div class="pradio" data-stream>'
-        + '<button type="button" data-v="1"' + (m.stream === false ? '' : ' class="on"') + '>边想边出字</button>'
-        + '<button type="button" data-v="0"' + (m.stream === false ? ' class="on"' : '') + '>一次性出完</button></div>')
+      + row('Xuất dạng luồng', '<div class="pradio" data-stream>'
+        + '<button type="button" data-v="1"' + (m.stream === false ? '' : ' class="on"') + '>Vừa nghĩ vừa ra chữ</button>'
+        + '<button type="button" data-v="0"' + (m.stream === false ? ' class="on"' : '') + '>Ra hết một lần</button></div>')
       + '</div></div>';
   }
 
@@ -133,13 +133,13 @@
         + (x.profileKey === S.key ? ' class="on"' : '') + '>' + esc(x.name) + '</button>').join('')
       + '</div>'
       + modelCard()
-      + (top.length ? '<div class="pcard"><div class="pcard-hd"><h3>置顶规则</h3>'
-        + '<span class="hint">优先级最高，每章都会喂给 AI</span></div><div class="pcard-bd">'
+      + (top.length ? '<div class="pcard"><div class="pcard-hd"><h3>Quy tắc ghim</h3>'
+        + '<span class="hint">Ưu tiên cao nhất, chương nào cũng đưa cho AI</span></div><div class="pcard-bd">'
         + top.map(fieldHtml).join('') + '</div></div>' : '')
-      + (rest.length ? '<div class="pcard"><div class="pcard-hd"><h3>写作设定</h3>'
-        + '<span class="hint">' + rest.length + ' 项</span></div><div class="pcard-bd">'
+      + (rest.length ? '<div class="pcard"><div class="pcard-hd"><h3>Thiết lập viết</h3>'
+        + '<span class="hint">' + rest.length + ' mục</span></div><div class="pcard-bd">'
         + rest.map(fieldHtml).join('') + '</div></div>' : '')
-      + '<p class="pfield-ds" style="padding:2px var(--sp-2) var(--sp-2)">改动只影响这个身份以后新写的稿子，已有的章节不会被动。</p>';
+      + '<p class="pfield-ds" style="padding:2px var(--sp-2) var(--sp-2)">Thay đổi chỉ ảnh hưởng bản thảo viết mới sau này của danh tính này, các chương đã có không bị động tới.</p>';
 
     const body = q('#preset-body');
     if (body) body.scrollTop = 0;
@@ -198,8 +198,8 @@
     opts = opts || {};
     const html =
       '<div class="sheet-grip"></div>'
-      + '<div class="pk-search"><input id="pk-q" placeholder="搜索" autocomplete="off"></div>'
-      + (previewPath ? '<div style="padding:var(--sp-3) var(--sp-4) 0"><button type="button" class="btn sm" id="pk-view">看当前这条写了什么</button></div>' : '')
+      + '<div class="pk-search"><input id="pk-q" placeholder="Tìm kiếm" autocomplete="off"></div>'
+      + (previewPath ? '<div style="padding:var(--sp-3) var(--sp-4) 0"><button type="button" class="btn sm" id="pk-view">Xem mục hiện tại viết gì</button></div>' : '')
       + (opts.head || '')
       + '<div class="pk-preview hidden" id="pk-prev"></div>'
       + '<ul class="pk-list" id="pk-list"></ul>';
@@ -214,13 +214,13 @@
           list.innerHTML = hit.slice(0, 400).map((it) =>
             '<li data-v="' + esc(it.value) + '"' + (it.value === cur ? ' class="on"' : '') + '>'
             + '<span class="t">' + esc(it.label) + '</span>'
-            + (it.value === cur ? '<span class="s">当前</span>' : '')
+            + (it.value === cur ? '<span class="s">Hiện tại</span>' : '')
             /* 每行右侧的「⋯」：模型列表用它打开"这个模型自己的参数"面板。
                要的：右上角三个点，点进去调上下文（1M/256K…）和高级参数。 */
             + (opts.rowExtra ? '<button type="button" class="pk-more" data-more="' + esc(it.value)
-               + '" aria-label="这个模型的参数">' + '\u22ef' + '</button>' : '')
+               + '" aria-label="Tham số của mô hình này">' + '\u22ef' + '</button>' : '')
             + '</li>').join('')
-            || '<li><span class="t muted">没找到</span></li>';
+            || '<li><span class="t muted">Không tìm thấy</span></li>';
         };
         draw('');
         input.addEventListener('input', () => draw(input.value));
@@ -242,11 +242,11 @@
           const box = q('#pk-prev', panel);
           if (!box.classList.contains('hidden')) { box.classList.add('hidden'); return; }
           box.classList.remove('hidden');
-          box.innerHTML = '<span class="spinner"></span> 读取中…';
+          box.innerHTML = '<span class="spinner"></span> Đang đọc…';
           try {
             const r = await API.presetResource(S.key, previewPath, cur, S.scope, S.slug);
-            box.textContent = r.content || '(这条是空的)';
-          } catch (err) { box.textContent = '读不出来：' + err.message; }
+            box.textContent = r.content || '(Mục này trống)';
+          } catch (err) { box.textContent = 'Không đọc được: ' + err.message; }
         });
       },
     });
@@ -261,19 +261,19 @@
        自己加的排在最前面，并且带一个「删」（只让自己删自己加的）。 */
     const opts = isRes ? {
       head: '<div style="padding:var(--sp-3) var(--sp-4) 0">'
-        + '<button type="button" class="btn sm" id="pk-new">＋ 新建自定义文风</button></div>',
+        + '<button type="button" class="btn sm" id="pk-new">+ Tạo văn phong tùy chỉnh</button></div>',
       rowExtra: (it) => !!(it.custom && it.value),
       onExtra: async (v) => {
-        if (!confirm('删掉「' + String(v).replace(/\.md$/, '') + '」？删了就选不到了。')) return;
+        if (!confirm('Xóa «' + String(v).replace(/\.md$/, '') + '»? Xóa rồi sẽ không chọn được nữa.')) return;
         try {
           const r = await API.styleDelete(v);
-          App.toast('已删掉');
+          App.toast('Đã xóa');
           try { S.data = null; } catch (e) {}
           const f2 = (prof().fields || []).find((x) => x.path === f.path);
           if (f2 && r && r.options) f2.options = r.options;
           App.closeSheet && App.closeSheet();
           openPick(f2 || f);
-        } catch (err) { App.toast('删不掉：' + (err.message || err)); }
+        } catch (err) { App.toast('Không xóa được: ' + (err.message || err)); }
       },
     } : undefined;
     openList(f.label, items, vals()[f.path], (v) => {
@@ -293,33 +293,33 @@
   function openStyleForm(f) {
     App.sheet(
       '<div class="sheet-grip"></div>'
-      + '<h3 class="sheet-h">新建自定义文风</h3>'
-      + '<p class="pfield-ds">写清楚你要什么、不要什么。存好之后会出现在列表最上面，随时能选、能删。</p>'
-      + '<div class="pfield"><div class="pfield-lb">起个名字</div><div class="pfield-ct">'
-      + '<input class="pinput" id="cs-name" placeholder="例如：市井白话 / 冷硬直白" autocomplete="off"></div></div>'
-      + '<div class="pfield"><div class="pfield-lb">这个文风要什么 <span class="hint">越具体越好用</span></div>'
-      + '<p class="pfield-ds">可以直接抄你喜欢的段落，也可以一条条列要求（要什么 / 不要什么 / 句式 / 用词）。</p>'
+      + '<h3 class="sheet-h">Tạo văn phong tùy chỉnh</h3>'
+      + '<p class="pfield-ds">Viết rõ bạn muốn gì, không muốn gì. Lưu xong sẽ hiện ở đầu danh sách, chọn hay xóa lúc nào cũng được.</p>'
+      + '<div class="pfield"><div class="pfield-lb">Đặt tên</div><div class="pfield-ct">'
+      + '<input class="pinput" id="cs-name" placeholder="VD: Bình dân đời thường / Lạnh lùng thẳng thắn" autocomplete="off"></div></div>'
+      + '<div class="pfield"><div class="pfield-lb">Văn phong này cần gì <span class="hint">càng cụ thể càng dễ dùng</span></div>'
+      + '<p class="pfield-ds">Có thể chép thẳng đoạn văn bạn thích, cũng có thể liệt kê từng yêu cầu (muốn gì / không muốn gì / kiểu câu / dùng từ).</p>'
       + '<div class="pfield-ct"><textarea class="pinput" id="cs-body" rows="8" spellcheck="false" '
-      + 'placeholder="例如：\n- 用词：生活化，不堆形容词。\n- 句式：短句为主，少用排比。\n- 不写段尾总结句。"></textarea></div></div>'
-      + '<div class="pk-actions"><button type="button" class="btn" id="cs-cancel">取消</button>'
-      + '<button type="button" class="btn btn-primary" id="cs-save">确认</button></div>',
+      + 'placeholder="VD:\n- Dùng từ: đời thường, không chồng chất tính từ.\n- Kiểu câu: chủ yếu câu ngắn, ít dùng phép liệt kê song song.\n- Không viết câu tổng kết cuối đoạn. "></textarea></div></div>'
+      + '<div class="pk-actions"><button type="button" class="btn" id="cs-cancel">Hủy</button>'
+      + '<button type="button" class="btn btn-primary" id="cs-save">Xác nhận</button></div>',
       { onMount(panel) {
         const nm = panel.querySelector('#cs-name');
         const bd = panel.querySelector('#cs-body');
         const save = async () => {
           const name = (nm.value || '').trim();
           const body = (bd.value || '').trim();
-          if (!name) { App.toast('先起个名字'); nm.focus(); return; }
-          if (!body) { App.toast('内容不能空'); bd.focus(); return; }
+          if (!name) { App.toast('Hãy đặt tên trước'); nm.focus(); return; }
+          if (!body) { App.toast('Nội dung không được trống'); bd.focus(); return; }
           try {
             const r = await API.styleSave({ name, content: body });
             try { S.data = null; } catch (e) {}
             const f2 = (prof().fields || []).find((x) => x.path === f.path);
             if (f2 && r && r.options) f2.options = r.options;
-            App.toast('已加进列表');
+            App.toast('Đã thêm vào danh sách');
             App.closeSheet && App.closeSheet();
             setTimeout(() => openPick(f2 || f), 120);
-          } catch (e) { App.toast('存不进去：' + (e.message || e)); }
+          } catch (e) { App.toast('Không lưu được: ' + (e.message || e)); }
         };
         panel.querySelector('#cs-cancel').addEventListener('click', () => { App.closeSheet && App.closeSheet(); openPick(f); });
         panel.querySelector('#cs-save').addEventListener('click', save);
@@ -330,7 +330,7 @@
   function openModelPick() {
     const list = (S.data.models || []).map((m) => ({ value: m.key,
       label: (m.name || m.label || m.key) + (m.provider ? '  ·  ' + m.provider : '') }));
-    openList('挑模型', list, mdl().modelKey, (v) => {
+    openList('Chọn mô hình', list, mdl().modelKey, (v) => {
       mdl().modelKey = v;
       render();
       mark(true);
@@ -360,26 +360,26 @@
     const html =
       '<div class="sheet-grip"></div>'
       + '<h3 class="sheet-h">' + esc(it.name || mid) + '</h3>'
-      + '<p class="pfield-ds" style="padding:0 var(--sp-4)">这个模型自己的参数。'
-      + '改完点「保存」—— 只影响这一个模型，别的模型不动。</p>'
-      + '<div class="pfield"><div class="pfield-lb">上下文上限 <span class="hint">一次能吃多少 token</span></div>'
-      + '<div class="pfield-ct"><input class="pinput" id="mp-ctx" inputmode="numeric" placeholder="比如 128000">'
+      + '<p class="pfield-ds" style="padding:0 var(--sp-4)">Tham số riêng của mô hình này. '
+      + ' Sửa xong bấm «Lưu» — chỉ ảnh hưởng mô hình này, mô hình khác không đổi.</p>'
+      + '<div class="pfield"><div class="pfield-lb">Giới hạn ngữ cảnh <span class="hint">một lần nhận tối đa bao nhiêu token</span></div>'
+      + '<div class="pfield-ct"><input class="pinput" id="mp-ctx" inputmode="numeric" placeholder="VD 128000">'
       + '<div class="mp-chips">'
       + PRE.map(([v, lb]) => '<button type="button" class="mp-chip" data-ctx="' + v + '">' + lb + '</button>').join('')
       + '</div></div></div>'
-      + '<div class="pfield"><div class="pfield-lb">单次最多出多少 <span class="hint">token，留空=默认</span></div>'
-      + '<div class="pfield-ct"><input class="pinput" id="mp-max" inputmode="numeric" placeholder="比如 8192"></div></div>'
-      + '<div class="pfield"><div class="pfield-lb">推理模型 <span class="hint">有些渠道要显式声明</span></div>'
+      + '<div class="pfield"><div class="pfield-lb">Mỗi lần xuất tối đa <span class="hint">token, để trống = mặc định</span></div>'
+      + '<div class="pfield-ct"><input class="pinput" id="mp-max" inputmode="numeric" placeholder="VD 8192"></div></div>'
+      + '<div class="pfield"><div class="pfield-lb">Mô hình suy luận <span class="hint">một số kênh cần khai báo rõ</span></div>'
       + '<div class="pfield-ct"><div class="pradio" id="mp-rs">'
-      + '<button type="button" data-v="0">不算</button>'
-      + '<button type="button" data-v="1">是推理模型</button></div></div></div>'
-      + '<div class="pfield"><div class="pfield-lb">高级参数 <span class="hint">一段 JSON，原样并进请求体</span></div>'
-      + '<p class="pfield-ds">给懂的人用：想调"思考强度"就写这儿，例如 '
-      + '<code>{"thinking": {"type": "enabled", "budget_tokens": 8192}}</code>。留空 = 什么都不发。</p>'
+      + '<button type="button" data-v="0">Không phải</button>'
+      + '<button type="button" data-v="1">Là mô hình suy luận</button></div></div></div>'
+      + '<div class="pfield"><div class="pfield-lb">Tham số nâng cao <span class="hint">một đoạn JSON, gộp nguyên văn vào thân yêu cầu</span></div>'
+      + '<p class="pfield-ds">Dành cho người hiểu: muốn chỉnh «cường độ suy nghĩ» thì ghi ở đây, ví dụ '
+      + '<code>{"thinking": {"type": "enabled", "budget_tokens": 8192}}</code>. Để trống = không gửi gì.</p>'
       + '<div class="pfield-ct"><textarea class="pinput" id="mp-json" rows="5" spellcheck="false" '
       + 'autocomplete="off" placeholder=\'{"thinking": {"type": "enabled"}}\'></textarea></div></div>'
-      + '<div class="mp-acts"><button type="button" class="btn" id="mp-cancel">取消</button>'
-      + '<button type="button" class="btn btn-primary" id="mp-save">保存</button></div>';
+      + '<div class="mp-acts"><button type="button" class="btn" id="mp-cancel">Hủy</button>'
+      + '<button type="button" class="btn btn-primary" id="mp-save">Lưu</button></div>';
 
     App.sheet(html, {
       onMount(panel) {
@@ -423,21 +423,21 @@
         q('#mp-cancel', panel).addEventListener('click', () => App.closeSheet());
         q('#mp-save', panel).addEventListener('click', async () => {
           const btn = q('#mp-save', panel);
-          if (btn) { btn.disabled = true; btn.textContent = '保存中…'; }
+          if (btn) { btn.disabled = true; btn.textContent = 'Đang lưu…'; }
           try {
             await API.modelSave({ source: it.provider || group, id: mid,
               contextWindowTokens: ctx ? ctx.value.trim() : '',
               maxTokens: mx ? mx.value.trim() : '',
               reasoning: reasoning === null ? undefined : reasoning,
               optionsJson: js ? js.value.trim() : '' });
-            App.toast('已保存');
+            App.toast('Đã lưu');
             App.haptic && App.haptic();
             App.closeSheet();
             /* 让预设页下次重新拉一遍（模型库是缓存过的） */
             S.data = null;
           } catch (e) {
-            if (btn) { btn.disabled = false; btn.textContent = '保存'; }
-            App.toast('保存失败：' + (e.message || e));
+            if (btn) { btn.disabled = false; btn.textContent = 'Lưu'; }
+            App.toast('Lưu thất bại: ' + (e.message || e));
           }
         });
       },
@@ -445,7 +445,7 @@
   }
 
   function openEffortPick() {
-    openList('思考强度', EFFORT.map(([v, lb]) => ({ value: v, label: lb })),
+    openList('Cường độ suy nghĩ', EFFORT.map(([v, lb]) => ({ value: v, label: lb })),
       mdl().reasoningEffort || '', (v) => {
         mdl().reasoningEffort = v || null;
         render();
@@ -461,27 +461,27 @@
     const bar = q('#preset-save');
     const btn = q('#preset-save .btn');
     const msg = q('#preset-save .msg');
-    if (btn) { btn.disabled = true; btn.textContent = '保存中…'; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Đang lưu…'; }
     try {
       await API.presetSave(S.key, { ...vals() }, { ...mdl() }, S.scope, S.slug);
-      if (msg) msg.textContent = '已保存';
+      if (msg) msg.textContent = 'Đã lưu';
       mark(false);
       S.data = null; S.draft = null;   // 下次进来重新拉，确保和平台一致
-      App.toast('预设已保存');
+      App.toast('Đã lưu preset');
       App.haptic && App.haptic();
     } catch (e) {
-      if (msg) msg.textContent = '保存失败';
-      App.toast('保存失败：' + e.message);
+      if (msg) msg.textContent = 'Lưu thất bại';
+      App.toast('Lưu thất bại: ' + e.message);
     } finally {
       S.busy = false;
-      if (btn) { btn.disabled = !S.dirty; btn.textContent = '保存'; }
+      if (btn) { btn.disabled = !S.dirty; btn.textContent = 'Lưu'; }
     }
   }
 
   /* 离开这一页时如果还有没存的，问一句 */
   function guardLeave() {
     if (!S.dirty) { App.show('shelf'); return; }
-    App.confirm('预设还没保存，现在走就丢了。', () => { mark(false); App.show('shelf'); }, '丢掉离开');
+    App.confirm('Preset chưa lưu, rời đi bây giờ sẽ mất.', () => { mark(false); App.show('shelf'); }, 'Bỏ và rời đi');
   }
 
   /* ---------------- 作用域（这本书 / 所有书默认） ---------------- */
@@ -503,7 +503,7 @@
       S.slug = slug; S.scope = 'project'; S.data = null; S.draft = null; S.key = null;
       window.Preset.open('project', slug);
     };
-    if (S.dirty) App.confirm('这边还没保存，切过去就丢了。', go, '丢掉切换');
+    if (S.dirty) App.confirm('Bên này chưa lưu, chuyển sang sẽ mất.', go, 'Bỏ và chuyển');
     else go();
   }
 
@@ -514,43 +514,43 @@
        现在「当前书」是全局的，总有值；真没有也留一个提示，不再静默隐藏。 */
     if (!S.slug) {
       el.hidden = false;
-      el.innerHTML = '<p class="pseg-hint">还没有作品 · 先去书架建一本</p>';
+      el.innerHTML = '<p class="pseg-hint">Chưa có tác phẩm · hãy tạo một cuốn trên giá sách trước</p>';
       return;
     }
     el.hidden = false;
     const on = S.scope === 'project';
     el.innerHTML = '<div class="pseg">'
-      + '<button type="button" data-scope="project" class="' + (on ? 'on' : '') + '">这本书</button>'
-      + '<button type="button" data-scope="global" class="' + (on ? '' : 'on') + '">所有书默认</button>'
+      + '<button type="button" data-scope="project" class="' + (on ? 'on' : '') + '">Cuốn này</button>'
+      + '<button type="button" data-scope="global" class="' + (on ? '' : 'on') + '">Mặc định mọi sách</button>'
       + '</div><p class="pseg-hint">'
       + (on
-        ? '只对《' + esc(bookTitle()) + '》生效' + (S.hasOwn
-            ? ' · 它已经有自己的一份设定了 <button type="button" class="plink" data-reset>取消它的独立设定</button>'
-            : ' · 还没有自己的一份，保存后就有了')
-        : '所有<b>还没单独设过</b>的书都跟着这套走，不影响已经单独设过的')
+        ? 'Chỉ áp dụng cho «' + esc(bookTitle()) + '» ' + (S.hasOwn
+            ? ' · nó đã có bộ thiết lập riêng <button type="button" class="plink" data-reset>Hủy thiết lập riêng của nó</button>'
+            : ' · chưa có bộ riêng, lưu xong sẽ có')
+        : 'Mọi sách<b>chưa đặt riêng</b> đều theo bộ này, không ảnh hưởng những cuốn đã đặt riêng')
       + '</p>';
   }
 
   /* 取消这本书的独立设定，让它重新跟着「所有书默认」走 */
   function resetProject() {
-    App.confirm('《' + bookTitle() + '》会重新跟着「所有书默认」走，这本书单独改过的设定会丢掉。',
+    App.confirm('«' + bookTitle() + '» sẽ quay lại theo «Mặc định mọi sách», các thiết lập đã sửa riêng cho cuốn này sẽ mất.',
       async () => {
         try {
           await API.presetReset('project', S.slug);
-          App.toast('已恢复为所有书默认');
+          App.toast('Đã khôi phục về mặc định mọi sách');
           S.data = null; S.draft = null; S.dirty = false;
           window.Preset.open('project', S.slug);
-        } catch (e) { App.toast('恢复失败：' + (e.message || '')); }
-      }, '恢复默认');
+        } catch (e) { App.toast('Khôi phục thất bại: ' + (e.message || '')); }
+      }, 'Khôi phục mặc định');
   }
 
   function switchScope(next) {
     if (next === S.scope) return;
     if (S.dirty) {
-      App.confirm('这边还没保存，切过去就丢了。', () => {
+      App.confirm('Bên này chưa lưu, chuyển sang sẽ mất.', () => {
         mark(false); S.data = null; S.draft = null; S.scope = next;
         window.Preset.open(S.scope, S.slug);
-      }, '丢掉切换');
+      }, 'Bỏ và chuyển');
       return;
     }
     S.data = null; S.draft = null; S.scope = next;
@@ -593,7 +593,7 @@
      用户分不清"没东西"和"坏了"，也没有重试；而且**形状不对时会走进抛异常那条路**，
      屏上是错的、判据却当成空态报了绿（自己抓到的假绿）。 */
   function loadInto(host) {
-    UI.loadingIn(host, '正在读预设…');
+    UI.loadingIn(host, 'Đang đọc preset…');
     return API.presets(S.scope, S.slug).then((d) => {
       const list = Array.isArray(d && d.profiles) ? d.profiles : [];
       S.data = d;
@@ -602,8 +602,8 @@
       if (!list.length) {
         /* 真·空态：一个身份都没有。说清"这是什么、怎么才会出现"，别给白纸。 */
         S.key = null; S.draft = {};
-        return UI.emptyIn(host, S.slug ? '这本书还没有预设' : '还没有全站预设',
-          '预设是喂给 AI 的"写作规矩"（人设、口吻、禁写词）。填完保存，之后新写的稿子才会用上。',
+        return UI.emptyIn(host, S.slug ? 'Cuốn này chưa có preset' : 'Chưa có preset toàn cục',
+          'Preset là «quy tắc viết» đưa cho AI (nhân vật, giọng kể, từ cấm). Điền xong lưu lại, bản thảo viết mới sau đó mới dùng tới.',
           'sliders');
       }
       if (!S.key || !list.some((p) => p.profileKey === S.key)) S.key = (list[0] || {}).profileKey;
@@ -618,7 +618,7 @@
       return undefined;
     }).catch((e) => {
       /* 出错态：说人话 + 「重试」（重跑本次这一段）。连不上和"读不出来"分开说。 */
-      UI.failedIn(host, '预设', e, () => loadInto(host));
+      UI.failedIn(host, 'Preset', e, () => loadInto(host));
       return undefined;
     });
   }

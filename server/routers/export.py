@@ -40,7 +40,7 @@ def _pick(slug: str, chapters: str = "") -> list[dict]:
     want = [c for c in chapters.split(",") if c.strip()]
     out = [f for f in files if f["path"] in want]
     if not out:
-        raise HTTPException(404, "挑的这几章都不存在")
+        raise HTTPException(404, "Mấy chương đã chọn đều không tồn tại")
     return out
 
 
@@ -55,7 +55,7 @@ def _chapter_name(s: str) -> str:
     老代码直接拼 `.md` → 落盘成 `001-第001章-雪.md.md`，用户在目录里看见两个后缀。
     """
     n = _safe_name(s)
-    return re.sub(r"\.(md|markdown|txt)$", "", n, flags=re.I) or "导入"
+    return re.sub(r"\.(md|markdown|txt)$", "", n, flags=re.I) or "Nhập"
 
 
 def _download(data: bytes, filename: str, media: str) -> Response:
@@ -93,7 +93,7 @@ async def export_markdown_zip(request: Request, slug: str, chapters: str = ""):
     title = _book_title(s)
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
-        z.writestr("书名.txt", title + "\n")
+        z.writestr("Tên sách.txt", title + "\n")
         for i, f in enumerate(files, 1):
             z.writestr(f"{i:03d}-{_safe_name(f['name'])}.md",
                        f"# {f['name']}\n\n{read_text(s, f['path'])}")
@@ -138,14 +138,14 @@ async def export_epub(request: Request, slug: str, chapters: str = ""):
                    '<?xml version="1.0" encoding="utf-8"?>\n'
                    '<html xmlns="http://www.w3.org/1999/xhtml" '
                    'xmlns:epub="http://www.idpf.org/2007/ops"><head><meta charset="utf-8"/>'
-                   f'<title>目录</title></head><body><nav epub:type="toc"><h1>{_esc(title)}</h1>'
+                   f'<title>Mục lục</title></head><body><nav epub:type="toc"><h1>{_esc(title)}</h1>'
                    f'<ol>{"".join(navs)}</ol></nav></body></html>')
         z.writestr("OEBPS/content.opf",
                    '<?xml version="1.0" encoding="utf-8"?>\n'
                    '<package xmlns="http://www.idpf.org/2007/opf" version="3.0" '
                    'unique-identifier="bookid"><metadata '
                    'xmlns:dc="http://purl.org/dc/elements/1.1/">'
-                   f'<dc:title>{_esc(title)}</dc:title><dc:language>zh-CN</dc:language>'
+                   f'<dc:title>{_esc(title)}</dc:title><dc:language>vi</dc:language>'
                    f'<dc:identifier id="bookid">{uid}</dc:identifier>'
                    f'<dc:creator>{_esc(author)}</dc:creator></metadata><manifest>'
                    '<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" '
@@ -160,7 +160,18 @@ def _esc(s: str) -> str:
 
 
 # ── PDF ─────────────────────────────────────────────────────────────────────
-FONT_PATH = "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc"
+# Phông chữ hỗ trợ tiếng Việt (có dấu) được ưu tiên; phông Trung Quốc chỉ là dự phòng cuối.
+FONT_CANDIDATES = [
+    r"C:\Windows\Fonts\arial.ttf",
+    r"C:\Windows\Fonts\segoeui.ttf",
+    r"C:\Windows\Fonts\times.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+    "/System/Library/Fonts/Supplemental/Arial.ttf",
+    "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+]
+FONT_PATH = next((f for f in FONT_CANDIDATES if __import__("os").path.exists(f)), FONT_CANDIDATES[-1])
 
 
 @router.get("/export/pdf")
@@ -174,11 +185,11 @@ async def export_pdf(request: Request, slug: str, chapters: str = "", font_size:
         from reportlab.pdfbase.ttfonts import TTFont
         from reportlab.pdfgen import canvas
     except ImportError:
-        raise HTTPException(500, "服务器没装 PDF 组件（reportlab），先用 EPUB 或 TXT ")
+        raise HTTPException(500, "Máy chủ chưa cài thành phần PDF (reportlab), hãy dùng EPUB hoặc TXT trước ")
     import os
     if not os.path.exists(FONT_PATH):
-        raise HTTPException(500, "服务器上没有中文字体，导不了 PDF")
-    pdfmetrics.registerFont(TTFont("WQY", FONT_PATH, subfontIndex=0))
+        raise HTTPException(500, "Máy chủ không có phông chữ phù hợp, không xuất được PDF")
+    pdfmetrics.registerFont(TTFont("WQY", FONT_PATH, subfontIndex=0) if FONT_PATH.endswith(".ttc") else TTFont("WQY", FONT_PATH))
     files = _pick(s, chapters)
     title = _book_title(s)
     buf = io.BytesIO()
@@ -242,7 +253,7 @@ async def export_print(request: Request, slug: str, chapters: str = ""):
         f'<h2>{_esc(f["name"])}</h2>'
         + "".join(f"<p>{_esc(ln)}</p>" for ln in read_text(s, f["path"]).splitlines() if ln.strip())
         for f in files)
-    html = ("<!doctype html><html lang=zh-CN><head><meta charset=utf-8>"
+    html = ("<!doctype html><html lang=vi><head><meta charset=utf-8>"
             "<meta name=viewport content='width=device-width,initial-scale=1'>"
             f"<title>{_esc(_book_title(s))}</title><style>"
             "body{font-family:serif;max-width:44em;margin:0 auto;padding:18px;line-height:1.9}"
@@ -282,12 +293,12 @@ async def export_bundle(request: Request, slug: str):
             if f.is_file() and ".novel/revisions" not in str(f):
                 z.write(str(f), "book/" + str(f.relative_to(base)))
         z.writestr("data.json", json.dumps(data, ensure_ascii=False, indent=1))
-        z.writestr("说明.txt",
-                   "这是《%s》的整包数据。\nbook/ 里是原始书稿文件（manuscript 正文、"
-                   "lorebook 设定、world 世界配置）。\ndata.json 里是数据库里的设定、"
-                   "伏笔、时间线等结构化数据。\n换台机器时，把 book/ 里的文件放回"
-                   " data/books/<slug>/ 就能继续写。\n" % title)
-    return _download(buf.getvalue(), f"{_safe_name(title)}-整包.zip", "application/zip")
+        z.writestr("Giới thiệu.txt",
+                   "Đây là gói dữ liệu trọn bộ của《%s》.\nTrong book/ là các file bản thảo gốc (chính văn manuscript, "
+                   "thiết lập lorebook, cấu hình thế giới world).\nTrong data.json là thiết lập, "
+                   "phục bút, dòng thời gian… dạng dữ liệu có cấu trúc trong cơ sở dữ liệu.\nKhi đổi máy, đặt các file trong book/ trở lại"
+                   " data/books/<slug>/ là viết tiếp được.\n" % title)
+    return _download(buf.getvalue(), f"{_safe_name(title)}-tron-bo.zip", "application/zip")
 
 
 # ── 导入：Markdown 批量 ─────────────────────────────────────────────────────
@@ -299,13 +310,13 @@ async def import_markdown(request: Request, slug: str = Form(""),
     current_user(request)
     s = safe_slug(slug or title or "")
     if not s:
-        raise HTTPException(400, "给个书名或者 slug")
+        raise HTTPException(400, "Hãy cho tên sách hoặc slug")
     if not book_dir(s).is_dir():
         create_book(title or slug or s)
     items: list[tuple[str, str]] = []
     for up in files or []:
         raw = await up.read()
-        name = up.filename or "未命名"
+        name = up.filename or "Chưa đặt tên"
         if name.lower().endswith(".zip"):
             try:
                 with zipfile.ZipFile(io.BytesIO(raw)) as z:
@@ -313,13 +324,13 @@ async def import_markdown(request: Request, slug: str = Form(""),
                         if n.lower().endswith((".md", ".txt")) and not n.startswith("__MACOSX"):
                             items.append((n.split("/")[-1], z.read(n).decode("utf-8", "replace")))
             except zipfile.BadZipFile:
-                raise HTTPException(400, f"{name} 不是个正常的压缩包")
+                raise HTTPException(400, f"{name} không phải file nén bình thường")
         else:
             if not name.lower().endswith((".md", ".txt")):
-                raise HTTPException(400, f"{name} 不是 Markdown/文本文件")
+                raise HTTPException(400, f"{name} không phải file Markdown/văn bản")
             items.append((name, raw.decode("utf-8", "replace")))
     if not items:
-        raise HTTPException(400, "没收到文件")
+        raise HTTPException(400, "Không nhận được file")
     base = (prefix or "manuscript").strip("/")
     made = []
     for i, (name, text) in enumerate(items, 1):
@@ -329,8 +340,8 @@ async def import_markdown(request: Request, slug: str = Form(""),
         body = re.sub(r"^#\s+.+\n", "", text, count=1, flags=re.M) if m else text
         rel = f"{base}/{i:03d}-{_safe_name(chap)}.md"
         if (book_dir(s) / rel).exists():
-            raise HTTPException(400, f"{rel} 已经存在，先改名或换个前缀")
-        write_text(s, rel, body.strip() + "\n", origin="import", note="Markdown 导入")
+            raise HTTPException(400, f"{rel} đã tồn tại, hãy đổi tên hoặc đổi tiền tố")
+        write_text(s, rel, body.strip() + "\n", origin="import", note="Nhập Markdown")
         made.append({"path": rel, "name": chap, "words": hanzi(body)})
     from .books import sync_book
     sync_book(s)
@@ -353,17 +364,17 @@ async def import_bundle(request: Request, file: UploadFile = File(...),
     try:
         z = zipfile.ZipFile(io.BytesIO(raw))
     except zipfile.BadZipFile:
-        raise HTTPException(400, "这不是个正常的 zip")
+        raise HTTPException(400, "Đây không phải file zip bình thường")
     names = z.namelist()
     if not any(n.startswith("book/") for n in names):
-        raise HTTPException(400, "这个包里没有 book/ 目录 —— 不是本 App「整包带走」出来的文件")
+        raise HTTPException(400, "Gói này không có thư mục book/ —— không phải file xuất từ「Mang đi trọn bộ」của App này")
     data: dict = {}
     if "data.json" in names:
         try:
             data = json.loads(z.read("data.json").decode("utf-8"))
         except Exception as e:
-            raise HTTPException(400, f"data.json 读不了：{e}")
-    want = (title or str(data.get("title") or "") or "还原的书").strip()
+            raise HTTPException(400, f"Không đọc được data.json: {e}")
+    want = (title or str(data.get("title") or "") or "Sách được khôi phục").strip()
     made = create_book(want, str(data.get("summary") or ""), kind="novel")
     s = made["slug"]
     base = book_dir(s)
@@ -491,7 +502,7 @@ def _card_to_entity(slug: str, card: dict) -> dict:
     from ..engine import world as W
     name = str(card.get("name") or card.get("char_name") or "").strip()
     if not name:
-        raise HTTPException(400, "这张卡没有名字")
+        raise HTTPException(400, "Thẻ này không có tên")
     data = {
         "description": card.get("description") or "",
         "personality": card.get("personality") or "",
@@ -500,7 +511,7 @@ def _card_to_entity(slug: str, card: dict) -> dict:
         "example": card.get("mes_example") or "",
         "creator": card.get("creator") or "",
         "tags": card.get("tags") or [],
-        "source": "SillyTavern 角色卡",
+        "source": "Thẻ nhân vật SillyTavern",
     }
     eid = W.upsert_entity(slug, "character", name, data,
                           aliases=[a for a in (card.get("aliases") or []) if a])
@@ -520,21 +531,21 @@ async def import_character_card(request: Request, slug: str = Form(""),
         try:
             card = json.loads(raw.decode("utf-8", "replace"))
         except Exception:
-            raise HTTPException(400, "这个 json 读不出来")
+            raise HTTPException(400, "Không đọc được file json này")
     else:
         chunks = _png_text_chunks(raw)
         blob = chunks.get("chara") or chunks.get("ccv3")
         if not blob:
-            raise HTTPException(400, "这张 PNG 里没有角色卡数据（要 SillyTavern 导出的那种）")
+            raise HTTPException(400, "Ảnh PNG này không có dữ liệu thẻ nhân vật (cần loại xuất từ SillyTavern)")
         import base64
         try:
             card = json.loads(base64.b64decode(blob).decode("utf-8", "replace"))
         except Exception:
-            raise HTTPException(400, "角色卡数据解不开")
+            raise HTTPException(400, "Không giải mã được dữ liệu thẻ nhân vật")
     if isinstance(card, dict) and isinstance(card.get("data"), dict):
         card = {**card["data"], "name": card.get("name") or card["data"].get("name")}
     if not isinstance(card, dict):
-        raise HTTPException(400, "角色卡格式不认识")
+        raise HTTPException(400, "Không nhận ra định dạng thẻ nhân vật")
     return _card_to_entity(s, card)
 
 
@@ -545,13 +556,13 @@ async def import_text(request: Request, payload: dict = Body(...)):
     s = _slug(payload.get("slug"))
     text = str(payload.get("text") or "")
     if not text.strip():
-        raise HTTPException(400, "没有内容")
-    name = str(payload.get("name") or "导入").strip()[:40]
+        raise HTTPException(400, "Không có nội dung")
+    name = str(payload.get("name") or "Nhập").strip()[:40]
     base = str(payload.get("prefix") or "manuscript").strip("/")
     rel = f"{base}/{_chapter_name(name)}.md"
     if (book_dir(s) / rel).exists() and not payload.get("overwrite"):
-        raise HTTPException(400, "同名文件已存在")
-    write_text(s, rel, text, origin="import", note="粘贴导入")
+        raise HTTPException(400, "Đã có file cùng tên")
+    write_text(s, rel, text, origin="import", note="Dán để nhập")
     from .books import sync_book
     sync_book(s)
     return {"ok": True, "path": rel, "words": hanzi(text)}

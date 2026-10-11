@@ -56,7 +56,7 @@ def hanzi(s: str) -> int:
 def book_dir(slug: str) -> Path:
     s = safe_slug(slug)
     if not s:
-        raise ValueError("作品标识不合法")
+        raise ValueError("Mã tác phẩm không hợp lệ")
     return P.books / s
 
 
@@ -90,11 +90,11 @@ def inner_path(slug: str, rel: str) -> Path:
     """书内相对路径 → 绝对路径（已做穿越防护）。"""
     r = safe_rel(rel)
     if r is None:
-        raise ValueError("路径不合法")
+        raise ValueError("Đường dẫn không hợp lệ")
     base = book_dir(slug).resolve()
     p = (base / r).resolve()
     if not str(p).startswith(str(base) + os.sep) and p != base:
-        raise ValueError("路径越界")
+        raise ValueError("Đường dẫn vượt phạm vi")
     return p
 
 
@@ -278,7 +278,7 @@ def read_text(slug: str, rel: str) -> str:
     p = inner_path(slug, rel)
     data = p.read_bytes()
     if len(data) > MAX_TEXT_BYTES:
-        raise ValueError("文件太大，读不了")
+        raise ValueError("File quá lớn, không đọc được")
     try:
         return data.decode("utf-8")
     except UnicodeDecodeError:
@@ -323,17 +323,17 @@ def write_text(slug: str, rel: str, content: str, *, snapshot: bool = True,
 def create_file(slug: str, rel: str, content: str = "") -> dict:
     p = inner_path(slug, rel)
     if p.exists():
-        raise FileExistsError("已经有一个同名文件了")
+        raise FileExistsError("Đã có một file cùng tên")
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(content, encoding="utf-8")
-    _record_revision(slug, rel, "", content, origin="user", note="新建")
+    _record_revision(slug, rel, "", content, origin="user", note="Tạo mới")
     return {"ok": True, "path": rel, "mtimeMs": mtime_ms(slug, rel)}
 
 
 def create_dir(slug: str, rel: str) -> dict:
     p = inner_path(slug, rel)
     if p.exists():
-        raise FileExistsError("已经有一个同名目录了")
+        raise FileExistsError("Đã có một thư mục cùng tên")
     p.mkdir(parents=True, exist_ok=True)
     return {"ok": True, "path": rel}
 
@@ -342,7 +342,7 @@ def delete_path(slug: str, rel: str) -> dict:
     """删除 = 移进 data/trash（绝不真删，用户的东西不能丢）。"""
     p = inner_path(slug, rel)
     if not p.exists():
-        raise FileNotFoundError("没有这个文件")
+        raise FileNotFoundError("Không có file này")
     dst = P.trash / slug / f"{int(time.time()*1000)}-{p.name}"
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.move(str(p), str(dst))
@@ -353,9 +353,9 @@ def rename_path(slug: str, src: str, dst: str) -> dict:
     a = inner_path(slug, src)
     b = inner_path(slug, dst)
     if not a.exists():
-        raise FileNotFoundError("原文件不在了")
+        raise FileNotFoundError("File gốc không còn nữa")
     if b.exists():
-        raise FileExistsError("目标已经存在")
+        raise FileExistsError("Đích đã tồn tại")
     b.parent.mkdir(parents=True, exist_ok=True)
     shutil.move(str(a), str(b))
     return {"ok": True, "from": src, "to": dst}
@@ -403,7 +403,7 @@ def create_book(title: str, summary: str = "", kind: str = "novel") -> dict:
     from . import db as dbm
     title = (title or "").strip()
     if not title:
-        raise ValueError("书名不能为空")
+        raise ValueError("Tên sách không được để trống")
     slug = slugify(title)
     n = 1
     while exists(slug):
@@ -422,7 +422,7 @@ def create_book(title: str, summary: str = "", kind: str = "novel") -> dict:
     # 正文留空：打磨实测过，以前模板写的是 `# {书名}` —— 自家质检的 ai.markdown 会把它
     # 当成"markdown 残留"（严重度 3），于是用户刚建好的书打开「质检」就是 **0 分 · 要改**。
     # 空章在阅读器里显示「（本章暂无正文）」，比一个假警报好。
-    write_text(slug, "manuscript/第001章-未命名.md", "", snapshot=False)
+    write_text(slug, "manuscript/第001章-Chưa đặt tên.md", "", snapshot=False)
     return {"ok": True, "slug": slug, "title": title}
 
 
@@ -430,11 +430,11 @@ def create_book(title: str, summary: str = "", kind: str = "novel") -> dict:
 def resolve_in(root: Path, rel: str) -> Path:
     r = safe_rel(rel)
     if r is None:
-        raise ValueError("路径不合法")
+        raise ValueError("Đường dẫn không hợp lệ")
     base = Path(root).resolve()
     p = (base / r).resolve()
     if not str(p).startswith(str(base) + os.sep) and p != base:
-        raise ValueError("路径越界")
+        raise ValueError("Đường dẫn vượt phạm vi")
     return p
 
 
@@ -442,7 +442,7 @@ def read_text_in(root: Path, rel: str) -> str:
     p = resolve_in(root, rel)
     data = p.read_bytes()
     if len(data) > MAX_TEXT_BYTES:
-        raise ValueError("文件太大，读不了")
+        raise ValueError("File quá lớn, không đọc được")
     return data.decode("utf-8", "replace")
 
 

@@ -23,22 +23,22 @@ from ..store import now_ms
 router = APIRouter(tags=["workflows"])
 
 STEP_KINDS = [
-    ("outline", "写细纲", "按这一章的要求生成细纲，存进大纲等人确认"),
-    ("write", "写正文", "按细纲与前文写整章，进「改动」收件箱"),
-    ("continue", "往下续写", "接着这一章已写的内容往下写"),
-    ("polish", "润色", "删水词、把抽象换成具体，进「改动」收件箱"),
-    ("summary", "写摘要", "两句话的摘要，存到章节上"),
-    ("lint", "质检", "静态查 AI 味并修掉机械问题（不调模型）"),
+    ("outline", "Viết đề cương chi tiết", "Tạo đề cương chi tiết theo yêu cầu của chương này, lưu vào dàn ý chờ người xác nhận"),
+    ("write", "Viết chính văn", "Viết trọn chương theo đề cương chi tiết và phần trước, vào hộp thư「Thay đổi」"),
+    ("continue", "Viết tiếp", "Viết tiếp từ nội dung đã viết của chương này"),
+    ("polish", "Trau chuốt", "Bỏ chữ thừa, đổi trừu tượng thành cụ thể, vào hộp thư「Thay đổi」"),
+    ("summary", "Viết tóm tắt", "Tóm tắt hai câu, lưu vào chương"),
+    ("lint", "Kiểm tra chất lượng", "Kiểm tra tĩnh giọng AI và sửa các lỗi máy móc (không gọi mô hình)"),
 ]
 KIND_KEYS = tuple(k for k, _, _ in STEP_KINDS)
 
 # 现成的三条流水线：用户第一次打开就有能用的，不用自己拼
 PRESETS = [
-    {"name": "细纲→正文→润色", "note": "最常用的一条：先立骨架，再落笔，最后收水词",
+    {"name": "Đề cương→Chính văn→Trau chuốt", "note": "Đường hay dùng nhất: dựng khung trước, rồi đặt bút, cuối cùng gạn chữ thừa",
      "steps": [{"kind": "outline"}, {"kind": "write"}, {"kind": "polish"}]},
-    {"name": "正文→质检", "note": "写完一遍后过机：查 AI 味并修掉机械问题",
+    {"name": "Chính văn→Kiểm tra", "note": "Viết xong một lượt thì cho qua máy: tìm giọng AI và sửa các lỗi máy móc",
      "steps": [{"kind": "write"}, {"kind": "lint"}]},
-    {"name": "续写→摘要", "note": "接着往下写一章，顺手把摘要填上",
+    {"name": "Viết tiếp→Tóm tắt", "note": "Viết tiếp một chương, tiện tay điền luôn tóm tắt",
      "steps": [{"kind": "continue"}, {"kind": "summary"}]},
 ]
 
@@ -83,12 +83,12 @@ async def run_step(slug: str, step: dict, default_path: str = "", jid: str = "")
     from .write import _apply, _respond, build_prompt
     kind = str(step.get("kind") or "").strip()
     if kind not in KIND_KEYS:
-        raise HTTPException(400, "不认识的步骤：" + kind)
+        raise HTTPException(400, "Không nhận ra bước: " + kind)
     path = str(step.get("path") or default_path or "")
     inst = str(step.get("instruction") or "").strip()
     if kind == "lint":
         if not path:
-            raise HTTPException(400, "质检得指名哪一章")
+            raise HTTPException(400, "Kiểm tra chất lượng phải chỉ định chương nào")
         from ..engine import lint as L
         from ..store import read_text
         text = read_text(slug, path)
@@ -99,7 +99,7 @@ async def run_step(slug: str, step: dict, default_path: str = "", jid: str = "")
             new_text, n_fixed = L.fix(text)
             if new_text != text and n_fixed:
                 _apply(slug, path, new_text, {"apply": True, "mode": "polish"},
-                       "流水线：质检修复")
+                       "Dây chuyền: kiểm tra và sửa")
         dbm.db().execute(
             "INSERT INTO lint_run(slug,path,created_at,hits_json,stats_json) VALUES(?,?,?,?,?)",
             (slug, path, now_ms(), dbm.db().jdumps(hits[:200]),
@@ -107,7 +107,7 @@ async def run_step(slug: str, step: dict, default_path: str = "", jid: str = "")
         return {"kind": kind, "path": path, "issues": len(hits), "fixed": n_fixed,
                 "score": report["stats"]["score"], "grade": report["grade"]}
     if not path:
-        raise HTTPException(400, "这一步得指名哪一章")
+        raise HTTPException(400, "Bước này phải chỉ định chương nào")
     mode = {"outline": "outline", "write": "chapter", "continue": "continue",
             "polish": "polish", "summary": "summary"}[kind]
     payload = {"slug": slug, "path": path, "mode": mode, "stream": False,
@@ -132,8 +132,8 @@ async def run_step(slug: str, step: dict, default_path: str = "", jid: str = "")
         if step.get("apply", True):
             res.update(_apply(slug, path, text,
                               {"apply": True, "mode": mode, "append": kind == "continue"},
-                              "流水线：" + {"write": "写正文", "continue": "续写",
-                                            "polish": "润色"}[kind]))
+                              "Dây chuyền: " + {"write": "Viết chính văn", "continue": "Viết tiếp",
+                                            "polish": "Trau chuốt"}[kind]))
     return res
 
 
@@ -205,15 +205,15 @@ async def workflows_save(request: Request, payload: dict = Body(...)):
     current_user(request)
     name = str(payload.get("name") or "").strip()
     if not name or len(name) > 40:
-        raise HTTPException(400, "流水线得有个 40 字以内的名字")
+        raise HTTPException(400, "Dây chuyền phải có tên trong vòng 40 chữ")
     steps = payload.get("steps") or []
     if not isinstance(steps, list) or not steps:
-        raise HTTPException(400, "至少得有一两步")
+        raise HTTPException(400, "Phải có ít nhất một hai bước")
     if len(steps) > 8:
-        raise HTTPException(400, "步骤数超出上限（最多 8 步）")
+        raise HTTPException(400, "Số bước vượt giới hạn (tối đa 8 bước)")
     for st in steps:
         if str((st or {}).get("kind") or "") not in KIND_KEYS:
-            raise HTTPException(400, "不认识的步骤：" + str((st or {}).get("kind")))
+            raise HTTPException(400, "Không nhận ra bước: " + str((st or {}).get("kind")))
     slug = str(payload.get("slug") or "")
     if slug:
         slug = _slug(slug)
@@ -235,7 +235,7 @@ async def workflows_delete(request: Request, id: int, slug: str = ""):
     current_user(request)
     row = dbm.db().one("SELECT * FROM workflow WHERE id=?", (int(id),))
     if not row:
-        raise HTTPException(404, "没有这条流水线")
+        raise HTTPException(404, "Không có dây chuyền này")
     dbm.db().execute("DELETE FROM workflow WHERE id=?", (int(id),))
     return {"ok": True, "deleted": int(id), "name": row["name"]}
 
@@ -249,9 +249,9 @@ async def workflows_run(request: Request, payload: dict = Body(...)):
     steps = None
     if payload.get("id"):
         row = dbm.db().one("SELECT * FROM workflow WHERE id=?",
-                           (num(payload.get("id"), 0, name="流水线号"),))
+                           (num(payload.get("id"), 0, name="Mã dây chuyền"),))
         if not row:
-            raise HTTPException(404, "没有这条流水线")
+            raise HTTPException(404, "Không có dây chuyền này")
         steps = dbm.db().jloads(row["steps_json"], [])
     elif payload.get("steps"):
         steps = payload["steps"]
@@ -259,24 +259,24 @@ async def workflows_run(request: Request, payload: dict = Body(...)):
         row = dbm.db().one("SELECT * FROM workflow WHERE name=? AND (slug='' OR slug=?)",
                            (str(payload["name"]), s))
         if not row:
-            raise HTTPException(404, "没有这条流水线")
+            raise HTTPException(404, "Không có dây chuyền này")
         steps = dbm.db().jloads(row["steps_json"], [])
     if not steps:
-        raise HTTPException(400, "没说要跑哪条流水线")
+        raise HTTPException(400, "Chưa nói chạy dây chuyền nào")
     if not path and any(st.get("kind") != "lint" for st in steps):
-        raise HTTPException(400, "得先挑一章")
+        raise HTTPException(400, "Hãy chọn một chương trước")
     if path:
         from .books import require_path
         path = require_path(s, path)
-    title = "流水线：" + str(payload.get("name") or "%d 步" % len(steps)) + \
+    title = "Dây chuyền: " + str(payload.get("name") or "%d bước" % len(steps)) + \
             ("（%s）" % path.split("/")[-1] if path else "")
     jid = start_job_thread("workflow", title, s, steps, path)
     return {"ok": True, "jobId": jid, "steps": len(steps), "path": path}
 
 
 # ── 批量操作 ────────────────────────────────────────────────────────────────
-BATCH_MODES = {"outline": "写细纲", "polish": "润色", "summary": "写摘要",
-               "chapter": "写正文", "continue": "续写"}
+BATCH_MODES = {"outline": "Viết đề cương chi tiết", "polish": "Trau chuốt", "summary": "Viết tóm tắt",
+               "chapter": "Viết chính văn", "continue": "Viết tiếp"}
 
 
 @router.post("/write/batch")
@@ -289,12 +289,12 @@ async def write_batch(request: Request, payload: dict = Body(...)):
     s = _slug(payload.get("slug"))
     mode = str(payload.get("mode") or "outline")
     if mode not in BATCH_MODES:
-        raise HTTPException(400, "批量只支持：" + "、".join(BATCH_MODES))
+        raise HTTPException(400, "Hàng loạt chỉ hỗ trợ: " + "、".join(BATCH_MODES))
     paths = [str(p) for p in (payload.get("paths") or []) if str(p).strip()]
     if not paths:
-        raise HTTPException(400, "先挑几章")
+        raise HTTPException(400, "Hãy chọn vài chương trước")
     if len(paths) > 50:
-        raise HTTPException(400, "一次最多 50 章，分两回跑吧")
+        raise HTTPException(400, "Mỗi lần tối đa 50 chương, chia hai lần chạy nhé")
     from .books import require_path
     paths = [require_path(s, p) for p in paths]
     inst = str(payload.get("instruction") or "").strip()
@@ -302,7 +302,7 @@ async def write_batch(request: Request, payload: dict = Body(...)):
                        "chapter": "write", "continue": "continue"}[mode],
               "path": p, "instruction": inst, "apply": bool(payload.get("apply", True)),
               "save": True} for p in paths]
-    jid = start_job_thread("batch", "批量" + BATCH_MODES[mode] + "（%d 章）" % len(paths),
+    jid = start_job_thread("batch", "Hàng loạt: " + BATCH_MODES[mode] + " (%d chương)" % len(paths),
                            s, steps, "")
     return {"ok": True, "jobId": jid, "mode": mode, "chapters": len(paths),
             "paths": paths}

@@ -57,7 +57,7 @@ def get_engine(key: str | None = None) -> Engine:
     from ..config import CFG
     k = (key or CFG.get("tts_engine") or "edge").strip()
     if k not in _ENGINES:
-        raise KeyError(f"没有这个听书引擎：{k}（可用：{'、'.join(_ENGINES)}）")
+        raise KeyError(f"Không có bộ máy nghe truyện này: {k} (dùng được: {', '.join(_ENGINES)})")
     return _ENGINES[k]
 
 

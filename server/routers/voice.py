@@ -58,9 +58,9 @@ async def save(request: Request, payload: dict = Body(...)):
     name = str(payload.get("name") or "").strip()
     if not name:
         from fastapi import HTTPException
-        raise HTTPException(status_code=400, detail="得先说是谁（name 不能空）")
-    out = V.save_profile(s, name, args.obj(payload.get("voice"), {}, name="声音档案") or {},
-                         kind=args.s(payload.get("kind"), name="类型"))
+        raise HTTPException(status_code=400, detail="Phải nói trước là ai (name không được trống)")
+    out = V.save_profile(s, name, args.obj(payload.get("voice"), {}, name="Hồ sơ giọng nói") or {},
+                         kind=args.s(payload.get("kind"), name="Loại"))
     out["saved"] = True
     return out
 
@@ -72,7 +72,7 @@ async def clear(request: Request, slug: str = "", name: str = ""):
     s = _slug(slug)
     if not name.strip():
         from fastapi import HTTPException
-        raise HTTPException(status_code=400, detail="得说是谁")
+        raise HTTPException(status_code=400, detail="Phải nói là ai")
     out = V.save_profile(s, name, {})
     out["cleared"] = True
     return out

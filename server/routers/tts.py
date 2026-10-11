@@ -22,7 +22,7 @@ from ..tts.cache import (preview_path, seg_path, size as cache_size, whole_path,
 router = APIRouter(tags=["tts"])
 
 # 试听念的这句话（短、能听出音色差别、不涉及任何用户内容）
-PREVIEW_TEXT = "风从山口吹下来，卷起一路的尘土。他停下脚步，抬头看了看天色。"
+PREVIEW_TEXT = "Gió từ cửa núi thổi xuống, cuốn theo bụi đất suốt dọc đường. Anh dừng bước, ngẩng đầu nhìn sắc trời."
 PREVIEW_TEXT_MAX = 60      # 试听念多长：太长等着急，太短听不出音色
 
 
@@ -43,7 +43,7 @@ def _voice(v: str) -> str:
     want = (v or "").strip() or str(CFG.get("default_voice"))
     known = [str(x.get("id")) for x in (CFG.get("voices") or []) if isinstance(x, dict)]
     if known and want not in known:
-        raise HTTPException(400, f"没有这个音色：{want}（可用的有 {len(known)} 个，在听书面板里挑）")
+        raise HTTPException(400, f"Không có giọng đọc này: {want} (có {len(known)} giọng dùng được, chọn trong bảng Nghe truyện)")
     return want
 
 _SENT = re.compile(r"[^。！？!?…；;\n]+[。！？!?…；;]*")
@@ -97,7 +97,7 @@ def _chapter_text(slug: str, path: str) -> str:
     try:
         return to_speech(read_text(s, p))
     except FileNotFoundError:
-        raise HTTPException(404, "没有这一章")
+        raise HTTPException(404, "Không có chương này")
     except (ValueError, OSError) as e:
         raise HTTPException(400, str(e))
 
@@ -128,51 +128,51 @@ async def tts_selfcheck(request: Request, slug: str = "", path: str = "",
     # ① 引擎：装没装、认不认得
     try:
         eng = _engine(engine)
-        step("朗读引擎可用", True, {"engine": eng.key, "engines": list(list_engines()),
+        step("Bộ máy đọc dùng được", True, {"engine": eng.key, "engines": list(list_engines()),
                                     "默认": CFG.get("tts_engine", "edge")})
     except HTTPException as e:
-        step("朗读引擎可用", False, {"engine": engine or CFG.get("tts_engine", "edge"),
+        step("Bộ máy đọc dùng được", False, {"engine": engine or CFG.get("tts_engine", "edge"),
                                      "错误": str(e.detail), "可选": list(list_engines())})
         out["ok"] = False
-        out["结论"] = "引擎这块就不对：%s" % e.detail
+        out["结论"] = "Phần bộ máy đã không ổn: %s" % e.detail
         return out
     except Exception as e:
-        step("朗读引擎可用", False, {"错误": "%s: %s" % (type(e).__name__, e)})
+        step("Bộ máy đọc dùng được", False, {"错误": "%s: %s" % (type(e).__name__, e)})
         out["ok"] = False
-        out["结论"] = "引擎起不来：%s" % e
+        out["结论"] = "Bộ máy không khởi động được: %s" % e
         return out
 
     # ② 音色：认不认得（认不出来 = 用户挑的跟配置表对不上）
     try:
         v = _voice(voice)
-        step("音色可用", True, {"voice": v, "可选个数": len(CFG.get("voices") or [])})
+        step("Giọng đọc dùng được", True, {"voice": v, "可选个数": len(CFG.get("voices") or [])})
     except HTTPException as e:
-        step("音色可用", False, {"voice": voice, "错误": str(e.detail)})
+        step("Giọng đọc dùng được", False, {"voice": voice, "错误": str(e.detail)})
         out["ok"] = False
-        out["结论"] = "音色这个名字配置表里没有：%s" % e.detail
+        out["结论"] = "Tên giọng đọc này không có trong bảng cấu hình: %s" % e.detail
         return out
 
     # ③ 这一章：读得到吗、分几段
     if not slug or not path:
-        step("这一章能读", False, {"slug": slug, "path": path, "错误": "没给书或章节"})
+        step("Chương này đọc được", False, {"slug": slug, "path": path, "错误": "Chưa chọn sách hoặc chương"})
         out["ok"] = False
-        out["结论"] = "没指定书/章节 —— 先在阅读器里打开一章再自检"
+        out["结论"] = "Chưa chỉ định sách/chương —— hãy mở một chương trong trình đọc rồi tự kiểm tra"
         return out
     try:
         text = _chapter_text(slug, path)
         segs = split_segments(text)
-        step("这一章能读", True, {"slug": slug, "path": path, "字数": len(text),
+        step("Chương này đọc được", True, {"slug": slug, "path": path, "字数": len(text),
                                   "段落数": len(segs)})
     except HTTPException as e:
-        step("这一章能读", False, {"slug": slug, "path": path, "HTTP": e.status_code,
+        step("Chương này đọc được", False, {"slug": slug, "path": path, "HTTP": e.status_code,
                                    "错误": str(e.detail)})
         out["ok"] = False
-        out["结论"] = "这一章读不到（%s）：%s" % (e.status_code, e.detail)
+        out["结论"] = "Không đọc được chương này (%s): %s" % (e.status_code, e.detail)
         return out
     if not segs:
-        step("这一章有字可念", False, {"段落数": 0})
+        step("Chương này có chữ để đọc", False, {"段落数": 0})
         out["ok"] = False
-        out["结论"] = "这一章没有文字（空章 / 只有标题），没什么可念的"
+        out["结论"] = "Chương này không có chữ (chương trống / chỉ có tiêu đề), không có gì để đọc"
         return out
 
     # ④ 第 0 段音频：真合一次，看字节数和帧头 —— 这一步最能区分"没声"的两种原因
@@ -181,22 +181,22 @@ async def tts_selfcheck(request: Request, slug: str = "", path: str = "",
         data = await eng.synth(segs[0], v, r)
         head = data[:4].hex(" ")
         mpeg = data[:2] == b"\xff\xf3" or data[:2] == b"\xff\xfb" or (len(data) > 1 and data[0] == 0xFF)
-        step("第 0 段能合成", bool(data) and mpeg,
+        step("Đoạn 0 tổng hợp được", bool(data) and mpeg,
              {"字节数": len(data), "开头四字节": head,
               "像MPEG帧头": mpeg, "第一段字数": len(segs[0]), "语速": r})
         if not data or not mpeg:
             out["ok"] = False
-            out["结论"] = "合成出来的不是音频（%d 字节，开头 %s）—— 引擎在服务器上出问题了" % (len(data), head)
+            out["结论"] = "Thứ tổng hợp ra không phải âm thanh (%d byte, mở đầu %s) —— bộ máy trên máy chủ có vấn đề" % (len(data), head)
             return out
     except Exception as e:
-        step("第 0 段能合成", False, {"错误": "%s: %s" % (type(e).__name__, e), "第一段字数": len(segs[0])})
+        step("Đoạn 0 tổng hợp được", False, {"错误": "%s: %s" % (type(e).__name__, e), "第一段字数": len(segs[0])})
         out["ok"] = False
-        out["结论"] = "合成失败：%s（引擎在服务器上这条路没走通）" % e
+        out["结论"] = "Tổng hợp thất bại: %s (bộ máy trên máy chủ không chạy thông đường này)" % e
         return out
 
     out["ok"] = True
-    out["结论"] = ("服务器这一侧全通（引擎 %s / %s / 这一章 %d 段 / 第 0 段 %d 字节）。"
-                   "如果手机里还是没声，问题在**播放这一环** —— 看自检里手机那几项。"
+    out["结论"] = ("Phía máy chủ thông hết (bộ máy %s / %s / chương này %d đoạn / đoạn 0 %d byte). "
+                   "Nếu điện thoại vẫn không có tiếng, vấn đề nằm ở **khâu phát** —— xem mấy mục phía điện thoại trong phần tự kiểm tra."
                    % (eng.key, v, len(segs), len(data)))
     return out
 
@@ -228,9 +228,9 @@ async def tts_seg(slug: str, path: str, i: int, request: Request,
     segs = split_segments(text)
     # 空章（比如新建书自带的那一章）要说人话：不是"没有这一段"，是"这一章没字可以念"。
     if not segs:
-        raise HTTPException(400, "这一章没有可读的文字，没什么可念的")
+        raise HTTPException(400, "Chương này không có chữ đọc được, không có gì để đọc")
     if i < 0 or i >= len(segs):
-        raise HTTPException(404, f"没有这一段（这一章一共 {len(segs)} 段，从 0 数）")
+        raise HTTPException(404, f"Không có đoạn này (chương này có tổng {len(segs)} đoạn, đếm từ 0)")
     eng = _engine(engine)
     v = _voice(voice)
     r = norm_rate(rate)
@@ -241,7 +241,7 @@ async def tts_seg(slug: str, path: str, i: int, request: Request,
         except (KeyError, ValueError) as e:
             raise HTTPException(400, str(e))
         except Exception as e:
-            raise HTTPException(502, f"合成失败：{e}")
+            raise HTTPException(502, f"Tổng hợp thất bại: {e}")
         write_atomic(out, data)
     return FileResponse(str(out), media_type="audio/mpeg")
 
@@ -253,7 +253,7 @@ async def tts_whole(slug: str, path: str, request: Request,
     current_user(request)
     text = _chapter_text(slug, path)
     if not text.strip():
-        raise HTTPException(400, "这一章没有可读的文字")
+        raise HTTPException(400, "Chương này không có chữ đọc được")
     eng = _engine(engine)
     v = _voice(voice)
     r = norm_rate(rate)
@@ -264,7 +264,7 @@ async def tts_whole(slug: str, path: str, request: Request,
         except (KeyError, ValueError) as e:
             raise HTTPException(400, str(e))
         except Exception as e:
-            raise HTTPException(502, f"合成失败：{e}")
+            raise HTTPException(502, f"Tổng hợp thất bại: {e}")
         write_atomic(out, data)
     return FileResponse(str(out), media_type="audio/mpeg")
 
@@ -290,7 +290,7 @@ async def tts_preview(request: Request, voice: str = "", rate: str = "+0%",
         except (KeyError, ValueError) as e:
             raise HTTPException(400, str(e))
         except Exception as e:
-            raise HTTPException(502, f"合成失败：{e}")
+            raise HTTPException(502, f"Tổng hợp thất bại: {e}")
         write_atomic(out, data)
     return FileResponse(str(out), media_type="audio/mpeg",
                         headers={"cache-control": "no-store"})

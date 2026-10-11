@@ -92,9 +92,9 @@ async def sync_push(request: Request, payload: dict = Body(...)):
     s = _slug(payload.get("slug"))
     items = payload.get("items") or []
     if not isinstance(items, list):
-        raise HTTPException(400, "items 得是一串改动")
+        raise HTTPException(400, "items phải là một chuỗi thay đổi")
     if len(items) > 50:
-        raise HTTPException(400, "一次最多推 50 条")
+        raise HTTPException(400, "Mỗi lần đẩy tối đa 50 mục")
     from .books import require_path, sync_book
     out = []
     conflicts = 0
@@ -106,10 +106,10 @@ async def sync_push(request: Request, payload: dict = Body(...)):
             continue
         content = it.get("content")
         if content is None:
-            out.append({"path": p, "status": "bad", "error": "没有正文内容"})
+            out.append({"path": p, "status": "bad", "error": "Không có nội dung chính văn"})
             continue
         content = str(content)[:MAX_TEXT]
-        base = num(it.get("baseMtimeMs"), 0, name="基准版本号")
+        base = num(it.get("baseMtimeMs"), 0, name="Số phiên bản gốc")
         try:
             server_text = read_text(s, p)
             cur = int(mtime_ms(s, p))
@@ -126,13 +126,13 @@ async def sync_push(request: Request, payload: dict = Body(...)):
                         "serverMtimeMs": cur, "baseMtimeMs": base,
                         "serverText": server_text[:MAX_TEXT]})
             continue
-        res = write_text(s, p, content, origin="user", note="手机同步")
+        res = write_text(s, p, content, origin="user", note="Đồng bộ từ điện thoại")
         out.append({"path": p, "status": "ok", "mtimeMs": res["mtimeMs"], "words": res["words"]})
     if conflicts:
         try:
             from .core import notify
-            notify("sync", "有 %d 章两边都改过" % conflicts,
-                   "去「同步」里挑一版：两边的内容都留着，没动你的稿子。", s)
+            notify("sync", "Có %d chương bị sửa ở cả hai bên" % conflicts,
+                   "Vào「Đồng bộ」chọn một bản: nội dung cả hai bên đều được giữ, bản thảo của bạn không bị động vào.", s)
         except Exception:
             # 推送提醒失败（没装通知渠道）不该拦住同步本身。
             pass
@@ -162,7 +162,7 @@ async def sync_conflict_one(request: Request, id: int):
     current_user(request)
     r = dbm.db().one("SELECT * FROM sync_conflict WHERE id=?", (int(id),))
     if not r:
-        raise HTTPException(404, "没有这条冲突")
+        raise HTTPException(404, "Không có xung đột này")
     return _conflict_doc(r)
 
 
@@ -175,9 +175,9 @@ async def sync_resolve(request: Request, payload: dict = Body(...)):
     current_user(request)
     d = dbm.db()
     r = d.one("SELECT * FROM sync_conflict WHERE id=?",
-              (num(payload.get("id"), 0, name="冲突号"),))
+              (num(payload.get("id"), 0, name="Mã xung đột"),))
     if not r:
-        raise HTTPException(404, "没有这条冲突")
+        raise HTTPException(404, "Không có xung đột này")
     if r["status"] != "open":
         return {"ok": True, "already": r["status"]}
     s = _slug(r["slug"])
@@ -189,12 +189,12 @@ async def sync_resolve(request: Request, payload: dict = Body(...)):
     elif choice in ("merged", "merge"):
         text = str(payload.get("text") or "")
         if not text.strip():
-            raise HTTPException(400, "合并稿是空的")
+            raise HTTPException(400, "Bản hợp nhất đang trống")
     else:
-        raise HTTPException(400, "choice 只能是 local / server / merged")
+        raise HTTPException(400, "choice chỉ có thể là local / server / merged")
     res = write_text(s, r["path"], text, origin="user",
-                     note="同步冲突：%s" % {"local": "用了手机这版", "server": "用了服务器这版",
-                                            "merged": "用了我合并的"}.get(choice, choice))
+                     note="Xung đột đồng bộ: %s" % {"local": "dùng bản trên điện thoại", "server": "dùng bản trên máy chủ",
+                                            "merged": "dùng bản tôi hợp nhất"}.get(choice, choice))
     from .books import sync_book
     sync_book(s)
     with d.tx() as conn:

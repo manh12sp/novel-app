@@ -16,7 +16,7 @@
     pageMode: 'curl',      // curl(仿真) | slide(平移) | scroll(滚动) | none(无动画)
     motion: 'on',          // on | off —— 全局动效开关
     keepAwake: true,
-    voice: 'zh-CN-YunxiNeural',
+    voice: 'vi-VN-HoaiMyNeural',
     ttsEngine: 'edge',     // edge | cosyvoice（服务器上有哪些由 /tts/voices 说了算）
     rate: '+0%',
     ttsFollow: true,       // 听书时页面自动跟读（可在设置里关）

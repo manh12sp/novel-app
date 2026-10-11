@@ -86,7 +86,7 @@ def _headers(provider: dict) -> dict:
 def _base(provider: dict) -> str:
     b = (provider.get("base_url") or "").strip().rstrip("/")
     if not b:
-        raise LLMError("这个渠道还没配 base_url")
+        raise LLMError("Kênh này chưa cấu hình base_url")
     return b
 
 
@@ -122,7 +122,7 @@ async def stream_chat(provider: dict, model_id: str, messages: list[dict], *,
             yield {"type": "delta", "delta": fb}
             yield {"type": "done", "stopReason": "nonstream"}
             return
-        yield {"type": "error", "error": "模型没有返回内容（非流式：" + (fb_err or "空响应") + "）"}
+        yield {"type": "error", "error": "Mô hình không trả về nội dung (không streaming: " + (fb_err or "phản hồi trống") + "）"}
         return
     shapes = stream_shapes(api)
     for shape in shapes:
@@ -135,7 +135,7 @@ async def stream_chat(provider: dict, model_id: str, messages: list[dict], *,
                 if ev["type"] == "delta":
                     got_delta = True
                 elif ev["type"] == "error":
-                    got_error = ev.get("error") or "模型返回了错误"
+                    got_error = ev.get("error") or "Mô hình trả về lỗi"
                 yield ev
         except LLMStall as e:                   # 连得上但不吐字：**不白等回退**（一样会卡）
             stalled = True
@@ -143,11 +143,11 @@ async def stream_chat(provider: dict, model_id: str, messages: list[dict], *,
         except LLMError as e:                   # 渠道级错误（4xx 正文里的话最有用）
             got_error = str(e)
         except httpx.TimeoutException:
-            got_error = f"连模型超时（{base}，{TIMEOUT.read:g} 秒没回应）"
+            got_error = f"Kết nối mô hình quá thời gian ({base}, {TIMEOUT.read:g} giây không phản hồi)"
         except httpx.RequestError as e:
-            got_error = f"连不上模型服务（{base}）：{type(e).__name__}"
+            got_error = f"Không kết nối được dịch vụ mô hình ({base}): {type(e).__name__}"
         except Exception as e:                  # 别的意外也别让流断在半路
-            got_error = f"调用模型出错了：{str(e)[:200]}"
+            got_error = f"Gọi mô hình bị lỗi: {str(e)[:200]}"
 
         if got_delta or stalled:
             break
@@ -174,7 +174,7 @@ async def stream_chat(provider: dict, model_id: str, messages: list[dict], *,
             yield {"type": "error", "error": got_error}
             return
         if not os.environ.get("LLM_SILENT"):
-            yield {"type": "error", "error": "模型没有返回内容（回退被 LLM_NOFALLBACK 关掉了）"}
+            yield {"type": "error", "error": "Mô hình không trả về nội dung (phương án dự phòng đã bị LLM_NOFALLBACK tắt)"}
         return
     fb, fb_err = await _fallback_nonstream(provider, model_id, messages,
                                            temperature=temperature, max_tokens=max_tokens,
@@ -184,7 +184,7 @@ async def stream_chat(provider: dict, model_id: str, messages: list[dict], *,
             # 用户在图省事里明确点了"流式（逐字出）"，这个渠道两种形状都不给分片 ——
             # 字照样给，但**得说一声**为什么是整段蹦出来的（不说 = 用户以为又坏了）。
             yield {"type": "notice",
-                   "notice": "这个渠道不给逐字的分片（%s 两种接口都试过了），这次整段给你" % base}
+                   "notice": "Kênh này không trả về từng mảnh chữ (%s đã thử cả hai kiểu giao diện), lần này trả nguyên đoạn cho bạn" % base}
         yield {"type": "delta", "delta": fb}
         yield {"type": "done", "stopReason": "fallback-nonstream"}
         return
@@ -198,13 +198,13 @@ async def stream_chat(provider: dict, model_id: str, messages: list[dict], *,
         inner.append("HTTP %s" % diag["status"])
     if diag.get("ctype"):
         inner.append(str(diag["ctype"]).split(";")[0])
-    inner.append("收到 %s 个数据块" % diag.get("events", 0))
-    bits = ["模型没有返回内容（" + "，".join(inner) + "）"]
+    inner.append("Nhận được %s khối dữ liệu" % diag.get("events", 0))
+    bits = ["Mô hình không trả về nội dung (" + "，".join(inner) + "）"]
     tail = (diag.get("head") or "").strip().replace("\n", " ")
     if fb_err:
-        bits.append("；回退非流式也不行：" + fb_err[:120])
+        bits.append("; dự phòng không streaming cũng không được: " + fb_err[:120])
     if tail:
-        bits.append("；响应开头：" + tail[:160])
+        bits.append("; đầu phản hồi: " + tail[:160])
     yield {"type": "error", "error": "".join(bits)}
 
 
@@ -241,7 +241,7 @@ async def _stream_once(provider: dict, model_id: str, messages: list[dict], *,
             if r.status_code >= 400:
                 body = (await r.aread()).decode("utf-8", "replace")[:300]
                 diag["head"] = body
-                raise LLMError(f"模型返回 {r.status_code}：{body}")
+                raise LLMError(f"Mô hình trả về {r.status_code}: {body}")
             buf = ""
             raw_head = ""
             ait = r.aiter_text()
@@ -259,8 +259,8 @@ async def _stream_once(provider: dict, model_id: str, messages: list[dict], *,
                     break
                 except (asyncio.TimeoutError, TimeoutError):
                     raise LLMStall(
-                        "模型 %d 秒没有第一个字（渠道 %s 连得上但不吐字：排队卡住／中转挂了／"
-                        "这个模型不可用），已经替你中止" % (int(first_s), base))
+                        "Mô hình %d giây chưa ra chữ đầu tiên (kênh %s kết nối được nhưng không nhả chữ: xếp hàng bị kẹt／trung chuyển hỏng／"
+                        "mô hình này không dùng được), đã dừng giúp bạn" % (int(first_s), base))
                 if len(raw_head) < 220:
                     raw_head += chunk[:220 - len(raw_head)]
                 buf += chunk
@@ -353,7 +353,7 @@ async def _fallback_nonstream(provider: dict, model_id: str, messages: list[dict
                                         system=system, diag=diag)
             if txt.strip():
                 return txt, ""
-            err = err or f"{kind} 也没正文"
+            err = err or f"{kind} cũng không có nội dung"
         except Exception as e:
             err = f"{kind}: {str(e)[:140]}"
     return "", err
@@ -468,8 +468,8 @@ async def stream_with_fallback(provider: dict, model_id: str, messages: list[dic
     except LLMError:
         return
     # 这一条是给界面看的：让用户知道"刚刚换了个人来答"，而不是莫名其妙换了口风
-    yield {"type": "notice", "notice": "主模型这一轮没出内容（%s），已自动换备用模型 %s 再试"
-           % ((err or "没有说明")[:60], key)}
+    yield {"type": "notice", "notice": "Mô hình chính lượt này không ra nội dung (%s), đã tự đổi sang mô hình dự phòng %s để thử lại"
+           % ((err or "không có giải thích")[:60], key)}
     async for ev in stream_chat(fb_provider, fb_mid, messages, temperature=temperature,
                                 max_tokens=max_tokens, system=system, stream=stream):
         yield ev
@@ -493,7 +493,7 @@ def provider_of(model_key: str) -> tuple[dict, str]:
     """`group/model` → (provider 行, 模型 id)。"""
     from .. import db as dbm
     if not model_key or "/" not in model_key:
-        raise LLMError("没选模型")
+        raise LLMError("Chưa chọn mô hình")
     grp, mid = model_key.split("/", 1)
     rows = dbm.db().query("SELECT * FROM provider WHERE enabled=1 ORDER BY sort, id")
     for r in rows:
@@ -505,4 +505,4 @@ def provider_of(model_key: str) -> tuple[dict, str]:
         if dbm.db().one("SELECT id FROM provider_model WHERE provider_id=? AND model_id=? AND enabled=1",
                         (r["id"], mid)):
             return r, mid
-    raise LLMError(f"没有这个模型：{model_key}")
+    raise LLMError(f"Không có mô hình này: {model_key}")

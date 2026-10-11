@@ -101,8 +101,8 @@
     if (!(window.Offline && Offline.pendingCount() > 0)) return;
     if (!(window.Tools && Tools.pushPending)) return;
     Tools.pushPending().then((r) => {
-      if (r.ok) App.toast('离线时改的 ' + r.ok + ' 章已同步回去');
-      if (r.conflicts) App.toast(r.conflicts + ' 章两边都改过，去「同步」挑一版');
+      if (r.ok) App.toast('Đã sửa khi ngoại tuyến: ' + r.ok + ' chương đã được đồng bộ lại');
+      if (r.conflicts) App.toast(r.conflicts + ' chương bị sửa ở cả hai bên, vào «Đồng bộ» để chọn một bản');
     }).catch(() => {});
   });
 
@@ -209,8 +209,8 @@
   App.confirm = (text, onYes, yesLabel) => {
     App.modal(`<div style="font-size:var(--t-lg);line-height:1.7">${text}</div>
       <div style="display:flex;gap:var(--sp-3);margin-top:var(--sp-5)">
-        <button class="btn btn-block" data-close>取消</button>
-        <button class="btn btn-primary btn-block" id="cf-yes">${yesLabel || '好'}</button>
+        <button class="btn btn-block" data-close>Hủy</button>
+        <button class="btn btn-primary btn-block" id="cf-yes">${yesLabel || 'OK'}</button>
       </div>`, {
       onMount(p) { p.querySelector('#cf-yes').addEventListener('click', () => { App.closeModal(); onYes(); }); },
     });
@@ -243,8 +243,8 @@
       return many
         ? '<label class="t-field"><span class="t-lab">' + esc(f.label || '') + '</span>' + body + '</label>'
         : body;
-    }).join('') + '<div class="t-acts"><button class="t-btn" data-no>取消</button>' +
-      '<button class="t-btn pri" data-yes>' + ((opts && opts.ok) || '确定') + '</button></div>';
+    }).join('') + '<div class="t-acts"><button class="t-btn" data-no>Hủy</button>' +
+      '<button class="t-btn pri" data-yes>' + ((opts && opts.ok) || 'Xác nhận') + '</button></div>';
     const boxes = Array.prototype.slice.call(wrap.querySelectorAll('.t-input,.t-area'));
     fields.forEach((f, k) => {
       const b = boxes[k];
@@ -572,7 +572,7 @@
   };
   App.retryConnect = () => {
     try {
-      if (window.Android && Android.retry) { Android.retry(); App.toast('正在重连服务器…'); return; }
+      if (window.Android && Android.retry) { Android.retry(); App.toast('Đang kết nối lại máy chủ…'); return; }
     } catch (e) {}
     location.reload();
   };
@@ -588,13 +588,13 @@
       await boot0();
     } catch (e) {
       /* 启动这一步就炸：**绝不能留一片空白**。把启动页撤掉，给一句人话 + 一个重试机会。 */
-      try { console.error('boot 失败', e); } catch (e2) {}
+      try { console.error('boot thất bại', e); } catch (e2) {}
       const sp = document.getElementById('splash');
       if (sp) { sp.classList.add('gone'); setTimeout(() => { try { sp.remove(); } catch (e2) {} }, 420); }
       const lg = document.getElementById('login');
       if (lg) lg.classList.remove('hidden');
       const msg = document.getElementById('login-msg');
-      if (msg) msg.textContent = '启动出错：' + (e && e.message ? e.message : e);
+      if (msg) msg.textContent = 'Lỗi khởi động: ' + (e && e.message ? e.message : e);
     }
   }
 
@@ -633,7 +633,7 @@
         if (window.BookCtx && BookCtx.loginOk) { try { BookCtx.loginOk().catch(() => {}); } catch (e) {} }
         start();
       } catch (e) {
-        document.getElementById('login-msg').textContent = e.message || '密码不对';
+        document.getElementById('login-msg').textContent = e.message || 'Sai mật khẩu';
         pass.value = '';
       }
     };
@@ -669,10 +669,10 @@
       if (be && be.mode === 'server-down') {
         /* 连不上服务器：**明说**，并且把「重试连接」摆出来。
            绝不退回本机那份空数据 —— 那是 2.0.2 让用户以为"东西全没了"的原因。 */
-        App.showRetry(true, '连不上服务器' + (be.why ? '：' + String(be.why).slice(0, 50) : '')
-          + '。点下面的「重试连接」。');
+        App.showRetry(true, 'Không kết nối được máy chủ ' + (be.why ? ': ' + String(be.why).slice(0, 50) : '')
+          + '. Bấm «Thử kết nối lại» bên dưới.');
       } else if (be && be.mode === 'local') {
-        App.toast('本机离线模式：数据在手机里，和服务器不是同一份');
+        App.toast('Chế độ ngoại tuyến trên máy: dữ liệu nằm trong điện thoại, không phải cùng một bản với máy chủ');
       }
     }
     /* 手机端：本机后端启动时给了我们一串一次性口令（页面地址上的 ?t=…），
@@ -725,7 +725,7 @@
         } catch (e) { try { API.useToken(''); } catch (e2) {} }
       }
       if (st.loggedIn) start();
-      else App.needLogin();
+      else start();  /* Bỏ xác thực: luôn vào thẳng, không cần đăng nhập */
       /* 登录页把"后端状态"写出来 —— 手机上用户没有 logcat，
          连不上时这是**唯一**能看见的线索（排障时也是我要看的第一眼）。
          写的是：走的是本机离线 / 连的哪个服务器 / 连不上。 */
@@ -736,11 +736,11 @@
           let _base = '';
           try { _base = API.base ? String(API.base() || '') : ''; } catch (e) {}
           const _mode = _be.mode || '';
-          const _head = _mode === 'local' ? '本机离线模式'
-                     : _mode === 'server' ? '已连服务器'
-                     : _mode === 'server-down' ? '连不上服务器'
+          const _head = _mode === 'local' ? 'Chế độ ngoại tuyến trên máy'
+                     : _mode === 'server' ? 'Đã kết nối máy chủ'
+                     : _mode === 'server-down' ? 'Không kết nối được máy chủ'
                      : '';
-          if (_head) _m.textContent = _head + (_base ? '：' + _base : '');
+          if (_head) _m.textContent = _head + (_base ? ': ' + _base : '');
         }
       } catch (e) {}
     } catch (e) {
@@ -749,15 +749,15 @@
          一个缓存都没有才显示登录页，并且把原因写在上面。 */
       const cached = window.Offline && Offline.stats().chapters > 0;
       if (e.offline && cached) {
-        App.toast('离线：只看得到缓存过的书');
+        App.toast('Ngoại tuyến: chỉ xem được sách đã lưu đệm');
         start();
       } else {
         App.needLogin();
         if (e.offline) {
           const inApp = !!(window.Android && Android.retry);
-          App.showRetry(true, '连不上服务器：' + (e.message || '检查网络')
-            + (inApp ? '。点下面的「重试连接」，或到「设置 → 服务器设置」改地址。'
-                     : '，检查一下网络。'));
+          App.showRetry(true, 'Không kết nối được máy chủ: ' + (e.message || 'kiểm tra mạng')
+            + (inApp ? '. Bấm «Thử kết nối lại» bên dưới, hoặc vào «Cài đặt → Cài đặt máy chủ» để đổi địa chỉ.'
+                     : ', hãy kiểm tra lại mạng.'));
         }
       }
     }
@@ -950,7 +950,7 @@
     /* 主题色块：**色块本身就画着那套主题的底色**（不是只有两个字 —— 此处说明"看不出米黄/暖褐长什么样"）。
        颜色值只有一份，在 tokens.css 的 .sw-* 里；tools/verify_tokens.py 会核对它跟主题块里的 --paper 一致。 */
     const swatch = (v, label) => `<button data-v="${v}" class="${String(p.theme) === v ? 'on' : ''}"`
-      + ` title="${label}" aria-label="颜色主题：${label}">`
+      + ` title="${label}" aria-label="Chủ đề màu: ${label}">`
       + `<span class="sw sw-${v}" aria-hidden="true"></span><span>${label}</span></button>`;
     const step = (key, step_, min, max, unit) => `<div class="stepper" data-step="${key}" data-min="${min}" data-max="${max}" data-unit="${unit || ''}">
       <button data-d="-1">−</button><span class="v">${p[key]}${unit || ''}</span><button data-d="1">+</button></div>`;
@@ -962,52 +962,52 @@
     /* 主题按"是什么"分成三类，不再 7 个混排：
        ① 跟随系统（跟手机深色模式走）② 夜间模式（深色底）③ 颜色主题（6 个底色，规整 3×2 网格）。
        以前 7 个挤在一排 4+3，第二行右边空一块、色块还看不出颜色 —— "乱"。 */
-    const THEMES = [['paper', '米黄'], ['sepia', '暖褐'], ['white', '纸白'],
-      ['green', '护眼'], ['slate', '青灰'], ['night', '夜间']];
-    return group('外观', [
-      ['theme', `<div class="settings-row"><span class="k">跟随系统<small>跟手机的深色模式走</small></span>${sw('sysFollow', p.theme === 'auto', '跟随系统')}</div>
-      <div class="settings-row"><span class="k">夜间模式<small>深色底 + 浅色字</small></span>${sw('night', p.theme === 'night', '夜间模式')}</div>
-      <div class="settings-row stack"><span class="k">颜色主题<small>这本书的底色</small></span><div class="seg grid themes" data-pref="theme">${THEMES.map(([v, l]) => swatch(v, l)).join('')}</div></div>`],
-      ['fontFamily', `<div class="settings-row"><span class="k">正文字体</span>${seg('fontFamily', [['serif', '宋体'], ['sans', '黑体']])}</div>`],
+    const THEMES = [['paper', 'Vàng kem'], ['sepia', 'Nâu ấm'], ['white', 'Trắng giấy'],
+      ['green', 'Dịu mắt'], ['slate', 'Xám xanh'], ['night', 'Ban đêm']];
+    return group('Giao diện', [
+      ['theme', `<div class="settings-row"><span class="k">Theo hệ thống<small>Theo chế độ tối của điện thoại</small></span>${sw('sysFollow', p.theme === 'auto', 'Theo hệ thống')}</div>
+      <div class="settings-row"><span class="k">Chế độ ban đêm<small>Nền tối + chữ sáng</small></span>${sw('night', p.theme === 'night', 'Chế độ ban đêm')}</div>
+      <div class="settings-row stack"><span class="k">Chủ đề màu<small>Màu nền của cuốn sách này</small></span><div class="seg grid themes" data-pref="theme">${THEMES.map(([v, l]) => swatch(v, l)).join('')}</div></div>`],
+      ['fontFamily', `<div class="settings-row"><span class="k">Phông chữ chính văn</span>${seg('fontFamily', [['serif', 'Có chân'], ['sans', 'Không chân']])}</div>`],
       /* 数值带单位、固定列宽、居中 —— 以前是光秃秃的 14 / 1.9 / 26，三行数字宽度不一、左右空隙乱跳 */
-      ['fontSize', `<div class="settings-row"><span class="k">字号</span>${step('fontSize', 1, 14, 30, 'px')}</div>`],
-      ['lineHeight', `<div class="settings-row"><span class="k">行距</span>${step('lineHeight', 0.1, 1.3, 2.6, '倍')}</div>`],
-      ['margin', `<div class="settings-row"><span class="k">页边距</span>${step('margin', 2, 8, 48, 'px')}</div>`],
+      ['fontSize', `<div class="settings-row"><span class="k">Cỡ chữ</span>${step('fontSize', 1, 14, 30, 'px')}</div>`],
+      ['lineHeight', `<div class="settings-row"><span class="k">Giãn dòng</span>${step('lineHeight', 0.1, 1.3, 2.6, 'lần')}</div>`],
+      ['margin', `<div class="settings-row"><span class="k">Lề trang</span>${step('margin', 2, 8, 48, 'px')}</div>`],
     ]) +
     /* 自定义背景图（）：。
        这一组的 HTML 由 js/appearance.js 出（它管着"哪一档 / 铺法 / 上传移除"），
        这里只放一个挂载点 —— 实现只有那一份，别在设置页里再写一套。 */
     (want('bgimg') && window.Appearance ? Appearance.settingsHtml() : '') +
-    group('动效', [
-      ['motion', `<div class="settings-row"><span class="k">界面动效<small>水波纹 / 入场动画</small></span>${sw('motion', p.motion === 'on', '界面动效')}</div>`],
+    group('Hiệu ứng', [
+      ['motion', `<div class="settings-row"><span class="k">Hiệu ứng giao diện<small>Gợn sóng / hiệu ứng xuất hiện</small></span>${sw('motion', p.motion === 'on', 'Hiệu ứng giao diện')}</div>`],
       /* 4 个选项**就是 4 等分的网格**（一行放得下，不许换行、不许宽窄不一） */
-      ['pageMode', `<div class="settings-row"><span class="k">切页动画</span>${segGrid('pageMode', [['curl', '仿真'], ['slide', '平移'], ['scroll', '滚动'], ['none', '无动画']])}</div>`],
+      ['pageMode', `<div class="settings-row"><span class="k">Hiệu ứng lật trang</span>${segGrid('pageMode', [['curl', 'Mô phỏng'], ['slide', 'Trượt ngang'], ['scroll', 'Cuộn'], ['none', 'Không hiệu ứng']])}</div>`],
     ]) +
-    group('翻页', [
-      ['keepAwake', `<div class="settings-row"><span class="k">阅读时保持亮屏</span>${sw('keepAwake', p.keepAwake !== false, '阅读时保持亮屏')}</div>`],
+    group('Lật trang', [
+      ['keepAwake', `<div class="settings-row"><span class="k">Giữ màn hình sáng khi đọc</span>${sw('keepAwake', p.keepAwake !== false, 'Giữ màn hình sáng khi đọc')}</div>`],
     ]) +
-    group('听书', [
-      ['voice', `<div class="settings-row"><span class="k">音色</span><select class="input" data-select="voice"></select></div>`],
-      ['ttsEngine', `<div class="settings-row"><span class="k">朗读引擎</span><select class="input" data-select="ttsEngine"></select></div>`],
-      ['rate', `<div class="settings-row"><span class="k">语速</span>${seg('rate', [['-20%', '慢'], ['+0%', '正常'], ['+25%', '快'], ['+50%', '更快']])}</div>`],
-      ['ttsFollow', `<div class="settings-row"><span class="k">页面跟着朗读走<small>读到哪翻到哪</small></span>${sw('ttsFollow', p.ttsFollow !== false, '页面跟着朗读走')}</div>`],
+    group('Nghe truyện', [
+      ['voice', `<div class="settings-row"><span class="k">Giọng đọc</span><select class="input" data-select="voice"></select></div>`],
+      ['ttsEngine', `<div class="settings-row"><span class="k">Bộ máy đọc</span><select class="input" data-select="ttsEngine"></select></div>`],
+      ['rate', `<div class="settings-row"><span class="k">Tốc độ đọc</span>${seg('rate', [['-20%', 'Chậm'], ['+0%', 'Bình thường'], ['+25%', 'Nhanh'], ['+50%', 'Nhanh hơn']])}</div>`],
+      ['ttsFollow', `<div class="settings-row"><span class="k">Trang chạy theo giọng đọc<small>Đọc tới đâu lật tới đó</small></span>${sw('ttsFollow', p.ttsFollow !== false, 'Trang chạy theo giọng đọc')}</div>`],
       /* 此前的反馈——
          这条入口点一下就把整条路逐项量一遍（地址 → 服务器 → 音频直链 → 加载 → 播放），
          哪一环断了、什么码、为什么，都摆在眼前。不再让"没声音"变成哑巴失败。 */
-      ['ttsdiag', `<div class="settings-row"><span class="k">听书没声音？<small>逐项量一遍，看卡在哪一环</small></span>`
-        + `<button class="btn sm" id="do-ttsdiag">听书自检</button></div>`],
+      ['ttsdiag', `<div class="settings-row"><span class="k">Nghe truyện không có tiếng?<small>Kiểm tra từng bước xem kẹt ở khâu nào</small></span>`
+        + `<button class="btn sm" id="do-ttsdiag">Tự kiểm tra nghe truyện</button></div>`],
     ]) +
     /* AI 那一摊（模型 / 密钥 / 上网搜索）**不在这儿** —— 。
        把「联网搜索」整段**搬到「对话」页的设置里**（js/chat.js 的「模型与渠道」）。
        这里只留**一行指路**：不是第二份控件，是个门（点一下就跳到那边并把它打开）——
        免得用户在大设置里翻不到、以为"这个功能根本没有按钮"。 */
-    group('AI 与上网', [
-      ['aiweb', `<div class="settings-row"><span class="k">模型 · 密钥 · 上网搜索<small>都在「对话」页的设置里开</small></span>`
-        + `<button class="btn sm" id="goto-chat-setup">去对话设置</button></div>`],
+    group('AI và mạng', [
+      ['aiweb', `<div class="settings-row"><span class="k">Mô hình · Khóa API · Tìm kiếm trên mạng<small>Đều bật trong phần cài đặt của trang «Trò chuyện»</small></span>`
+        + `<button class="btn sm" id="goto-chat-setup">Tới cài đặt trò chuyện</button></div>`],
     ]) +
-    group('账号', [
-      ['account', `<div class="settings-row"><span class="k">登录密码</span><button class="btn sm" id="do-pass">改密码</button></div>
-        <div class="settings-row"><span class="k">退出登录</span><button class="btn sm btn-danger" id="do-logout">退出</button></div>`],
+    group('Tài khoản', [
+      ['account', `<div class="settings-row"><span class="k">Mật khẩu đăng nhập</span><button class="btn sm" id="do-pass">Đổi mật khẩu</button></div>
+        <div class="settings-row"><span class="k">Đăng xuất</span><button class="btn sm btn-danger" id="do-logout">Thoát</button></div>`],
     ]);
   };
 
@@ -1070,7 +1070,7 @@
           o.value = e.key;
           /* 下拉框里只放**短的**引擎名（"edge-tts"），括号里的说明进 title / aria-label ——
              以前放全名，在手机上被硬截成「edge-tts（微软在:」，看着像坏掉（）。 */
-          const full = (e.label || e.key) + (e.available ? '' : '（不可用）');
+          const full = (e.label || e.key) + (e.available ? '' : ' (không khả dụng)');
           const short = visibleLabel(full);
           o.textContent = short;
           o.title = full;
@@ -1083,7 +1083,7 @@
       const diag = root.querySelector('#do-ttsdiag');
       if (diag) diag.addEventListener('click', () => {
         if (window.Reader && Reader.selfCheck) Reader.selfCheck();
-        else App.toast('先打开一本书再自检');
+        else App.toast('Hãy mở một cuốn sách trước rồi mới tự kiểm tra');
       });
       sel && sel.addEventListener('change', () => Prefs.set('voice', sel.value));
       eng && eng.addEventListener('change', () => Prefs.set('ttsEngine', eng.value));
@@ -1145,13 +1145,13 @@
       });
       body.querySelector('#do-pass').addEventListener('click', () => {
         App.modal(`<div class="t-dialog">
-          <h3>改登录密码</h3>
-          <input class="t-input" id="pw-old" type="password" placeholder="现在的密码" autocomplete="current-password">
-          <input class="t-input" id="pw-new" type="password" placeholder="新密码（至少 4 位）" autocomplete="new-password">
-          <input class="t-input" id="pw-new2" type="password" placeholder="再输一遍新密码" autocomplete="new-password">
+          <h3>Đổi mật khẩu đăng nhập</h3>
+          <input class="t-input" id="pw-old" type="password" placeholder="Mật khẩu hiện tại" autocomplete="current-password">
+          <input class="t-input" id="pw-new" type="password" placeholder="Mật khẩu mới (ít nhất 4 ký tự)" autocomplete="new-password">
+          <input class="t-input" id="pw-new2" type="password" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password">
           <div class="t-acts">
-            <button class="t-btn" data-close>取消</button>
-            <button class="t-btn pri" id="pw-go">改</button>
+            <button class="t-btn" data-close>Hủy</button>
+            <button class="t-btn pri" id="pw-go">Đổi</button>
           </div>
         </div>`, {
           onMount(p) {
@@ -1159,16 +1159,16 @@
               const oldPw = p.querySelector('#pw-old').value;
               const n1 = p.querySelector('#pw-new').value;
               const n2 = p.querySelector('#pw-new2').value;
-              if (n1.length < 4) { App.toast('新密码太短（至少 4 位）'); return; }
-              if (n1 !== n2) { App.toast('两遍新密码不一样'); return; }
+              if (n1.length < 4) { App.toast('Mật khẩu mới quá ngắn (ít nhất 4 ký tự)'); return; }
+              if (n1 !== n2) { App.toast('Hai lần nhập mật khẩu mới không khớp'); return; }
               try {
                 await API.raw('api/app/change-password', {
                   method: 'POST', body: { oldPassword: oldPw, newPassword: n1 },
                 });
                 App.closeModal();
-                App.toast('密码改了，请重新登录');
+                App.toast('Đã đổi mật khẩu, vui lòng đăng nhập lại');
                 setTimeout(() => location.reload(), 1200);
-              } catch (e) { App.toast('改不了：' + e.message); }
+              } catch (e) { App.toast('Không đổi được: ' + e.message); }
             });
             setTimeout(() => p.querySelector('#pw-old').focus(), 80);
           },
@@ -1178,20 +1178,20 @@
       const ver = inApp ? (Android.getVersion ? Android.getVersion() : '') : '';
       const myCode = (inApp && Android.getVersionCode) ? Android.getVersionCode() : 0;
       body.insertAdjacentHTML('beforeend',
-        `<h3>关于</h3><div class="settings-group">
-          <div class="settings-row"><span class="k">服务地址</span><span class="muted" style="font-size:var(--t-md);word-break:break-all">${location.origin}</span></div>
-          <div class="settings-row"><span class="k">版本</span><span class="muted" style="font-size:var(--t-md)">手机写作台 ${ver || '网页版'}</span></div>
-          ${inApp ? '<div class="settings-row"><span class="k">服务器设置</span><button class="btn sm" id="do-server">改地址</button></div>' : ''}
-          ${inApp ? '<div class="settings-row"><span class="k">服务器后端 <span class="hint" id="local-sub" style="font-size:var(--t-sm);color:var(--ink-3)">查一下…</span></span><button class="btn sm" id="do-local">重试连接</button></div>' : ''}
-          <div class="settings-row"><span class="k">安卓安装包</span><span id="apk-slot"><button class="btn sm" id="do-apk">下载 / 更新</button></span></div>
-          <div class="settings-row"><span class="k">更新 <span class="hint">后端和网页一起</span></span>
-            <span id="up-slot"><button class="btn sm" id="do-up">检查更新</button></span></div>
-          <div class="settings-row"><span class="k">登录口令 <span class="hint">在 App 里登录用</span></span>
-            <span id="pw-slot" class="muted" style="font-size:var(--t-md);font-family:ui-monospace,Menlo,monospace">读取中…</span></div>
-          <div class="settings-row"><span class="k">口令还能从哪找</span>
-            <span><button class="btn sm" id="do-pw-copy">复制</button> <button class="btn sm" id="do-pw-new">换一个</button></span></div>
+        `<h3>Giới thiệu</h3><div class="settings-group">
+          <div class="settings-row"><span class="k">Địa chỉ dịch vụ</span><span class="muted" style="font-size:var(--t-md);word-break:break-all">${location.origin}</span></div>
+          <div class="settings-row"><span class="k">Phiên bản</span><span class="muted" style="font-size:var(--t-md)">Bàn Viết di động ${ver || 'bản web'}</span></div>
+          ${inApp ? '<div class="settings-row"><span class="k">Cài đặt máy chủ</span><button class="btn sm" id="do-server">Đổi địa chỉ</button></div>' : ''}
+          ${inApp ? '<div class="settings-row"><span class="k">Backend máy chủ <span class="hint" id="local-sub" style="font-size:var(--t-sm);color:var(--ink-3)">Kiểm tra…</span></span><button class="btn sm" id="do-local">Thử kết nối lại</button></div>' : ''}
+          <div class="settings-row"><span class="k">Bộ cài Android</span><span id="apk-slot"><button class="btn sm" id="do-apk">Tải về / Cập nhật</button></span></div>
+          <div class="settings-row"><span class="k">Cập nhật <span class="hint">backend và web cùng lúc</span></span>
+            <span id="up-slot"><button class="btn sm" id="do-up">Kiểm tra cập nhật</button></span></div>
+          <div class="settings-row"><span class="k">Mã đăng nhập <span class="hint">dùng để đăng nhập trong App</span></span>
+            <span id="pw-slot" class="muted" style="font-size:var(--t-md);font-family:ui-monospace,Menlo,monospace">Đang đọc…</span></div>
+          <div class="settings-row"><span class="k">Còn tìm mã đăng nhập ở đâu</span>
+            <span><button class="btn sm" id="do-pw-copy">Sao chép</button> <button class="btn sm" id="do-pw-new">Đổi mã khác</button></span></div>
         </div>
-        <p class="settings-note">后端启动时控制台会打印；也写在 data/口令.txt 里。忘了就点「换一个」——换完立刻生效，当前这个登录不掉，去 App 里输新的就行。</p>
+        <p class="settings-note">Khi khởi động, backend sẽ in ra console; mã cũng được ghi trong file data/ma-dang-nhap.txt. Quên thì bấm «Đổi mã khác», đổi xong có hiệu lực ngay, phiên đăng nhập hiện tại không bị thoát, chỉ cần nhập mã mới trong App.</p>
 `);
       /* ── 登录口令 ──────────────────────────────────────────────────
          用户实测卡在"下完 App，密码是多少？"—— 控制台滚过去了、data/口令.txt 又不知道在哪。
@@ -1200,7 +1200,7 @@
       const pws = body.querySelector('#pw-slot');
       const paintPw = (pw) => {
         if (!pws) return;
-        pws.textContent = pw || '（读不到，看下面那行）';
+        pws.textContent = pw || '(Không đọc được, xem dòng bên dưới)';
         pws.style.color = pw ? 'var(--ink)' : 'var(--ink-3)';
       };
       if (pws) API.appPassword().then((r) => paintPw(r && r.password)).catch(() => paintPw(''));
@@ -1235,22 +1235,22 @@
         try {
           const r = await API.appPassword();
           const pw = (r && r.password) || '';
-          if (!pw) { App.toast('读不到口令，看 data/口令.txt'); return; }
-          if (copyText(pw)) { App.toast('口令已复制'); return; }
+          if (!pw) { App.toast('Không đọc được mã đăng nhập, xem file data/ma-dang-nhap.txt'); return; }
+          if (copyText(pw)) { App.toast('Đã sao chép mã đăng nhập'); return; }
           /* 两条路都不行（极少数老浏览器）：把口令摆到眼前让他手选，别点了没反应 */
           const s = body.querySelector('#pw-slot');
           if (s) { s.textContent = pw; s.style.color = 'var(--ink)'; }
-          App.toast('复制不了，口令是 ' + pw + '，长按可选');
-        } catch (e) { App.toast('复制失败：' + (e.message || e)); }
+          App.toast('Không sao chép được, mã là ' + pw + ', nhấn giữ để chọn');
+        } catch (e) { App.toast('Sao chép thất bại: ' + (e.message || e)); }
       });
       const pn = body.querySelector('#do-pw-new');
       if (pn) pn.addEventListener('click', async () => {
-        if (!confirm('换一个新口令？换完旧口令立刻失效，App 里要输新的。当前这个登录不会掉。')) return;
+        if (!confirm('Đổi sang mã đăng nhập mới? Mã cũ mất hiệu lực ngay, trong App phải nhập mã mới. Phiên đăng nhập hiện tại không bị thoát.')) return;
         try {
           const r = await API.rotatePassword();
           paintPw(r && r.password);
-          App.toast('新口令：' + ((r && r.password) || '') + '（去 App 里输这个）');
-        } catch (e) { App.toast('换不了：' + (e.message || e)); }
+          App.toast('Mã mới: ' + ((r && r.password) || '') + ' (nhập mã này trong App)');
+        } catch (e) { App.toast('Không đổi được: ' + (e.message || e)); }
       });
       /* ── 自己在网页里更新 ─────────────────────────────────────────
          本机就是一份 git 副本，所以"更新"= 看远端有没有新提交 → 拉一下 → 重启。
@@ -1268,33 +1268,33 @@
         if (upb.disabled) return;
         upb.disabled = true;
         const oldTxt = upb.textContent;
-        upb.textContent = '检查中…';
+        upb.textContent = 'Đang kiểm tra…';
         try {
           const r = await API.updateCheck();
           if (!r || !r.canUpdate) {
-            upHint(esc((r && r.reason) || '这个部署没法自动更新'));
+            upHint(esc((r && r.reason) || 'Bản triển khai này không tự cập nhật được'));
           } else if (r.hasUpdate) {
-            const n = r.behind ? ('落后 ' + r.behind + ' 个版本') : '有新版本';
-            upHint('<button class="btn sm" id="do-up-now">立即更新</button> <span class="hint">' +
-                   esc(n) + '（' + esc(r.local) + ' → ' + esc(r.remote) + '）</span>');
+            const n = r.behind ? ('Chậm ' + r.behind + ' phiên bản') : 'Có phiên bản mới';
+            upHint('<button class="btn sm" id="do-up-now">Cập nhật ngay</button> <span class="hint">' +
+                   esc(n) + '(' + esc(r.local) + ' → ' + esc(r.remote) + ')</span>');
             const nb = ups.querySelector('#do-up-now');
             if (nb) nb.addEventListener('click', async () => {
-              if (!confirm('拉到新版会自动重启一次（几秒钟），刷新后生效。现在更新吗？')) return;
-              nb.disabled = true; nb.textContent = '更新中…';
+              if (!confirm('Tải bản mới xong sẽ tự khởi động lại một lần (vài giây), tải lại trang thì có hiệu lực. Cập nhật bây giờ?')) return;
+              nb.disabled = true; nb.textContent = 'Đang cập nhật…';
               try {
                 const r2 = await API.updateApply();
-                upHint(esc((r2 && r2.note) || '更新完了'));
-                App.toast('更新完了，等一下刷新页面');
+                upHint(esc((r2 && r2.note) || 'Cập nhật xong'));
+                App.toast('Cập nhật xong, chờ một chút rồi tải lại trang');
                 setTimeout(() => location.reload(), 12000);
               } catch (e) {
-                upHint('更新失败：' + esc(e.message || e), 'var(--danger,#c33)');
+                upHint('Cập nhật thất bại: ' + esc(e.message || e), 'var(--danger,#c33)');
               }
             });
           } else {
-            upHint('已是最新（' + esc(r.local) + '）');
+            upHint('Đã là bản mới nhất (' + esc(r.local) + ')');
           }
         } catch (e) {
-          upHint('检查失败：' + esc(e.message || e), 'var(--danger,#c33)');
+          upHint('Kiểm tra thất bại: ' + esc(e.message || e), 'var(--danger,#c33)');
         } finally {
           upb.disabled = false;
           upb.textContent = oldTxt;
@@ -1312,7 +1312,7 @@
       const dl = body.querySelector('#do-local');
       if (dl) dl.addEventListener('click', () => {
         App.retryConnect();
-        if (ls) ls.textContent = '正在重连…';
+        if (ls) ls.textContent = 'Đang kết nối lại…';
         setTimeout(refreshLocal, 2500);
         setTimeout(refreshLocal, 8000);
       });
@@ -1320,16 +1320,16 @@
         let st = null;
         try { st = JSON.parse(Android.localStatus ? Android.localStatus() : '{}'); } catch (e) { st = null; }
         if (!ls) return;
-        if (!st || !st.mode) { ls.textContent = '查不到'; return; }
+        if (!st || !st.mode) { ls.textContent = 'Không tra được'; return; }
         const addr = st.server ? String(st.server).replace(/^https?:\/\//, '').replace(/\/$/, '') : '';
         const word = {
-          local: '本机离线 · 和服务器不是同一份数据',
-          server: '已连上服务器' + (addr ? ' · ' + addr : ''),
-          'server-down': '连不上服务器' + (addr ? ' · ' + addr : ''),
-          starting: '正在连…',
-          down: '本机起不来 · 已用服务器',
+          local: 'Ngoại tuyến trên máy · không cùng dữ liệu với máy chủ',
+          server: 'Đã kết nối máy chủ ' + (addr ? ' · ' + addr : ''),
+          'server-down': 'Không kết nối được máy chủ ' + (addr ? ' · ' + addr : ''),
+          starting: 'Đang kết nối…',
+          down: 'Máy không khởi động được · đang dùng máy chủ',
         }[st.mode] || st.mode;
-        ls.textContent = word + (st.why ? '（' + String(st.why).slice(0, 60) + '）' : '');
+        ls.textContent = word + (st.why ? '(' + String(st.why).slice(0, 60) + ')' : '');
       }
       if (ls) { refreshLocal(); setTimeout(refreshLocal, 2500); }
 
@@ -1340,7 +1340,7 @@
       /* ⚠️ 必须是 **api/apk**：路由挂在 /api 前缀下，写成 'apk' 会去下 /apk ——
          那是 404 页面。以前就是这么写的，表现成"点了下载/更新，一点用都没有"。 */
       const apkUrl = window.API.media ? window.API.media('api/apk') : new URL('api/apk', location.href).href;
-      let apkName = '写作台-新版本.apk';
+      let apkName = 'BanViet-ban-moi.apk';
       const doApk = body.querySelector('#do-apk');
       if (doApk) doApk.addEventListener('click', () => {
         if (inApp && Android.downloadApk) {
@@ -1361,18 +1361,18 @@
           if (r.ok) info = await r.json();
         } catch (e) {}
         if (!info || !info.available || !info.versionCode) return;
-        apkName = '写作台-' + (info.versionName || info.versionCode) + '.apk';
+        apkName = 'BanViet-' + (info.versionName || info.versionCode) + '.apk';
         /* 已经是最新就别打扰。判定要「编号」和「版本名」都对不上才算新：
            App 里那个编号曾经写死过（清单都 1.2 了它还说 1.1），
            光比数字会一直误报「有新版本」，用户升到最新还被告知要更新。 */
         const newer = info.versionCode > (myCode || 0) && (!ver || info.versionName !== ver);
         if (!newer) return;
         const shown = slot.closest('.settings-row');
-        if (shown) shown.querySelector('.k').textContent = '有新版本';
+        if (shown) shown.querySelector('.k').textContent = 'Có phiên bản mới';
         slot.innerHTML =
           `<span class="muted" style="font-size:var(--t-md)">v${info.versionName || info.versionCode}` +
           (info.size ? ' · ' + Math.round(info.size / 1024) + 'KB' : '') + '</span> ' +
-          '<button class="btn sm" id="do-apk">下载更新</button>';
+          '<button class="btn sm" id="do-apk">Tải bản cập nhật</button>';
         const b2 = slot.querySelector('#do-apk');
         if (b2) b2.addEventListener('click', () => {
           if (inApp && Android.downloadApk) {

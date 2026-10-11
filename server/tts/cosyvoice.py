@@ -23,7 +23,7 @@ from .base import Engine, rate_to_speed, register
 
 class CosyVoiceEngine(Engine):
     key = "cosyvoice"
-    label = "CosyVoice（可克隆音色，需要本机推理服务）"
+    label = "CosyVoice (giọng có thể nhân bản, cần dịch vụ suy luận trên máy)"
 
     def _cfg(self) -> dict:
         from ..config import CFG
@@ -32,18 +32,18 @@ class CosyVoiceEngine(Engine):
     def available(self) -> tuple[bool, str]:
         c = self._cfg()
         if not c.get("base_url"):
-            return False, "还没配 CosyVoice 服务地址（server/config.json 里的 cosyvoice.base_url）"
+            return False, "Chưa cấu hình địa chỉ dịch vụ CosyVoice (cosyvoice.base_url trong server/config.json)"
         return True, ""
 
     async def synth(self, text: str, voice: str, rate: str) -> bytes:
         c = self._cfg()
         base = str(c.get("base_url") or "").rstrip("/")
         if not base:
-            raise RuntimeError("还没配 CosyVoice 服务地址")
+            raise RuntimeError("Chưa cấu hình địa chỉ dịch vụ CosyVoice")
         api = c.get("api") or "cosyvoice"
         text = (text or "").strip()
         if not text:
-            raise ValueError("这一段没有可读的文字")
+            raise ValueError("Đoạn này không có chữ đọc được")
         speed = rate_to_speed(rate) * float(c.get("speed") or 1.0)
         try:
             async with httpx.AsyncClient(timeout=httpx.Timeout(120.0, connect=5.0)) as cli:
@@ -59,12 +59,12 @@ class CosyVoiceEngine(Engine):
                         payload["prompt_wav"] = c["prompt_wav"]
                     r = await cli.post(base + "/inference_sft", data=payload)
                 if r.status_code >= 400:
-                    raise RuntimeError(f"CosyVoice 返回 {r.status_code}：{r.text[:120]}")
+                    raise RuntimeError(f"CosyVoice trả về {r.status_code}: {r.text[:120]}")
                 if not r.content:
-                    raise RuntimeError("CosyVoice 没返回音频（是不是模型还没加载完？）")
+                    raise RuntimeError("CosyVoice không trả về âm thanh (có phải mô hình chưa tải xong?)")
                 return r.content
         except httpx.HTTPError as e:
-            raise RuntimeError(f"连不上 CosyVoice（{base}）：{e.__class__.__name__}")
+            raise RuntimeError(f"Không kết nối được CosyVoice ({base}): {e.__class__.__name__}")
 
 
 register(CosyVoiceEngine())

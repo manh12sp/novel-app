@@ -26,7 +26,7 @@ async def rag_subject(request: Request, projectRoot: str = "", subjectPath: str 
     s = require_book(projectRoot)
     who = subjectPath or subject
     if not who:
-        raise HTTPException(400, "缺少 subjectPath")
+        raise HTTPException(400, "Thiếu subjectPath")
     return mem.subject_detail(s, who)
 
 
@@ -65,7 +65,7 @@ async def rag_forget(request: Request, projectRoot: str = "", payload: dict = Bo
     # 只认前一个的话，调用方发 subject 会静默变成"删空 subject 的那条"，什么都不删还回 200。
     subj = body.get("subjectPath") or body.get("subject") or ""
     if not subj and not body.get("topic"):
-        raise HTTPException(400, "缺少数删除目标")
+        raise HTTPException(400, "Thiếu đối tượng cần xóa")
     return mem.forget(s, subj, body.get("topic") or "")
 
 
@@ -75,14 +75,14 @@ async def rag_rebuild(request: Request, projectRoot: str = "", payload: dict = B
     from .books import require_book
     s = require_book(projectRoot)
     from .agent import finish_job, new_job
-    jid = new_job("rag_rebuild", "重建记忆", s)
+    jid = new_job("rag_rebuild", "Dựng lại ký ức", s)
     try:
         out = await mem.rebuild(s, model_key=(payload or {}).get("modelKey") or "")
         finish_job(jid, "done", result=out)
         return out
     except Exception as e:
         finish_job(jid, "failed", error=str(e))
-        raise HTTPException(500, f"重建失败：{e}")
+        raise HTTPException(500, f"Dựng lại thất bại: {e}")
 
 
 @router.get("/projects/rag/debug")
@@ -93,8 +93,8 @@ async def rag_debug_get(request: Request, projectRoot: str = ""):
     ins = mem.inspector(s, 50)
     return {"projectRoot": s, "ok": True, "subjects": len(ins.get("subjects") or []),
             "index": ins.get("index") or {}, "embedding": ins.get("embedding") or {},
-            "checks": [{"name": "记忆主体", "ok": bool(ins.get("subjects")),
-                        "detail": f"{len(ins.get('subjects') or [])} 个"}]}
+            "checks": [{"name": "Chủ thể ký ức", "ok": bool(ins.get("subjects")),
+                        "detail": f"{len(ins.get('subjects') or [])} mục"}]}
 
 
 @router.post("/projects/rag/debug")

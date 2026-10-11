@@ -22,27 +22,27 @@ from fastapi import HTTPException
 MAX_INT = 2 ** 53 - 1            # JS 能精确表示的上限（也是 SQLite 64 位整数之前的安全线）
 
 
-def num(value, default=0, *, kind=int, lo=None, hi=None, name="参数"):
+def num(value, default=0, *, kind=int, lo=None, hi=None, name="Tham số"):
     """把 value 变成 kind 类型的数字；None/空串 → default（保持老行为）。"""
     if value is None or (isinstance(value, str) and not value.strip()):
         if default is None:
-            raise HTTPException(400, f"{name}不能为空")
+            raise HTTPException(400, f"{name} không được để trống")
         return default
     if isinstance(value, bool):                  # True/False 当 1/0，别当成字符串处理
         value = int(value)
     try:
         out = int(value) if kind is int else float(value)
     except (TypeError, ValueError, OverflowError):
-        what = "整数" if kind is int else "数字"
-        raise HTTPException(400, f"{name}要是{what}（收到 {str(value)[:20]!r}）")
+        what = "số nguyên" if kind is int else "số"
+        raise HTTPException(400, f"{name} phải là {what} (nhận được {str(value)[:20]!r})")
     if out != out or out in (float("inf"), float("-inf")):
-        raise HTTPException(400, f"{name}超出范围（收到 {str(value)[:20]!r}）")
+        raise HTTPException(400, f"{name} vượt phạm vi (nhận được {str(value)[:20]!r})")
     if abs(out) > MAX_INT:
-        raise HTTPException(400, f"{name}超出范围（最大 {MAX_INT}，收到 {str(value)[:20]!r}）")
+        raise HTTPException(400, f"{name} vượt phạm vi (tối đa {MAX_INT}, nhận được {str(value)[:20]!r})")
     if lo is not None and out < lo:
-        raise HTTPException(400, f"{name}最小是 {lo}（收到 {out}）")
+        raise HTTPException(400, f"{name} tối thiểu là {lo} (nhận được {out})")
     if hi is not None and out > hi:
-        raise HTTPException(400, f"{name}最大是 {hi}（收到 {out}）")
+        raise HTTPException(400, f"{name} tối đa là {hi} (nhận được {out})")
     return out
 
 
@@ -59,7 +59,7 @@ def clamp(value, default, *, lo, hi, kind=int):
     return max(lo, min(hi, out))
 
 
-def s(value, default: str = "", *, name: str = "字段") -> str:
+def s(value, default: str = "", *, name: str = "Trường") -> str:
     """把用户传的标量变成文字；**容器（数组/对象）一律 400**。
 
     打磨补的：`tools/verify_edges.py` 的错类型模糊测试一跑就抓出
@@ -81,15 +81,15 @@ def s(value, default: str = "", *, name: str = "字段") -> str:
     if isinstance(value, (int, float)):
         return str(value)
     if isinstance(value, (bytes, bytearray)):
-        raise HTTPException(400, f"{name}要是文字（收到二进制）")
-    raise HTTPException(400, f"{name}要是文字，不该是{'数组' if isinstance(value, list) else '对象'}"
-                             f"（收到 {json.dumps(value, ensure_ascii=False)[:60]}）")
+        raise HTTPException(400, f"{name} phải là chữ (nhận được dữ liệu nhị phân)")
+    raise HTTPException(400, f"{name} phải là chữ, không được là {'mảng' if isinstance(value, list) else 'đối tượng'}"
+                             f"(nhận được {json.dumps(value, ensure_ascii=False)[:60]})")
 
 
-def obj(value, default=None, *, name: str = "字段"):
+def obj(value, default=None, *, name: str = "Trường"):
     """给"本来就要一个对象"的字段用（比如 voice 档案、settings）。不是对象 → 400。"""
     if value is None:
         return default
     if isinstance(value, dict):
         return value
-    raise HTTPException(400, f"{name}要是对象（收到 {type(value).__name__}）")
+    raise HTTPException(400, f"{name} phải là đối tượng (nhận được {type(value).__name__})")

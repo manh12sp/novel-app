@@ -92,7 +92,7 @@
       sawText++;
     }
     flush();
-    return out.join('') || '<p class="rd-quote">（本章暂无正文）</p>';
+    return out.join('') || '<p class="rd-quote">(Chương này chưa có nội dung)</p>';
   }
 
   /* ══════════════════════ 抽屉/弹窗 + 手机返回键 ══════════════════════ */
@@ -198,8 +198,8 @@
           const cached = (window.Offline && Offline.projects()) || [];
           if (!netE.offline || !cached.length) throw netE;
           this.projects = cached;
-          this.stale = '连不上服务器：现在看到的是缓存里的书';   // 留在屏上，不靠 toast
-          App.toast('离线：只看得到缓存过的书');
+          this.stale = 'Không kết nối được máy chủ: đang xem sách trong bộ nhớ đệm';   // 留在屏上，不靠 toast
+          App.toast('Ngoại tuyến: chỉ xem được sách đã lưu đệm');
         }
         this.render();
         const jobs = this.projects.slice();
@@ -242,10 +242,10 @@
       const box = window.UI.state({
         kind: 'error',
         icon: 'refresh',
-        title: offline ? '书架打不开：连不上服务器' : '书架打不开',
-        desc: offline ? '看看手机是不是断网了，或者服务器在重启。点下面重试。'
-                      : '出了点问题：' + ((e && e.message) || '未知错误'),
-        actions: [window.UI.btn('重试', { variant: 'primary', act: 'shelf-reload' })],
+        title: offline ? 'Không mở được giá sách: không kết nối được máy chủ' : 'Không mở được giá sách',
+        desc: offline ? 'Kiểm tra xem điện thoại có mất mạng không, hoặc máy chủ đang khởi động lại. Bấm thử lại bên dưới.'
+                      : 'Có lỗi xảy ra: ' + ((e && e.message) || 'Lỗi không rõ'),
+        actions: [window.UI.btn('Thử lại', { variant: 'primary', act: 'shelf-reload' })],
       });
       list.textContent = '';
       list.appendChild(box);
@@ -269,17 +269,17 @@
          不然脚本会以为"书架出错时什么都没说"（就是这么误报的）。 */
       if (this.stale) {
         frag.appendChild(UIx.h('button', {
-          class: 'shelf-stale', 'data-act': 'shelf-reload', 'data-state': 'error', 'aria-label': '重试',
+          class: 'shelf-stale', 'data-act': 'shelf-reload', 'data-state': 'error', 'aria-label': 'Thử lại',
         }, [UIx.h('span', { class: 'shelf-stale-dot' }),
            UIx.h('span', { text: this.stale }),
-           UIx.h('b', { text: '重试' })]));
+           UIx.h('b', { text: 'Thử lại' })]));
       }
 
       const rows = this.matched();
       if (!this.projects.length) {
         frag.appendChild(UIx.state({
-          kind: 'empty', icon: 'book', title: '书架还是空的',
-          desc: '点右下角的 ＋ 新建一本。写过的稿子想搬过来，可以进「工具 · 同步」。',
+          kind: 'empty', icon: 'book', title: 'Giá sách còn trống',
+          desc: 'Bấm + ở góc dưới phải để tạo một cuốn. Muốn chuyển bản thảo đã viết sang, vào «Công cụ · Đồng bộ».',
         }));
         list.textContent = '';
         list.appendChild(frag);
@@ -288,8 +288,8 @@
       }
       if (!rows.length) {
         frag.appendChild(UIx.state({
-          kind: 'empty', icon: 'search', title: '没找到「' + (this.q || '') + '」',
-          desc: '换个词试试，或者点右上角的 × 收起搜索。',
+          kind: 'empty', icon: 'search', title: 'Không tìm thấy «' + (this.q || '') + '»',
+          desc: 'Thử từ khác, hoặc bấm × ở góc trên phải để đóng tìm kiếm.',
         }));
         list.textContent = '';
         list.appendChild(frag);
@@ -309,27 +309,27 @@
       const b = this.books[p.slug];
       const pg = Progress.get(p.slug);
       const title = (b && b.title && b.title !== b.slug) ? b.title : (p.title || p.slug);
-      const first = String(title || '书').trim()[0] || '书';
+      const first = String(title || 'B').trim()[0] || 'B';
       const isCur = !!(window.BookCtx && BookCtx.slug() === p.slug);
 
       let meta = String(p.slug || '');
-      let cta = '打开';
+      let cta = 'Mở';
       let pct = null;
       if (b) {
         const total = b.totalWords || 0;
         const idx = (pg && pg.path) ? b.chapters.findIndex((c) => c.path === pg.path) : -1;
-        meta = UIx.fmt.words(total) + ' · 共 ' + b.chapters.length + ' 章' +
-          (idx >= 0 ? ' · 读到第' + b.chapters[idx].index + '章' : '');
+        meta = UIx.fmt.words(total) + ' · Tổng ' + b.chapters.length + ' chương ' +
+          (idx >= 0 ? ' · Đang đọc chương ' + b.chapters[idx].index + '' : '');
         if (idx >= 0 && total > 0) {
           let before = 0;
           for (let i = 0; i < idx; i++) before += b.chapters[i].words || 0;
           pct = Math.round(clamp((before + (b.chapters[idx].words || 0) * ((pg.percent || 0) / 100)) / total, 0, 1) * 100);
         }
-        cta = idx >= 0 ? '继续阅读' : '开始读';
+        cta = idx >= 0 ? 'Đọc tiếp' : 'Bắt đầu đọc';
       } else if (pg) {
-        meta = '读到 ' + String(pg.path || '').split('/').pop().replace(/\.md$/, '');
+        meta = 'Đang đọc ' + String(pg.path || '').split('/').pop().replace(/\.md$/, '');
       } else {
-        meta = '还没读过';
+        meta = 'Chưa đọc';
       }
 
       const spine = UIx.h('div', { class: 'book-spine', style: { '--h': hashHue(p.slug) } }, [
@@ -347,11 +347,11 @@
            「正在写」小标挪到下一行的信息行里，跟字数、进度排在一起。 */
         UIx.h('div', { class: 'book-title' }, UIx.h('span', { class: 'bt-txt', text: title })),
         UIx.h('div', { class: 'book-meta' },
-          isCur ? UIx.h('span', { class: 'book-cur', text: '正在写' }) : null,
+          isCur ? UIx.h('span', { class: 'book-cur', text: 'Đang viết' }) : null,
           UIx.h('span', { class: 'bm-txt', text: meta })),
         UIx.h('div', { class: 'book-prog' }, [
           UIx.h('div', { class: 'book-prog-bar' }, UIx.h('i', { style: { width: (pct || 0) + '%' } })),
-          UIx.h('span', { class: 'book-prog-txt', text: pct == null ? '未开始' : pct + '%' }),
+          UIx.h('span', { class: 'book-prog-txt', text: pct == null ? 'Chưa bắt đầu' : pct + '%' }),
           UIx.h('span', { class: 'book-cta', text: cta + ' ›' }),
         ]),
       ]);
@@ -359,7 +359,7 @@
       const card = UIx.h('article', {
         class: 'book-card' + (fresh ? ' enter' : '') + (isCur ? ' cur' : ''),
         'data-slug': p.slug,
-      }, [spine, info, UIx.iconBtn({ icon: 'more', sm: true, label: '更多', cls: 'book-more' })]);
+      }, [spine, info, UIx.iconBtn({ icon: 'more', sm: true, label: 'Thêm', cls: 'book-more' })]);
       if (fresh) card.style.animationDelay = (pi * 55) + 'ms';
       return card;
     },
@@ -406,7 +406,7 @@
       if (rf) rf.addEventListener('click', () => {
         this.books = {};
         this.load(true);
-        App.toast('正在刷新字数…');
+        App.toast('Đang làm mới số chữ…');
       });
 
       const nb = $('#btn-shelf-new');
@@ -488,7 +488,7 @@
         await Reader.preload(slug, cmd);
       } catch (e) {
         done();
-        App.toast('打不开：' + ((e && e.message) || ''));
+        App.toast('Không mở được: ' + ((e && e.message) || ''));
         return;
       }
       done();
@@ -513,22 +513,22 @@
       App.sheet(
         '<div class="sheet-grip"></div>' +
         '<div class="sheet-head rd-menu-head"><div class="rd-menu-title">' + esc(title) + '</div>' +
-        '<button class="icon-btn" data-close aria-label="关闭">' + iconHtml('close') + '</button></div>' +
+        '<button class="icon-btn" data-close aria-label="Đóng">' + iconHtml('close') + '</button></div>' +
         '<div class="rd-menu-body">' +
           '<div class="rd-toc-group">' + (b
-            ? '共 ' + chs + ' 章 · ' + (b.totalWords || 0).toLocaleString('en-US') + ' 字'
-            : (readName ? '读到 ' + esc(readName) : '还没开始读')) + '</div>' +
+            ? 'Tổng ' + chs + ' chương · ' + (b.totalWords || 0).toLocaleString('en-US') + ' chữ'
+            : (readName ? 'Đang đọc ' + esc(readName) : 'Chưa bắt đầu đọc')) + '</div>' +
           '<div class="rd-menu-rows">' +
-            row('read', '继续阅读', esc(readName || '从头开始')) +
-            row('toc', '目录', chs ? '共 ' + chs + ' 章' : '一章一句话') +
-            row('search', '全书搜索', '找一句话') +
-            row('cover', '换封面', proj.hasCover ? '已设置' : '还没设') +
-            row('rename', '改书名', '换个名字') +
-            row('restart', '重新开始', '从第一章重读') +
-            row('refresh', '刷新字数', '重新统计') +
+            row('read', 'Đọc tiếp', esc(readName || 'Từ đầu')) +
+            row('toc', 'Mục lục', chs ? 'Tổng ' + chs + ' chương' : 'Mỗi chương một câu') +
+            row('search', 'Tìm toàn sách', 'Tìm một câu') +
+            row('cover', 'Đổi bìa', proj.hasCover ? 'Đã đặt' : 'Chưa đặt') +
+            row('rename', 'Đổi tên sách', 'Đặt tên khác') +
+            row('restart', 'Bắt đầu lại', 'Đọc lại từ chương một') +
+            row('refresh', 'Làm mới số chữ', 'Đếm lại') +
           '</div>' +
           '<div class="rd-menu-rows rd-menu-danger">' +
-            row('delete', '删除这本书', '删了就找不回来', 'is-danger') +
+            row('delete', 'Xóa cuốn sách này', 'Xóa là không lấy lại được', 'is-danger') +
           '</div>' +
         '</div>',
         {
@@ -542,9 +542,9 @@
                  那种写法会让旧面板的收尾把新面板一起带走（面板高度 0 = 用户看到"点了没用"）。 */
               if (a === 'read') App.closeSheet(() => Shelf.open(slug));
               else if (a === 'restart') App.closeSheet(() =>
-                App.confirm('从第一章重新开始？阅读进度会清空。', () => Shelf.open(slug, 'restart'), '重新开始'));
+                App.confirm('Bắt đầu lại từ chương một? Tiến độ đọc sẽ bị xóa.', () => Shelf.open(slug, 'restart'), 'Bắt đầu lại'));
               else if (a === 'refresh') App.closeSheet(() => {
-                Shelf.projects = null; Shelf.books = {}; Shelf.load(true); App.toast('正在刷新字数…');
+                Shelf.projects = null; Shelf.books = {}; Shelf.load(true); App.toast('Đang làm mới số chữ…');
               });
               else if (a === 'toc') App.closeSheet(async () => {
                 Reader.pending = { slug: slug };
@@ -556,8 +556,8 @@
               else if (a === 'cover') App.closeSheet(() => Shelf.pickCover(slug));
               else if (a === 'rename') App.closeSheet(() => Shelf.rename(slug, title));
               else if (a === 'delete') App.closeSheet(() =>
-                App.confirm('真的要删掉《' + title + '》？整个作品和所有章节都会被删除，删了就找不回来了。',
-                  () => Shelf.remove(slug, title), '确认删除'));
+                App.confirm('Thật sự muốn xóa «' + title + '»? Toàn bộ tác phẩm và mọi chương sẽ bị xóa, xóa rồi không lấy lại được.',
+                  () => Shelf.remove(slug, title), 'Xác nhận xóa'));
             });
           },
         });
@@ -566,26 +566,26 @@
     /* ---------- 新建作品 ---------- */
     newBook() {
       App.modal(
-        '<div style="font-size:var(--t-lg);font-weight:var(--w-semi);margin-bottom:var(--sp-3)">新建作品</div>' +
-        '<input id="nb-title" class="input" placeholder="书名，例如：剑起示例" ' +
+        '<div style="font-size:var(--t-lg);font-weight:var(--w-semi);margin-bottom:var(--sp-3)">Tạo tác phẩm mới</div>' +
+        '<input id="nb-title" class="input" placeholder="Tên sách, ví dụ: Kiếm Khởi" ' +
         'style="-webkit-user-select:text;user-select:text">' +
         '<div style="display:flex;gap:var(--sp-3);margin-top:var(--sp-4)">' +
-        '<button class="btn btn-block" data-close>取消</button>' +
-        '<button class="btn btn-primary btn-block" id="nb-go">创建</button></div>',
+        '<button class="btn btn-block" data-close>Hủy</button>' +
+        '<button class="btn btn-primary btn-block" id="nb-go">Tạo</button></div>',
         {
           onMount(p) {
             const inp = p.querySelector('#nb-title');
             setTimeout(() => inp && inp.focus(), 120);
             p.querySelector('#nb-go').addEventListener('click', async () => {
               const t = (inp.value || '').trim();
-              if (!t) { App.toast('先起个书名'); return; }
+              if (!t) { App.toast('Hãy đặt tên sách trước'); return; }
               try {
                 await API.bookNew(t);
                 App.closeModal();
-                App.toast('已创建《' + t + '》');
+                App.toast('Đã tạo «' + t + '»');
                 Shelf.projects = null;
                 await Shelf.load(true);
-              } catch (e) { App.toast('创建失败：' + e.message); }
+              } catch (e) { App.toast('Tạo thất bại: ' + e.message); }
             });
           },
         });
@@ -599,13 +599,13 @@
       inp.onchange = async () => {
         const f = inp.files && inp.files[0];
         if (!f) return;
-        App.toast('正在上传封面…');
+        App.toast('Đang tải ảnh bìa lên…');
         try {
           await API.coverUpload(slug, f);
-          App.toast('封面换好了');
+          App.toast('Đã đổi bìa');
           Shelf.projects = null;
           await Shelf.load(true);
-        } catch (e) { App.toast('上传失败：' + e.message); }
+        } catch (e) { App.toast('Tải lên thất bại: ' + e.message); }
       };
       inp.click();
     },
@@ -613,11 +613,11 @@
     /* ---------- 改书名 ---------- */
     rename(slug, oldTitle) {
       App.modal(
-        '<div style="font-size:var(--t-lg);font-weight:var(--w-semi);margin-bottom:var(--sp-3)">改书名</div>' +
+        '<div style="font-size:var(--t-lg);font-weight:var(--w-semi);margin-bottom:var(--sp-3)">Đổi tên sách</div>' +
         '<input id="rn-title" class="input" style="-webkit-user-select:text;user-select:text">' +
         '<div style="display:flex;gap:var(--sp-3);margin-top:var(--sp-4)">' +
-        '<button class="btn btn-block" data-close>取消</button>' +
-        '<button class="btn btn-primary btn-block" id="rn-go">保存</button></div>',
+        '<button class="btn btn-block" data-close>Hủy</button>' +
+        '<button class="btn btn-primary btn-block" id="rn-go">Lưu</button></div>',
         {
           onMount(p) {
             const inp = p.querySelector('#rn-title');
@@ -625,14 +625,14 @@
             setTimeout(() => { inp.focus(); inp.select(); }, 120);
             p.querySelector('#rn-go').addEventListener('click', async () => {
               const t = (inp.value || '').trim();
-              if (!t) { App.toast('书名不能空着'); return; }
+              if (!t) { App.toast('Tên sách không được để trống'); return; }
               try {
                 await API.bookRename(slug, t);
                 App.closeModal();
-                App.toast('改好了');
+                App.toast('Đã sửa xong');
                 Shelf.projects = null;
                 await Shelf.load(true);
-              } catch (e) { App.toast('改名失败：' + e.message); }
+              } catch (e) { App.toast('Đổi tên thất bại: ' + e.message); }
             });
           },
         });
@@ -644,10 +644,10 @@
         await API.bookDelete(slug);
         Progress.clear(slug);
         delete Shelf.books[slug];
-        App.toast('《' + title + '》已删除');
+        App.toast('«' + title + '» đã bị xóa');
         Shelf.projects = null;
         await Shelf.load(true);
-      } catch (e) { App.toast('删除失败：' + e.message); }
+      } catch (e) { App.toast('Xóa thất bại: ' + e.message); }
     },
 
     /* ---------- 全书搜索 ---------- */
@@ -657,10 +657,10 @@
         '<div class="sheet-grip"></div>' +
         /* 跟别的弹层同一个模子：标题 + 右上角 ×（以前这个面板没有头、也没有关闭键，
            "点了没反应"之外还退不出去） */
-        '<div class="sheet-head"><h3>全书搜索</h3>' +
-        '<button class="icon-btn" data-close aria-label="关闭">' + iconHtml('close') + '</button></div>' +
-        '<div class="sheet-note">在这本书的每一章里找一句话，点结果直接跳到那一章。</div>' +
-        '<div class="pk-search"><input id="bs-q" placeholder="在全书中找一句话" ' +
+        '<div class="sheet-head"><h3>Tìm toàn sách</h3>' +
+        '<button class="icon-btn" data-close aria-label="Đóng">' + iconHtml('close') + '</button></div>' +
+        '<div class="sheet-note">Tìm một câu trong mọi chương của cuốn này, bấm kết quả để nhảy thẳng tới chương đó.</div>' +
+        '<div class="pk-search"><input id="bs-q" placeholder="Tìm một câu trong toàn sách" ' +
         'autocomplete="off" style="-webkit-user-select:text;user-select:text"></div>' +
         '<ul class="pk-list" id="bs-list"></ul>',
         {
@@ -670,21 +670,21 @@
             let timer = null;
             const run = async () => {
               const q = (inp.value || '').trim();
-              if (!q) { list.innerHTML = '<li><span class="t" style="color:var(--ink-3)">输入关键词开始搜</span></li>'; return; }
-              list.innerHTML = '<li><span class="t"><span class="spinner"></span> 搜索中…</span></li>';
+              if (!q) { list.innerHTML = '<li><span class="t" style="color:var(--ink-3)">Nhập từ khóa để bắt đầu tìm</span></li>'; return; }
+              list.innerHTML = '<li><span class="t"><span class="spinner"></span> Đang tìm…</span></li>';
               try {
                 const d = await API.searchBook(slug, q);
                 const hits = d.hits || [];
                 list.innerHTML = hits.length ? hits.map((h) =>
                   '<li data-path="' + esc(h.path) + '"><span class="t">' +
                   esc(h.before) + '<b style="color:var(--accent)">' + esc(h.match) + '</b>' +
-                  esc(h.after) + '</span><span class="s">第' + esc(h.index || '?') + '章</span></li>'
-                ).join('') : '<li><span class="t" style="color:var(--ink-3)">没找到</span></li>';
+                  esc(h.after) + '</span><span class="s">Chương ' + esc(h.index || '?') + '</span></li>'
+                ).join('') : '<li><span class="t" style="color:var(--ink-3)">Không tìm thấy</span></li>';
               } catch (e) {
-                list.innerHTML = '<li><span class="t" style="color:var(--danger)">搜索失败：' + esc(e.message) + '</span></li>';
+                list.innerHTML = '<li><span class="t" style="color:var(--danger)">Tìm kiếm thất bại: ' + esc(e.message) + '</span></li>';
               }
             };
-            list.innerHTML = '<li><span class="t" style="color:var(--ink-3)">输入关键词开始搜</span></li>';
+            list.innerHTML = '<li><span class="t" style="color:var(--ink-3)">Nhập từ khóa để bắt đầu tìm</span></li>';
             inp.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(run, 320); });
             list.addEventListener('click', (e) => {
               const li = e.target.closest('li[data-path]');
@@ -838,7 +838,7 @@
     }
     if (e.scrub && document.activeElement !== e.scrub) e.scrub.value = String(R.pct);
     if (e.scrubVal) e.scrubVal.textContent = R.pct + '%';
-    if (e.ptext) e.ptext.textContent = '第 ' + (ch.index || 1) + '/' + (ch.total || 1) + ' 章';
+    if (e.ptext) e.ptext.textContent = 'Chương ' + (ch.index || 1) + '/' + (ch.total || 1) + '';
     if (e.headTitle) e.headTitle.textContent = prettyName(ch.name || '');
     Progress.set(R.slug, R.path, R.pct);
   }
@@ -859,15 +859,15 @@
     applyThemeClass();
     showChrome();
     if (!R.book || R.book.slug !== slug) {
-      R.els.headTitle.textContent = '载入中…';
+      R.els.headTitle.textContent = 'Đang tải…';
       try {
         R.book = await API.book(slug);
         window.Offline && Offline.putBook(slug, R.book);
       } catch (e) {
         const c = window.Offline && Offline.getBook(slug);
-        if (!c) { App.toast('书本打不开：' + (e.message || '')); App.show('shelf'); return; }
+        if (!c) { App.toast('Không mở được sách: ' + (e.message || '')); App.show('shelf'); return; }
         R.book = c;
-        App.toast('离线：目录是缓存里的');
+        App.toast('Ngoại tuyến: mục lục lấy từ bộ nhớ đệm');
       }
     }
     App.state.book = R.book;
@@ -876,7 +876,7 @@
     const chs = R.book.chapters || [];
     let path = cmd.path;
     if (!path || !chs.some((c) => c.path === path)) path = chs.length ? chs[0].path : null;
-    if (!path) { App.toast('这本书还没有章节'); App.show('shelf'); return; }
+    if (!path) { App.toast('Cuốn này chưa có chương nào'); App.show('shelf'); return; }
     await loadChapter(path, cmd.path ? (cmd.percent || 0) : 0);
     autoHideChrome();
   }
@@ -889,16 +889,16 @@
     const si = chs.findIndex((c) => c.path === path);
     if (si < 0) return false;
     if (R.cache[path] == null) {
-      e.headTitle.textContent = '载入中…';
+      e.headTitle.textContent = 'Đang tải…';
       try {
         const d = await API.chapter(R.slug, path);
         R.cache[path] = d.content || '';
         window.Offline && Offline.putChapter(R.slug, path, R.cache[path]);
       } catch (err) {
         const c = window.Offline && Offline.getChapter(R.slug, path);
-        if (c == null) { App.toast('章节打不开：' + (err.message || '')); return false; }
+        if (c == null) { App.toast('Không mở được chương: ' + (err.message || '')); return false; }
         R.cache[path] = c;
-        App.toast('离线：这一章是缓存过的');
+        App.toast('Ngoại tuyến: chương này lấy từ bộ nhớ đệm');
       }
     }
     // 预取往后两章：翻到下一章不用等（后台悄悄拉，失败也不打扰）
@@ -1017,22 +1017,22 @@
     const e = (termMap || {})[name];
     if (!e) return;
     hapNow(6);
-    const KIND = { character: '角色', place: '地点', faction: '势力', item: '物品', concept: '设定',
-                   event: '事件', org: '组织', other: '其它' };
+    const KIND = { character: 'Nhân vật', place: 'Địa điểm', faction: 'Thế lực', item: 'Vật phẩm', concept: 'Thiết lập',
+                   event: 'Sự kiện', org: 'Tổ chức', other: 'Khác' };
     const facts = (e.facts || []).slice(0, 6);
     App.sheet('<div class="sheet-grip"></div>' +
       '<div class="sheet-head"><h3>' + esc(e.name) + '</h3>' +
-      '<button class="icon-btn" data-close aria-label="关闭">' + iconHtml('close') + '</button></div>' +
+      '<button class="icon-btn" data-close aria-label="Đóng">' + iconHtml('close') + '</button></div>' +
       '<div class="rd-termcard">' +
-        '<div class="tc-kind">' + esc(KIND[e.kind] || e.kind || '设定') + '</div>' +
-        ((e.aliases || []).length ? '<div class="tc-line"><b>也叫</b>' + esc((e.aliases || []).join('、')) + '</div>' : '') +
-        ((e.summary || e.note) ? '<div class="tc-line"><b>一句话</b>' + esc(e.summary || e.note) + '</div>' : '') +
-        (facts.length ? '<div class="tc-line"><b>已有事实</b></div>' + facts.map((f) =>
+        '<div class="tc-kind">' + esc(KIND[e.kind] || e.kind || 'Thiết lập') + '</div>' +
+        ((e.aliases || []).length ? '<div class="tc-line"><b>Còn gọi là</b>' + esc((e.aliases || []).join(', ')) + '</div>' : '') +
+        ((e.summary || e.note) ? '<div class="tc-line"><b>Tóm tắt</b>' + esc(e.summary || e.note) + '</div>' : '') +
+        (facts.length ? '<div class="tc-line"><b>Dữ kiện đã có</b></div>' + facts.map((f) =>
           '<div class="tc-fact">' + esc(f.text || f.fact || '') + '</div>').join('')
-          : '<div class="tc-line" style="color:var(--ink-3)">还没有登记更多设定</div>') +
+          : '<div class="tc-line" style="color:var(--ink-3)">Chưa ghi thêm thiết lập nào</div>') +
         '<div class="t-bar" style="margin-top:var(--sp-3)">' +
-          '<button class="t-btn" data-more>看完整设定</button>' +
-          '<button class="t-btn pri" data-close2>知道了</button></div>' +
+          '<button class="t-btn" data-more>Xem toàn bộ thiết lập</button>' +
+          '<button class="t-btn pri" data-close2>Đã hiểu</button></div>' +
       '</div>');
     const pn = document.getElementById('sheet-panel');
     pn.querySelector('[data-close2]').onclick = () => App.closeSheet();
@@ -1061,12 +1061,12 @@
   function nextPage() {
     if (R.mode === 'scroll') { scrollByScreen(1); return; }
     if (R.idx < R.pages - 1) { animateTurn(1); return; }
-    if (R.pathNext) toChapter(R.pathNext, 0); else App.toast('已经是最后一章了');
+    if (R.pathNext) toChapter(R.pathNext, 0); else App.toast('Đây đã là chương cuối');
   }
   function prevPage() {
     if (R.mode === 'scroll') { scrollByScreen(-1); return; }
     if (R.idx > 0) { animateTurn(-1); return; }
-    if (R.pathPrev) toChapter(R.pathPrev, 100); else App.toast('已经是第一章了');
+    if (R.pathPrev) toChapter(R.pathPrev, 100); else App.toast('Đây đã là chương đầu');
   }
   async function toChapter(path, pct) {
     const ok = await loadChapter(path, pct);
@@ -1081,7 +1081,7 @@
     e.page.scrollTop = clamp(e.page.scrollTop + dir * e.page.clientHeight * 0.86, 0, max);
   }
   function nextChapterByScroll() {
-    if (R.pathNext) toChapter(R.pathNext, 0); else App.toast('已经是最后一章了');
+    if (R.pathNext) toChapter(R.pathNext, 0); else App.toast('Đây đã là chương cuối');
   }
 
   /* ---------- 翻页动画（curl 仿真 / slide 平移） ---------- */
@@ -1378,12 +1378,12 @@
     const paused = !!(R.ttsOn && R.audio && R.audio.paused);
     const st = R.ttsBusy ? 'busy' : (R.ttsOn ? 'on' : 'off');
     const icon = R.ttsBusy ? 'refresh' : (R.ttsOn ? (paused ? 'play' : 'pause') : 'sound');
-    const label = R.ttsBusy ? '准备中…' : (R.ttsOn ? (paused ? '继续朗读' : '停止朗读') : '开始朗读');
+    const label = R.ttsBusy ? 'Đang chuẩn bị…' : (R.ttsOn ? (paused ? 'Đọc tiếp' : 'Dừng đọc') : 'Bắt đầu đọc to');
     return '<button class="rd-act ' + st + '" data-a="tts">' + iconHtml(icon) + '<span>' + label + '</span></button>' +
-      '<button class="rd-act" data-a="note">' + iconHtml('note') + '<span>记一笔</span></button>' +
-      '<button class="rd-act" data-a="mark">' + iconHtml('bookmark') + '<span>加书签</span></button>' +
+      '<button class="rd-act" data-a="note">' + iconHtml('note') + '<span>Ghi chú nhanh</span></button>' +
+      '<button class="rd-act" data-a="mark">' + iconHtml('bookmark') + '<span>Thêm dấu trang</span></button>' +
       /* 此前的反馈时的入口：点一下逐项亮灯，把卡在哪一环说清楚 */
-      '<button class="rd-act" data-a="ttsdiag">' + iconHtml('search') + '<span>听书自检</span></button>';
+      '<button class="rd-act" data-a="ttsdiag">' + iconHtml('search') + '<span>Tự kiểm tra nghe truyện</span></button>';
   }
 
   function quickTab(t) {
@@ -1404,9 +1404,9 @@
     if (t === 'mark') { body.innerHTML = marksHtml(); quickTop(); return; }
     if (t === 'note') { notesHtml(body); return; }              // 异步，自己往 body 里画
     if (t === 'share') {                                         // 旧版那一格：把这一章发出去
-      body.innerHTML = '<div class="rd-hint">把这一章发给别人 · 手机上弹系统「分享」，浏览器里给你复制一份</div>'
+      body.innerHTML = '<div class="rd-hint">Gửi chương này cho người khác · trên điện thoại sẽ mở «Chia sẻ» của hệ thống, trên trình duyệt sẽ sao chép giúp bạn</div>'
         + '<div class="rd-quick-acts"><button class="rd-act" data-a="share">'
-        + iconHtml('share') + '<span>分享这一章</span></button></div>';
+        + iconHtml('share') + '<span>Chia sẻ chương này</span></button></div>';
       App.wirePrefs(body);
       quickTop();
       return;
@@ -1529,16 +1529,16 @@
     const sub = document.getElementById('rd-toc-sub', el);
     if (!body) return;
     const chs = (R.book && R.book.chapters) || [];
-    if (sub) sub.textContent = (R.book && chs.length) ? ('共 ' + chs.length + ' 章') : '';
+    if (sub) sub.textContent = (R.book && chs.length) ? ('Tổng ' + chs.length + ' chương') : '';
     if (!R.book) {
       body.innerHTML = '';
-      body.appendChild(UI.state({ kind: 'empty', icon: 'list', title: '还没打开书', desc: '先回书架打开一本。' }));
+      body.appendChild(UI.state({ kind: 'empty', icon: 'list', title: 'Chưa mở sách', desc: 'Hãy quay lại giá sách mở một cuốn.' }));
       return;
     }
     if (!chs.length) {
       body.innerHTML = '';
-      body.appendChild(UI.state({ kind: 'empty', icon: 'list', title: '这本书还没有章节',
-        desc: '点下面「新建一章」开始写。' }));
+      body.appendChild(UI.state({ kind: 'empty', icon: 'list', title: 'Cuốn này chưa có chương nào',
+        desc: 'Bấm «Tạo chương mới» bên dưới để bắt đầu viết.' }));
       return;
     }
     body.innerHTML = tocListHtml();
@@ -1587,7 +1587,7 @@
         if (act.dataset.toc === 'new') { tocClose(); setTimeout(newChapter, 180); return; }
         const cur = $('.rd-toc-item.cur', el);
         if (cur) cur.scrollIntoView({ block: 'center' });
-        else App.toast('还没打开书');
+        else App.toast('Chưa mở sách');
         return;
       }
       const it = e.target.closest('.rd-toc-item[data-path]');
@@ -1659,7 +1659,7 @@
       const del = e.target.closest('[data-del]');
       if (del) {
         Marks.remove(R.slug, +del.dataset.del);
-        App.toast('已删除书签');
+        App.toast('Đã xóa dấu trang');
         quickTab('mark');
         return;
       }
@@ -1737,19 +1737,19 @@
       const m = (c.name || '').match(/第\s*0*(\d+)\s*章/);
       if (m) mx = Math.max(mx, +m[1]);
     });
-    return { path: 'manuscript/第' + String(mx + 1).padStart(3, '0') + '章-新章节.md', book: false };
+    return { path: 'manuscript/第' + String(mx + 1).padStart(3, '0') + '章-Chưa đặt tên.md', book: false };
   }
 
   function newChapter() {
     if (!R.slug) return;
     const nx = nextChapterPath();
     App.modal(
-      '<div style="font-size:var(--t-lg);font-weight:var(--w-semi);margin-bottom:var(--sp-3)">新建一章</div>' +
-      '<input id="nc-name" class="input" placeholder="章节名（可留空，稍后再改）" ' +
+      '<div style="font-size:var(--t-lg);font-weight:var(--w-semi);margin-bottom:var(--sp-3)">Tạo chương mới</div>' +
+      '<input id="nc-name" class="input" placeholder="Tên chương (có thể để trống, sửa sau)" ' +
       'style="-webkit-user-select:text;user-select:text">' +
       '<div style="display:flex;gap:var(--sp-3);margin-top:var(--sp-4)">' +
-      '<button class="btn btn-block" data-close>取消</button>' +
-      '<button class="btn btn-primary btn-block" id="nc-go">创建并打开</button></div>',
+      '<button class="btn btn-block" data-close>Hủy</button>' +
+      '<button class="btn btn-primary btn-block" id="nc-go">Tạo và mở</button></div>',
       {
         onMount(p) {
           const inp = p.querySelector('#nc-name');
@@ -1760,7 +1760,7 @@
             if (nm) {
               path = nx.book
                 ? nx.path.replace(/index\.md$/, 'index.md')
-                : nx.path.replace(/-新章节\.md$/, '-' + nm.replace(/[\\/:*?"<>|]/g, '') + '.md');
+                : nx.path.replace(/-(?:新章节|未命名|Chưa đặt tên)\.md$/, '-' + nm.replace(/[\\/:*?"<>|]/g, '') + '.md');
             }
             const content = nm && nx.book
               ? '---\ntitle: ' + nm + '\ntype: chapter\nstatus: draft\n---\n\n'
@@ -1768,11 +1768,11 @@
             try {
               await API.chapterNew(R.slug, path, content);
               App.closeModal();
-              App.toast('已新建');
+              App.toast('Đã tạo');
               R.book = await API.book(R.slug, true);
               await toChapter(path, 0);
               showChrome();
-            } catch (e) { App.toast('新建失败：' + e.message); }
+            } catch (e) { App.toast('Tạo thất bại: ' + e.message); }
           });
         },
       });
@@ -1781,12 +1781,12 @@
   function renameChapter(path, cur) {
     const book = /\/index\.md$/.test(path);
     App.modal(
-      '<div style="font-size:var(--t-lg);font-weight:var(--w-semi);margin-bottom:var(--sp-3)">改章名</div>' +
+      '<div style="font-size:var(--t-lg);font-weight:var(--w-semi);margin-bottom:var(--sp-3)">Đổi tên chương</div>' +
       '<input id="cn-name" class="input" style="-webkit-user-select:text;user-select:text">' +
-      '<div style="font-size:var(--t-sm);color:var(--ink-3);margin-top:var(--sp-2)">只改这一章的名字，顺序和正文都不动。</div>' +
+      '<div style="font-size:var(--t-sm);color:var(--ink-3);margin-top:var(--sp-2)">Chỉ đổi tên chương này, thứ tự và nội dung không đổi.</div>' +
       '<div style="display:flex;gap:var(--sp-3);margin-top:var(--sp-4)">' +
-      '<button class="btn btn-block" data-close>取消</button>' +
-      '<button class="btn btn-primary btn-block" id="cn-go">保存</button></div>',
+      '<button class="btn btn-block" data-close>Hủy</button>' +
+      '<button class="btn btn-primary btn-block" id="cn-go">Lưu</button></div>',
       {
         onMount(p) {
           const inp = p.querySelector('#cn-name');
@@ -1794,7 +1794,7 @@
           setTimeout(() => { inp.focus(); inp.select(); }, 140);
           p.querySelector('#cn-go').addEventListener('click', async () => {
             const t = (inp.value || '').trim();
-            if (!t) { App.toast('名字不能空着'); return; }
+            if (!t) { App.toast('Tên không được để trống'); return; }
             try {
               if (book) {
                 // 新版结构：章名写在文件头的 title 里
@@ -1818,10 +1818,10 @@
                 if (R.path === path) R.path = to;
               }
               App.closeModal();
-              App.toast('改好了');
+              App.toast('Đã sửa xong');
               R.book = await API.book(R.slug, true);
               refreshToc();
-            } catch (e) { App.toast('改名失败：' + e.message); }
+            } catch (e) { App.toast('Đổi tên thất bại: ' + e.message); }
           });
         },
       });
@@ -1832,10 +1832,10 @@
      都不给用就退回「复制到剪贴板」，总之点了必须有反馈，不许没反应。 */
   async function shareChapter() {
     const ch = R.chapter;
-    if (!ch) { App.toast('这一章还没打开'); return; }
+    if (!ch) { App.toast('Chương này chưa mở'); return; }
     const book = (R.book && R.book.title && R.book.title !== R.book.slug) ? R.book.title : R.slug;
     const cname = prettyName(ch.name || R.path || '');
-    const title = '《' + book + '》' + cname;
+    const title = '«' + book + '»' + cname;
     const body = String(R.text || R.cache[R.path] || '').trim();
     const text = title + (body ? '\n\n' + body : '');
     if (window.Android && typeof Android.share === 'function') {
@@ -1847,9 +1847,9 @@
     }
     try {
       await navigator.clipboard.writeText(text);
-      App.toast('这一章已复制，粘贴到哪儿都行');
+      App.toast('Đã sao chép chương này, dán ở đâu cũng được');
     } catch (e) {
-      App.toast('这个环境不支持分享，试试长按正文选中复制');
+      App.toast('Môi trường này không hỗ trợ chia sẻ, thử nhấn giữ chính văn để chọn và sao chép');
     }
   }
 
@@ -1867,14 +1867,14 @@
     App.sheet(
       '<div class="sheet-grip"></div>' +
       '<div class="sheet-head"><h3>' + esc(cur) + '</h3>' +
-      '<button class="icon-btn" data-close aria-label="关闭">' + iconHtml('close') + '</button></div>' +
+      '<button class="icon-btn" data-close aria-label="Đóng">' + iconHtml('close') + '</button></div>' +
       '<div class="rd-menu-body">' +
         '<div class="rd-menu-rows">' +
-          menRow('rename', '改章名', '换个名字') +
-          menRow('share', '分享这一章', '复制出去给别人') +
+          menRow('rename', 'Đổi tên chương', 'Đặt tên khác') +
+          menRow('share', 'Chia sẻ chương này', 'Sao chép gửi người khác') +
         '</div>' +
         '<div class="rd-menu-rows rd-menu-danger">' +
-          menRow('del', '删除这一章', '删了就找不回来') +
+          menRow('del', 'Xóa chương này', 'Xóa là không lấy lại được') +
         '</div>' +
       '</div>',
       {
@@ -1888,28 +1888,28 @@
                同一拍"关完立刻弹"就是书卡菜单那个"点了没反应"的同一类写法。 */
             if (a === 'rename') { App.closeSheet(() => renameChapter(path, cur)); return; }
             if (a === 'share') { App.closeSheet(() => shareChapter()); return; }
-            App.closeSheet(() => App.confirm('删掉「' + cur + '」这一章？删了就找不回来了。', async () => {
+            App.closeSheet(() => App.confirm('Xóa «' + cur + '» chương này? Xóa rồi không lấy lại được.', async () => {
               try {
                 await API.chapterDelete(R.slug, path);
-                App.toast('已删除');
+                App.toast('Đã xóa');
                 if (R.path === path) R.path = null;
                 R.book = await API.book(R.slug, true);
                 refreshToc();
-              } catch (err) { App.toast('删除失败：' + err.message); }
-            }, '确认删除'));
+              } catch (err) { App.toast('Xóa thất bại: ' + err.message); }
+            }, 'Xác nhận xóa'));
           });
         },
       });
   }
   function marksHtml() {
     const arr = Marks.list(R.slug) || [];
-    if (!arr.length) return '<div class="rd-toc-empty">还没有书签<br>读到想记住的地方，点「加书签」</div>';
+    if (!arr.length) return '<div class="rd-toc-empty">Chưa có dấu trang<br>Đọc tới chỗ muốn nhớ thì bấm «Thêm dấu trang»</div>';
     return arr.map((m, i) => {
       const chs = R.book ? (R.book.chapters || []).find((c) => c.path === m.path) : null;
       return '<div class="rd-toc-mark">' +
-        '<div class="tx" data-mark="' + i + '">' + esc((chs ? prettyName(chs.name) + ' · ' : '') + (m.text || '书签')) + '</div>' +
+        '<div class="tx" data-mark="' + i + '">' + esc((chs ? prettyName(chs.name) + ' · ' : '') + (m.text || 'Dấu trang')) + '</div>' +
         '<span class="pc">' + (m.percent || 0) + '%</span>' +
-        '<button class="del" data-del="' + i + '" aria-label="删除">' + iconHtml('trash') + '</button></div>';
+        '<button class="del" data-del="' + i + '" aria-label="Xóa">' + iconHtml('trash') + '</button></div>';
     }).join('');
   }
 
@@ -1924,7 +1924,7 @@
   function refreshToc() { tocOpen(); }          // 改名 / 删除之后：把目录重新画出来给用户看结果
 
   async function notesHtml(body) {
-    body.innerHTML = '<div class="rd-toc-empty">读笔记…</div>';
+    body.innerHTML = '<div class="rd-toc-empty">Đang đọc ghi chú…</div>';
     /* 两段：**笔记**（我的想法）和**批注**（挂在某一段上的待办，不进正文一个字）。
        一条笔记都没有的时候，也不能把"批注"那段藏起来 —— 用户就是来用批注的。 */
     let d = null, mg = { items: [] };
@@ -1932,26 +1932,26 @@
     try { mg = await API.nb('api/notes/margin?slug=' + encodeURIComponent(R.slug || '')); }
     catch (e) { mg = null; }
     if (d === null && mg === null) {
-      body.innerHTML = '<div class="rd-toc-empty">读不到笔记（可能连不上服务器）</div>'; return;
+      body.innerHTML = '<div class="rd-toc-empty">Không đọc được ghi chú (có thể không kết nối được máy chủ)</div>'; return;
     }
     const items = (d && d.items) || [];
     const margins = (mg && mg.items) || [];
     quickNotes = items;
     quickMargins = margins;
-    const head = '<div class="rd-qsec">批注 · 给自己留的待办</div>' +
-      '<button class="rd-addm" data-addmargin>' + iconHtml('plus') + '<span>给这一段加批注</span></button>';
+    const head = '<div class="rd-qsec">Chú thích · việc cần làm để lại cho mình</div>' +
+      '<button class="rd-addm" data-addmargin>' + iconHtml('plus') + '<span>Thêm chú thích cho đoạn này</span></button>';
     const mList = margins.length ? margins.map((m) =>
       '<div class="rd-toc-mark"><div class="tx" data-margin="' + m.id + '">' +
-        esc((m.note || '（空）').slice(0, 40)) + '</div>' +
+        esc((m.note || '(trống)').slice(0, 40)) + '</div>' +
       '<span class="pc">' + esc(String(m.path || '').split('/').pop() || '') + '</span>' +
-      '<button class="del" data-mdel="' + m.id + '" aria-label="删掉">' + iconHtml('trash') + '</button></div>').join('')
-      : '<div class="rd-toc-empty">还没有批注<br>读到要改的地方，点上面「给这一段加批注」</div>';
-    const noteSec = '<div class="rd-qsec">笔记 · 我想到的</div>' +
+      '<button class="del" data-mdel="' + m.id + '" aria-label="Xóa">' + iconHtml('trash') + '</button></div>').join('')
+      : '<div class="rd-toc-empty">Chưa có chú thích<br>Đọc tới chỗ cần sửa thì bấm «Thêm chú thích cho đoạn này» ở trên</div>';
+    const noteSec = '<div class="rd-qsec">Ghi chú · điều tôi nghĩ ra</div>' +
       (items.length ? items.map((n) =>
         '<div class="rd-toc-mark"><div class="tx" data-note="' + n.id + '">' +
-        esc((n.text || n.quote || '（空）').slice(0, 42)) + '</div>' +
+        esc((n.text || n.quote || '(trống)').slice(0, 42)) + '</div>' +
         '<span class="pc">' + esc(String(n.path || '').split('/').pop() || '') + '</span></div>').join('')
-        : '<div class="rd-toc-empty">还没有笔记<br>读到有想法的地方，点下边「记一笔」</div>');
+        : '<div class="rd-toc-empty">Chưa có ghi chú<br>Đọc tới chỗ có ý tưởng thì bấm «Ghi chú nhanh» bên dưới</div>');
     body.innerHTML = head + mList + noteSec;
     const add = body.querySelector('[data-addmargin]');
     if (add) add.onclick = () => { hapNow(); marginSheet(); };
@@ -1969,8 +1969,8 @@
         try {
           await API.nb('api/notes/margin?slug=' + encodeURIComponent(R.slug || '') + '&id=' + b.dataset.mdel,
             { method: 'DELETE', body: {} });
-          App.toast('删了'); quickTab('note');
-        } catch (err) { App.toast('删不掉：' + err.message); }
+          App.toast('Đã xóa'); quickTab('note');
+        } catch (err) { App.toast('Không xóa được: ' + err.message); }
       };
     });
   }
@@ -1986,25 +1986,25 @@
       } catch (e) { return ''; }
     })();
     const quote = sel || noteQuote();
-    App.sheet('<div class="sheet-head"><h3>加一条批注</h3><button class="btn sm" data-close>关闭</button></div>' +
+    App.sheet('<div class="sheet-head"><h3>Thêm một chú thích</h3><button class="btn sm" data-close>Đóng</button></div>' +
       '<div style="padding:0 var(--sp-4) calc(var(--safe-b) + var(--sp-4))">' +
-      '<div class="t-hint" style="margin:0 0 var(--sp-2)">' + (sel ? '你选中的这一段' : '这一句（没选中）') + '</div>' +
+      '<div class="t-hint" style="margin:0 0 var(--sp-2)">' + (sel ? 'Đoạn bạn đã chọn' : 'Câu này (chưa chọn đoạn)') + '</div>' +
       (quote ? '<div class="t-pre">' + esc(quote) + '</div>' : '') +
-      '<textarea class="t-area" rows="4" placeholder="想改成什么？（例：这里要补一场打斗）"></textarea>' +
-      '<div class="t-hint" style="margin:var(--sp-2) 0 0">批注不会写进正文，导出 txt 里不会有它。</div>' +
-      '<div class="t-bar" style="margin-top:var(--sp-3)"><button class="t-btn pri" data-save>记下</button></div></div>');
+      '<textarea class="t-area" rows="4" placeholder="Muốn sửa thành gì? (VD: chỗ này cần thêm một trận đánh)"></textarea>' +
+      '<div class="t-hint" style="margin:var(--sp-2) 0 0">Chú thích không ghi vào chính văn, xuất txt cũng không có nó.</div>' +
+      '<div class="t-bar" style="margin-top:var(--sp-3)"><button class="t-btn pri" data-save>Ghi lại</button></div></div>');
     const pn = document.getElementById('sheet-panel');
     const ta = pn.querySelector('.t-area');
     setTimeout(() => ta && ta.focus(), 80);
     pn.querySelector('[data-save]').onclick = async () => {
       const text = ta.value.trim();
-      if (!text) { App.toast('还没写呢'); return; }
+      if (!text) { App.toast('Chưa viết gì mà'); return; }
       try {
         await API.nb('api/notes/margin', { method: 'POST', body: {
           slug: R.slug, path: R.path, percent: R.pct, quote: quote, note: text } });
-        App.toast('记下了'); App.haptic && App.haptic(8);
+        App.toast('Đã ghi lại'); App.haptic && App.haptic(8);
         App.closeSheet();
-      } catch (e) { App.toast('记不了：' + e.message); }
+      } catch (e) { App.toast('Không ghi được: ' + e.message); }
     };
   }
 
@@ -2012,16 +2012,16 @@
      改 / 删都在这一层；删完把面板的「笔记」页重新拉一遍。 */
   function openNoteDetail(id) {
     const n = (quickNotes || []).find((x) => String(x.id) === String(id));
-    if (!n) { App.toast('这条笔记找不到了，刷新一下'); return; }
+    if (!n) { App.toast('Không tìm thấy ghi chú này nữa, hãy làm mới'); return; }
     pushOverlay();
-    App.sheet('<div class="sheet-head"><h3>笔记</h3><button class="btn sm" data-close>关闭</button></div>' +
+    App.sheet('<div class="sheet-head"><h3>Ghi chú</h3><button class="btn sm" data-close>Đóng</button></div>' +
       '<div style="padding:0 var(--sp-4) var(--sp-5)">' +
-      (n.quote ? '<div class="t-hint" style="margin:0 0 var(--sp-2)">当时读到</div><div class="t-pre">' + esc(n.quote) + '</div>' : '') +
-      '<div class="t-hint" style="margin:var(--sp-3) 0 var(--sp-2)">我写的</div>' +
-      '<div class="t-pre selectable">' + esc(n.text || '（空）') + '</div>' +
+      (n.quote ? '<div class="t-hint" style="margin:0 0 var(--sp-2)">Lúc đó đang đọc</div><div class="t-pre">' + esc(n.quote) + '</div>' : '') +
+      '<div class="t-hint" style="margin:var(--sp-3) 0 var(--sp-2)">Tôi viết</div>' +
+      '<div class="t-pre selectable">' + esc(n.text || '(trống)') + '</div>' +
       '<div class="t-bar" style="margin-top:var(--sp-3)">' +
-      (n.path ? '<button class="t-btn pri" data-go>去那一章</button>' : '') +
-      '<button class="t-btn dan" data-del>删掉</button></div></div>');
+      (n.path ? '<button class="t-btn pri" data-go>Tới chương đó</button>' : '') +
+      '<button class="t-btn dan" data-del>Xóa</button></div></div>');
     const pn = document.getElementById('sheet-panel');
     const go = pn.querySelector('[data-go]');
     if (go) go.onclick = async () => { App.closeSheet(); if (n.path) await toChapter(n.path, (n.percent || 0)); showChrome(); };
@@ -2029,9 +2029,9 @@
       try {
         await API.noteDelete(R.slug, n.id);
         App.closeSheet();
-        App.toast('删了');
+        App.toast('Đã xóa');
         quickRefreshNotes();
-      } catch (e) { App.toast('删不了：' + e.message); }
+      } catch (e) { App.toast('Không xóa được: ' + e.message); }
     };
   }
   /* 笔记删完之后把那一页重新拉一遍（面板可能已经收了，收了就不管） */
@@ -2044,49 +2044,49 @@
 
   function noteSheet() {
     const quote = noteQuote();
-    App.sheet('<div class="sheet-head"><h3>记一笔</h3><button class="btn sm" data-close>关闭</button></div>' +
+    App.sheet('<div class="sheet-head"><h3>Ghi chú nhanh</h3><button class="btn sm" data-close>Đóng</button></div>' +
       '<div style="padding:0 var(--sp-4) calc(var(--safe-b) + var(--sp-4))">' +
-      (quote ? '<div class="t-hint" style="margin:0 0 var(--sp-2)">这一句</div><div class="t-pre">' + esc(quote) + '</div>' : '') +
-      '<textarea class="t-area" rows="5" placeholder="想到了什么？（这一条会跟着书走，换设备也在）"></textarea>' +
-      '<div class="t-bar" style="margin-top:var(--sp-3)"><button class="t-btn pri" data-save>记下</button></div></div>');
+      (quote ? '<div class="t-hint" style="margin:0 0 var(--sp-2)">Câu này</div><div class="t-pre">' + esc(quote) + '</div>' : '') +
+      '<textarea class="t-area" rows="5" placeholder="Bạn nghĩ ra gì? (mục này đi theo sách, đổi thiết bị vẫn còn)"></textarea>' +
+      '<div class="t-bar" style="margin-top:var(--sp-3)"><button class="t-btn pri" data-save>Ghi lại</button></div></div>');
     const pn = document.getElementById('sheet-panel');
     const ta = pn.querySelector('.t-area');
     setTimeout(() => ta && ta.focus(), 80);
     pn.querySelector('[data-save]').onclick = async () => {
       const text = ta.value.trim();
-      if (!text) { App.toast('还没写呢'); return; }
+      if (!text) { App.toast('Chưa viết gì mà'); return; }
       try {
         await API.noteSave({ slug: R.slug, path: R.path, percent: R.pct, quote: quote, text: text });
-        App.toast('记下了'); App.haptic && App.haptic(8);
+        App.toast('Đã ghi lại'); App.haptic && App.haptic(8);
         App.closeSheet();
-      } catch (e) { App.toast('记不了：' + e.message); }
+      } catch (e) { App.toast('Không ghi được: ' + e.message); }
     };
   }
 
 
   /* ---------- 编辑本章 ---------- */
   function editChapter() {
-    if (!R.path) { App.toast('先打开一章'); return; }
+    if (!R.path) { App.toast('Hãy mở một chương trước'); return; }
     showChrome();
     const root = document.createElement('div');
     root.className = 'rd-editor';
     root.innerHTML =
-      '<div class="rd-editor-head"><div class="row-title">' + esc(prettyName(R.chapter.name || '')) + ' · 编辑</div>' +
-      '<button class="icon-btn" data-close aria-label="关闭">' + iconHtml('close') + '</button></div>' +
+      '<div class="rd-editor-head"><div class="row-title">' + esc(prettyName(R.chapter.name || '')) + ' · Chỉnh sửa</div>' +
+      '<button class="icon-btn" data-close aria-label="Đóng">' + iconHtml('close') + '</button></div>' +
       '<textarea spellcheck="false"></textarea>' +
       '<div class="rd-editor-foot"><span class="rd-editor-info"></span>' +
-      '<button class="btn btn-primary" id="rd-save">保存</button></div>';
+      '<button class="btn btn-primary" id="rd-save">Lưu</button></div>';
     const ta = $('textarea', root);
     const info = $('.rd-editor-info', root);
     ta.value = R.text;
-    const upd = () => { info.textContent = ta.value.length + ' 字' + (ta.value !== R.text ? ' · 已修改' : ''); };
+    const upd = () => { info.textContent = ta.value.length + ' chữ ' + (ta.value !== R.text ? ' · Đã sửa' : ''); };
     ta.addEventListener('input', upd);
     upd();
     $('[data-close]', root).addEventListener('click', () => App.closeModal());
     $('#rd-save', root).addEventListener('click', async () => {
       const btn = $('#rd-save', root);
       if (ta.value === R.text) { App.closeModal(); return; }
-      btn.textContent = '保存中…'; btn.disabled = true;
+      btn.textContent = 'Đang lưu…'; btn.disabled = true;
       try {
         await API.saveFile(R.slug, R.path, ta.value);
         R.cache[R.path] = ta.value;
@@ -2096,10 +2096,10 @@
         R.idx = pageOf(R.pct);
         apply(0);
         App.closeModal();
-        App.toast('已保存');
+        App.toast('Đã lưu');
       } catch (err) {
-        App.toast('保存失败：' + (err.message || ''));
-        btn.textContent = '保存'; btn.disabled = false;
+        App.toast('Lưu thất bại: ' + (err.message || ''));
+        btn.textContent = 'Lưu'; btn.disabled = false;
       }
     });
     pushOverlay();
@@ -2117,7 +2117,7 @@
     const b = R.els.ttsBtn;
     if (!b) return;
     const busy = !!R.ttsBusy;
-    const label = busy ? '准备中' : (R.ttsOn ? '停止' : '听书');
+    const label = busy ? 'Đang chuẩn bị' : (R.ttsOn ? 'Dừng' : 'Nghe truyện');
     b.innerHTML = iconHtml(busy ? 'refresh' : (R.ttsOn ? 'pause' : 'sound')) +
                   '<span>' + label + '</span>';
     b.classList.toggle('tts-on', !!(R.ttsOn || busy));
@@ -2143,7 +2143,7 @@
         if (R.ttsSeg + 1 < R.ttsCount) { ttsPlay(R.ttsSeg + 1); return; }
         if (R.pathNext) {                                   // 这章读完 → 接着下一章
           toChapter(R.pathNext, 0).then(() => { if (R.ttsWant) ttsStart(); });
-        } else { ttsStop(true); App.toast('全书读完了'); }
+        } else { ttsStop(true); App.toast('Đã đọc hết cả sách'); }
       });
       R.audio.addEventListener('error', () => {
         if (!R.ttsWant) return;
@@ -2161,9 +2161,9 @@
           段: R.ttsSeg, 共几段: R.ttsCount, 时间: Date.now(),
         };
         ttsStop(true);
-        App.toast(off ? '连不上服务器：听书要联网（设置里可以「听书自检」看卡在哪）'
-                      : ('语音加载失败：' + (err.code !== undefined ? ('code=' + err.code + ' ') : '')
-                         + (err.message || '') + '（设置里可以「听书自检」看卡在哪）'));
+        App.toast(off ? 'Không kết nối được máy chủ: nghe truyện cần mạng (trong Cài đặt có «Tự kiểm tra nghe truyện» để xem kẹt ở đâu)'
+                      : ('Tải giọng đọc thất bại: ' + (err.code !== undefined ? ('code=' + err.code + ' ') : '')
+                         + (err.message || '') + ' (trong Cài đặt có «Tự kiểm tra nghe truyện» để xem kẹt ở đâu)'));
       });
     }
     return R.audio;
@@ -2214,7 +2214,7 @@
   }
 
   async function ttsStart() {
-    if (!R.path) { App.toast('先打开一章'); return; }
+    if (!R.path) { App.toast('Hãy mở một chương trước'); return; }
     ttsEnsureAudio();
     R.ttsWant = true; R.ttsOn = true; R.ttsBusy = true; R.ttsSeg = 0; R.ttsPath = R.path;
     R.ttsSeg = 0; R.ttsCount = 0;
@@ -2235,10 +2235,10 @@
          以前不管什么原因都写"这一章没有可朗读的内容" ——
          连不上服务器时用户看到的是"没内容"，其实人话是"连不上、听书要联网"。
          合成在服务器上做（edge-tts），手机自己不会发声，所以断网就是没声。 */
-      if (ttsErr && (ttsErr.status === 0 || ttsErr.offline)) App.toast('连不上服务器，听书要联网（点这里重试）');
-      else if (ttsErr && ttsErr.status === 401) App.toast('登录过期了，回设置重新输一次密码');
-      else if (ttsErr) App.toast('听书失败了：' + ((ttsErr.message || '') + '').slice(0, 30));
-      else App.toast('这一章没有可朗读的内容');
+      if (ttsErr && (ttsErr.status === 0 || ttsErr.offline)) App.toast('Không kết nối được máy chủ, nghe truyện cần mạng (bấm vào đây để thử lại)');
+      else if (ttsErr && ttsErr.status === 401) App.toast('Phiên đăng nhập hết hạn, vào Cài đặt nhập lại mật khẩu');
+      else if (ttsErr) App.toast('Nghe truyện thất bại: ' + ((ttsErr.message || '') + '').slice(0, 30));
+      else App.toast('Chương này không có nội dung để đọc');
       return;
     }
     R.ttsCount = meta.count;
@@ -2262,13 +2262,13 @@
       /* 以前只处理 NotAllowedError，其它拒绝原因**全被吞掉**（用户按了没声，界面也不说话）。
          现在一律记下来 + 说人话：name/message 原样保留，自检面板里能直接读到。 */
       R.ttsLastError = {
-        事件: 'play 被拒', 地址: String(R.audio.currentSrc || R.audio.src || ''),
+        事件: 'play bị từ chối', 地址: String(R.audio.currentSrc || R.audio.src || ''),
         地址尾巴: String(R.audio.currentSrc || R.audio.src || '').slice(-70),
         name: (e && e.name) || '', message: (e && e.message) || String(e),
         段: i, 共几段: R.ttsCount, 时间: Date.now(),
       };
       const nm = (e && e.name) || '';
-      if (nm === 'NotAllowedError') App.toast('系统拦了自动播放 —— 再点一下「听书」（听书自检里能看到详情）');
+      if (nm === 'NotAllowedError') App.toast('Hệ thống chặn tự động phát — bấm «Nghe truyện» thêm lần nữa (xem chi tiết trong Tự kiểm tra nghe truyện)');
       else if (nm === 'AbortError' && !window.__TTSD_NO_ABORT) {
         /* `__TTSD_NO_ABORT` 是判据的反证钩子（tools/e2e-ttsdiag.js 的 TTSD_FORCE=noabort）：
            勾上它就等于"被打断时什么都不做"的老行为 —— 那条判据必须因此报红。 */
@@ -2278,8 +2278,8 @@
            以前这里一律吞掉：用户回到 App 看到一片安静，只能再点一次（还不知道为什么）。
            现在：说人话 + 记住"是被打断的" + **页面重新可见时自动接着读**。 */
         R.ttsResume = true;
-        App.toast('刚才被系统打断了（切到后台 / 省电冻结），回到这一页会自动接着读');
-      } else App.toast('播放失败：' + nm + ' ' + ((e && e.message) || '') + '（设置里「听书自检」看详情）');
+        App.toast('Vừa bị hệ thống ngắt (chuyển sang nền / tiết kiệm pin), quay lại trang này sẽ tự đọc tiếp');
+      } else App.toast('Phát thất bại: ' + nm + ' ' + ((e && e.message) || '') + ' (xem chi tiết ở «Tự kiểm tra nghe truyện» trong Cài đặt)');
     });
     /* 读到哪，页面跟到哪：听书时页面一直停在原地就很怪。
        只跟「开读时那一章」，用户自己翻到别章就不管了；设置里可以关。 */
@@ -2327,7 +2327,7 @@
     /* 上次播放真的失败过？先说这件事 —— 用户是"点了没声"才来点自检的，
        这一行比什么都直接（它在历史里，不在这次量的数值里）。 */
     if (R.ttsLastError) {
-      push('上次播放失败的原因（记下来的）', false, R.ttsLastError);
+      push('Nguyên nhân phát thất bại lần trước (đã ghi lại)', false, R.ttsLastError);
       R.ttsLastError = null;
     }
 
@@ -2340,13 +2340,13 @@
     try { base = String(API.base ? API.base() : '') || ''; } catch (e) { base = ''; }
     const badBase = onFile && !base;
     const tokNow = (() => { try { return String((API.token ? API.token() : '') || ''); } catch (e) { return ''; } })();
-    push('后端地址', !badBase, {
-      地址: base || '（浏览器同源 —— 正常，相对路径天然就对）',
-      页面: onFile ? 'App 内嵌（file://，必须绝对地址）' : '浏览器打开（http，同源）',
+    push('Địa chỉ backend', !badBase, {
+      地址: base || '(Trình duyệt cùng nguồn — bình thường, đường dẫn tương đối tự đúng)',
+      页面: onFile ? 'App nhúng (file://, bắt buộc địa chỉ tuyệt đối)' : 'Mở bằng trình duyệt (http, cùng nguồn)',
     });
-    push('口令', !(onFile && !tokNow), {
-      有没有: tokNow ? ('有（' + tokNow.slice(0, 6) + '…）')
-        : (onFile ? '没有 —— App 里媒体地址靠 ?token= 过鉴权，听书会哑' : '浏览器同源走 cookie，不需要'),
+    push('Mã đăng nhập', !(onFile && !tokNow), {
+      有没有: tokNow ? ('Có (' + tokNow.slice(0, 6) + '…)')
+        : (onFile ? 'Không có — trong App địa chỉ media dựa vào ?token= để xác thực, nghe truyện sẽ câm' : 'Trình duyệt cùng nguồn dùng cookie, không cần'),
     });
     if (F === 'badbase') { base = 'http://127.0.0.1:1/'; }
 
@@ -2370,12 +2370,12 @@
       if (!r.ok) srvErr = { status: r.status, body: txt.slice(0, 200) };
     } catch (e) { srvErr = { status: 0, name: e && e.name, body: (e && e.message) || String(e) }; }
     const srvOk = !srvErr && srv && srv.ok !== false;
-    push('服务器自检（引擎 / 这一章 / 第 0 段）', srvOk, srvErr || { 结论: (srv || {}).结论 || '',
+    push('Máy chủ tự kiểm tra (bộ máy / chương này / đoạn 0)', srvOk, srvErr || { 结论: (srv || {}).结论 || '',
         分项: ((srv || {}).steps || []).map((x) => (x.ok ? '✓' : '✗') + x.name) });
     if (!srvOk) {
       return { ok: false, rows: rows, url: '', why: srvErr
-        ? ('服务器这一环没通：HTTP ' + srvErr.status + ' ' + String(srvErr.body || '').slice(0, 120))
-        : ('服务器自检说：' + ((srv || {}).结论 || '没通过')) };
+        ? ('Khâu máy chủ không thông: HTTP ' + srvErr.status + ' ' + String(srvErr.body || '').slice(0, 120))
+        : ('Máy chủ tự kiểm tra báo: ' + ((srv || {}).结论 || 'Không đạt')) };
     }
 
     /* ③ 音频直链：HTTP 码 / 类型 / 字节数 / 开头四字节（听书的音频就是它） */
@@ -2391,16 +2391,16 @@
       audio = { status: r.status, type: r.headers.get('content-type') || '', bytes: buf.byteLength,
                 开头四字节: head, 尾巴: segUrl.slice(-60) };
       const ok = r.ok && buf.byteLength > 0;
-      push('音频直链能取到（第 0 段）', ok, audio);
+      push('Lấy được link âm thanh trực tiếp (đoạn 0)', ok, audio);
       if (!ok) {
         return { ok: false, rows: rows, url: segUrl,
-                 why: '取音频这一步 HTTP ' + r.status + '（' + audio.type + '，' + audio.bytes + ' 字节）'
-                      + ' —— 地址尾巴：' + audio.尾巴 };
+                 why: 'Bước lấy âm thanh HTTP ' + r.status + '(' + audio.type + ', ' + audio.bytes + ' byte) '
+                      + ' —— Đuôi địa chỉ: ' + audio.尾巴 };
       }
     } catch (e) {
-      push('音频直链能取到（第 0 段）', false, { 错误: (e && e.name) + ': ' + ((e && e.message) || e) });
+      push('Lấy được link âm thanh trực tiếp (đoạn 0)', false, { 错误: (e && e.name) + ': ' + ((e && e.message) || e) });
       return { ok: false, rows: rows, url: segUrl,
-               why: '音频取不回来（' + ((e && e.name) || '错误') + '）：' + ((e && e.message) || e) };
+               why: 'Không lấy được âm thanh (' + ((e && e.name) || 'Lỗi') + '): ' + ((e && e.message) || e) };
     }
 
     /* ④ new Audio() 真加载一次：error.code / networkState / readyState / duration 全打出来 */
@@ -2424,12 +2424,12 @@
       地址尾巴: segUrl.slice(-60),
     };
     const mediaOk = (loaded === 'meta' || loaded === 'canplay');
-    push('能当音频加载（第 0 段）', mediaOk, media);
+    push('Tải được dưới dạng âm thanh (đoạn 0)', mediaOk, media);
     if (!mediaOk) {
-      const code = media.errorCode === null ? '（没有 error）' : ('code=' + media.errorCode);
+      const code = media.errorCode === null ? '(không có error)' : ('code=' + media.errorCode);
       return { ok: false, rows: rows, url: segUrl,
-               why: '这一段加载不了：' + loaded + '，' + code + ' ' + media.errorMessage
-                    + '（readyState=' + media.readyState + '，networkState=' + media.networkState + '）' };
+               why: 'Đoạn này không tải được: ' + loaded + ', ' + code + ' ' + media.errorMessage
+                    + '(readyState=' + media.readyState + ', networkState=' + media.networkState + ')' };
     }
 
     /* ⑤ play()：成功还是被拒（被拒也要原样说出 e.name + e.message） */
@@ -2440,14 +2440,14 @@
     } catch (e) {
       playRes = { ok: false, name: (e && e.name) || '', message: (e && e.message) || String(e) };
     }
-    push('真的播一下（play）', playRes.ok, playRes);
+    push('Phát thử thật (play)', playRes.ok, playRes);
     try { au.pause(); au.removeAttribute('src'); au.load(); } catch (e) {}
     if (!playRes.ok) {
       return { ok: false, rows: rows, url: segUrl,
-               why: '播放被拒：' + playRes.name + ' ' + playRes.message +
-                    (playRes.name === 'NotAllowedError' ? '（要用户先点一下页面才允许出声）' : '') };
+               why: 'Phát bị từ chối: ' + playRes.name + ' ' + playRes.message +
+                    (playRes.name === 'NotAllowedError' ? ' (người dùng phải bấm vào trang trước thì mới được phát tiếng)' : '') };
     }
-    return { ok: true, rows: rows, url: segUrl, why: '从地址到出声这一整条路都通了' };
+    return { ok: true, rows: rows, url: segUrl, why: 'Cả đường từ địa chỉ tới phát ra tiếng đều thông' };
   }
 
   function ttsSelfHtml(rep) {
@@ -2456,22 +2456,22 @@
       '<code>' + esc(JSON.stringify(r.detail)) + '</code></div>';
     return (rep.rows || []).map(line).join('') +
       '<div class="tsd-why ' + (rep.ok ? 'ok' : 'bad') + '">' +
-      (rep.ok ? '结论：' : '卡在哪儿：') + esc(rep.why || '') + '</div>' +
-      (rep.url ? '<div class="tsd-url">音频地址：' + esc(rep.url) + '</div>' : '');
+      (rep.ok ? 'Kết luận:' : 'Kẹt ở đâu:') + esc(rep.why || '') + '</div>' +
+      (rep.url ? '<div class="tsd-url">Địa chỉ âm thanh: ' + esc(rep.url) + '</div>' : '');
   }
 
   async function ttsSelfCheckSheet(opts) {
     if (App.sheetOpen && App.sheetOpen()) App.closeSheet();
     App.sheet('<div class="tsd">' +
-      '<div class="tsd-head"><h3>听书自检</h3><button class="ico" data-close aria-label="关闭">×</button></div>' +
-      '<div class="tsd-body" id="tsd-body"><div class="tsd-run">正在逐项检查…</div></div></div>');
+      '<div class="tsd-head"><h3>Tự kiểm tra nghe truyện</h3><button class="ico" data-close aria-label="Đóng">×</button></div>' +
+      '<div class="tsd-body" id="tsd-body"><div class="tsd-run">Đang kiểm tra từng mục…</div></div></div>');
     const body = document.getElementById('tsd-body');
     let rep;
     /* 走**对外的那个口子**（Reader.selfCheckReport）—— 界面上点的和判据调的是同一个函数，
        判据要模拟"静默失败"时覆盖它一处就够，不会出现"界面这条路测的是另一套"。 */
     const run = (typeof Reader !== 'undefined' && Reader.selfCheckReport) ? Reader.selfCheckReport : ttsSelfCheck;
     try { rep = await run(opts); }
-    catch (e) { rep = { ok: false, rows: [], why: '自检自己出错了：' + ((e && e.message) || e) }; }
+    catch (e) { rep = { ok: false, rows: [], why: 'Bản thân tự kiểm tra bị lỗi: ' + ((e && e.message) || e) }; }
     if (body) body.innerHTML = ttsSelfHtml(rep);
     return rep;
   }
@@ -2482,7 +2482,7 @@
     if (R.audio) { try { R.audio.pause(); R.audio.removeAttribute('src'); R.audio.load(); } catch (e) {} }
     ttsPre.length = 0;
     ttsPaint();
-    if (loud) App.toast('已停止听书');
+    if (loud) App.toast('Đã dừng nghe truyện');
   }
 
   /* 打开章节/换音色后，把按钮重新画成当前状态（以前图标和文字从来不跟着变，
@@ -2528,13 +2528,13 @@
           const c = window.Offline && Offline.getBook(slug);
           if (!c) throw e;
           R.book = c;
-          App.toast('离线：目录是缓存里的');
+          App.toast('Ngoại tuyến: mục lục lấy từ bộ nhớ đệm');
         }
       }
       const chs = R.book.chapters || [];
       let path = cmd.path;
       if (!path || !chs.some((c) => c.path === path)) path = chs.length ? chs[0].path : null;
-      if (!path) throw new Error('这本书还没有章节');
+      if (!path) throw new Error('Cuốn này chưa có chương nào');
       if (R.cache[path] == null) {
         try {
           const d = await API.chapter(slug, path);
@@ -2544,7 +2544,7 @@
           const c = window.Offline && Offline.getChapter(slug, path);
           if (c == null) throw e;
           R.cache[path] = c;
-          App.toast('离线：这一章是缓存过的');
+          App.toast('Ngoại tuyến: chương này lấy từ bộ nhớ đệm');
         }
       }
       return path;
@@ -2593,18 +2593,18 @@
     /* 底栏那一排「一定会用到」的（用户要的：不用点开设置就能用） */
     nextChapter() {
       if (R.pathNext) { toChapter(R.pathNext, 0); return; }
-      App.toast(R.book ? '已经是最后一章了' : '先打开一章');
+      App.toast(R.book ? 'Đây đã là chương cuối' : 'Hãy mở một chương trước');
     },
     prevChapter() {
       if (R.pathPrev) { toChapter(R.pathPrev, 100); return; }
-      App.toast(R.book ? '已经是第一章了' : '先打开一章');
+      App.toast(R.book ? 'Đây đã là chương đầu' : 'Hãy mở một chương trước');
     },
     /* 底栏的字号快捷：不用进设置直接加大/减小，四角都会重排 */
     fontStep(d) {
       const v = clamp(Math.round((+Prefs.get('fontSize') || 19) + d), 14, 30);
-      if (v === +Prefs.get('fontSize')) { App.toast(d > 0 ? '已经最大了' : '已经最小了'); return; }
+      if (v === +Prefs.get('fontSize')) { App.toast(d > 0 ? 'Đã lớn nhất rồi' : 'Đã nhỏ nhất rồi'); return; }
       Prefs.set('fontSize', v);
-      App.toast('字号 ' + v);
+      App.toast('Cỡ chữ ' + v);
     },
 
     /* 书签：当前页 */
@@ -2612,7 +2612,7 @@
       if (!R.path) return;
       const i = clamp(Math.round((R.pct / 100) * Math.max(0, R.text.length - 1)), 0, Math.max(0, R.text.length - 1));
       Marks.add(R.slug, R.path, R.pct, R.text.slice(i, i + 46).replace(/\s+/g, ''));
-      App.toast('已加书签');
+      App.toast('Đã thêm dấu trang');
     },
 
     /* 编辑本章 */

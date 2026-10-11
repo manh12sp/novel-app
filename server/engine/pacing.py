@@ -16,7 +16,7 @@ import statistics
 from ..store import chapter_files, read_text
 
 _QUOTE = re.compile(r"[“\"「『][^”\"」』\n]{1,300}[”\"」』]")
-_SENT = re.compile(r"[^。！？!?；;\n]+")
+_SENT = re.compile(r"[^。！？!?；;.\n]+")
 
 # 情绪词表：分正/负/紧张三桶。刻意写得短而准 —— 这里要的是**走势**，不是逐句打分。
 _POS = ("笑", "松", "暖", "安心", "高兴", "开心", "欢喜", "舒服", "甜", "放心", "轻松",
@@ -39,6 +39,25 @@ _TENSE = ("忽然", "突然", "猛地", "瞬间", "刹那", "紧", "急", "冲",
           "死", "倒", "摔", "滚", "翻", "勒", "掐", "踢", "踹", "砸开", "撞开")
 _ACT = ("跑", "跳", "抓", "推", "拉", "打", "踢", "拔", "劈", "翻", "爬", "冲", "闪",
         "扑", "扔", "摔", "撞", "咬", "扛", "拽", "挥", "刺", "砍", "扑倒")
+
+# Từ vựng tiếng Việt (để nhịp truyện cũng đo được với chính văn tiếng Việt)
+_POS = _POS + ("cười", "mỉm cười", "ấm áp", "yên tâm", "vui", "vui vẻ", "hạnh phúc", "thoải mái", "ngọt ngào",
+               "nhẹ nhõm", "dịu dàng", "bình an", "may mắn", "cảm động", "hy vọng", "mãn nguyện", "hài lòng",
+               "an ủi", "hân hoan", "bình yên", "thú vị", "náo nhiệt", "thân mật", "tin tưởng", "biết ơn",
+               "tự hào", "đắc ý", "sảng khoái", "hớn hở", "rạng rỡ")
+_NEG = _NEG + ("khóc", "đau", "chết", "máu", "hận", "giận", "sợ", "lạnh", "khổ", "tuyệt vọng", "buồn",
+               "thảm", "cô đơn", "mệt", "đói", "bệnh", "thương tích", "nước mắt", "áy náy", "hối hận",
+               "xấu hổ", "tủi thân", "khó chịu", "tức giận", "phẫn nộ", "bực bội", "lo âu", "bất an",
+               "hoảng loạn", "sợ hãi", "kinh hãi", "chán nản", "hụt hẫng", "chua xót", "đắng chát",
+               "ngạt thở", "nặng nề", "im lặng", "lúng túng", "nhục nhã", "thảm hại", "bất lực",
+               "nhức", "run rẩy", "nghiến răng", "siết chặt", "nhíu mày", "sát ý", "hận ý", "nức nở",
+               "nghẹn ngào", "chết lặng", "u ám", "đè nén", "sụp đổ", "phát điên", "chửi", "mắng")
+_TENSE = _TENSE + ("bỗng", "đột nhiên", "bất chợt", "chớp mắt", "khoảnh khắc", "gấp", "lao", "nổ",
+                   "dao", "kiếm", "vồ", "đâm sầm", "đuổi", "chạy trốn", "gầm", "hét", "chém", "vỡ",
+                   "nứt", "giết", "đập", "tên bắn", "súng", "lửa", "khói", "sấm", "rung", "mồ hôi lạnh",
+                   "nín thở", "ngã", "lăn", "bóp cổ", "đá", "đạp")
+_ACT = _ACT + ("chạy", "nhảy", "chộp", "đẩy", "kéo", "đánh", "đá", "rút", "chém", "lật", "bò", "lao",
+               "né", "vồ", "ném", "quăng", "đâm", "cắn", "vác", "giật", "vung", "chặt", "xô ngã")
 
 
 def _hits(text: str, words) -> int:
@@ -136,44 +155,44 @@ def alerts(points: list[dict]) -> list[dict]:
         vals = [p["valence"] for p in _span(points, a, b)]
         if max(vals) - min(vals) <= 0.35:
             add("warn", "flat_negative", a, b,
-                "第 %d–%d 章连着 %d 章情绪都压在负面（而且起伏不大，像一直在吵架）" % (a, b, b - a + 1),
-                "中间插一章缓的：换个场景、让人笑一次，或者把这场冲突收掉再开下一场")
+                "Chương %d–%d liền %d chương cảm xúc đều đè nặng ở mức tiêu cực (lại ít lên xuống, như cãi nhau suốt)" % (a, b, b - a + 1),
+                "Chèn vào giữa một chương nhẹ nhàng: đổi bối cảnh, để nhân vật cười một lần, hoặc khép xung đột này lại rồi mới mở trận sau")
     for a, b in _run(points, "valence", lambda p: p["valence"] >= 0.2, 4):
         add("info", "flat_positive", a, b,
-            "第 %d–%d 章连着 %d 章都是好情绪" % (a, b, b - a + 1),
-            "太顺会让人不想翻页：加个小坎，或者把已有的麻烦提前一点爆")
+            "Chương %d–%d liền %d chương đều là cảm xúc tích cực" % (a, b, b - a + 1),
+            "Quá suôn sẻ sẽ khiến người đọc không muốn lật trang: thêm một trở ngại nhỏ, hoặc cho rắc rối sẵn có bùng nổ sớm hơn một chút")
     # 2. 一直绷着，没有喘息
     for a, b in _run(points, "arousal", lambda p: p["arousal"] >= 0.6, 3):
         add("warn", "no_breath", a, b,
-            "第 %d–%d 章张力一直拉满，中间没有喘息" % (a, b),
-            "高潮后面要给读者一口气：写点日常、结算一下后果，下一场才更响")
+            "Chương %d–%d độ căng luôn kéo căng tối đa, không có chỗ thở" % (a, b),
+            "Sau cao trào phải cho người đọc một hơi: viết chút đời thường, tổng kết hậu quả, trận sau mới vang hơn")
     # 3. 连着几章没对话（全是叙述，读起来像流水账）
     for a, b in _run(points, "dialogue", lambda p: p["dialogue"] < 0.06 and p["chars"] > 120, 3):
         add("info", "no_dialogue", a, b,
-            "第 %d–%d 章几乎没有对话（对白占比都低于 6%%）" % (a, b),
-            "让人开口说话：一句话能交代的信息，叙述要三句")
+            "Chương %d–%d gần như không có lời thoại (tỉ lệ thoại đều dưới 6%%)" % (a, b),
+            "Cho nhân vật mở miệng: thông tin một câu thoại nói được, lời kể phải mất ba câu")
     # 4. 长句连片（读着累）
     for a, b in _run(points, "avgSent", lambda p: p["avgSent"] >= 32 and p["chars"] > 120, 3):
         add("info", "long_sentences", a, b,
-            "第 %d–%d 章平均句长都超过 32 字" % (a, b),
-            "长短交替：信息密的地方用短句砸下去，别一路长句")
+            "Chương %d–%d độ dài câu trung bình đều trên 32 chữ" % (a, b),
+            "Xen kẽ dài ngắn: chỗ thông tin dày thì dùng câu ngắn đập xuống, đừng câu dài suốt")
     # 5. 单章过长 / 过短
     for p in points:
         if p["chars"] >= 9000:
             add("info", "too_long", p["index"], p["index"],
-                "第 %d 章 %d 字，偏长（一口气读完会累）" % (p["index"], p["chars"]),
-                "考虑拆成两章，或者在中间找一个自然的断点")
+                "Chương %d có %d chữ, hơi dài (đọc một mạch sẽ mệt)" % (p["index"], p["chars"]),
+                "Cân nhắc tách thành hai chương, hoặc tìm một điểm ngắt tự nhiên ở giữa")
         if 0 < p["chars"] <= 150:
             add("info", "too_short", p["index"], p["index"],
-                "第 %d 章只有 %d 字" % (p["index"], p["chars"]),
-                "是占位还是真的就这几句？太短的一章读者会觉得被骗")
+                "Chương %d chỉ có %d chữ" % (p["index"], p["chars"]),
+                "Là chỗ giữ chỗ hay thật sự chỉ có mấy câu này? Chương quá ngắn người đọc sẽ thấy bị lừa")
     # 6. 最近几章没有高潮（全书最长的那一段之后一直平）
     if len(points) >= 6:
         tail = points[-5:]
         if all(p["arousal"] < 0.35 for p in tail):
             add("warn", "no_peak", tail[0]["index"], tail[-1]["index"],
-                "最近 5 章张力都偏低，没有一个像样的高点",
-                "找一个该爆的点：把攒着的伏笔用掉一个，或者让某人先动手")
+                "5 chương gần nhất độ căng đều thấp, không có một điểm cao ra hồn",
+                "Tìm một điểm nên bùng nổ: dùng một phục bút đã tích, hoặc để ai đó ra tay trước")
     out.sort(key=lambda x: (x["level"] != "warn", x["from"]))
     return out
 

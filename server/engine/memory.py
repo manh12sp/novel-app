@@ -14,17 +14,18 @@ import re
 from .. import db as dbm
 from ..store import chapter_files, now_ms, read_text
 
-EXTRACT_PROMPT = """你在读一部中文长篇小说的正文，请抽取"读者需要记住的事实"。
+EXTRACT_PROMPT = """Bạn đang đọc chính văn của một bộ tiểu thuyết dài, hãy trích xuất "những sự thật người đọc cần ghi nhớ".
 
-只输出 JSON，不要任何解释，格式：
-{"memories":[{"subject":"人物或势力或地点的名字","topic":"属性名（如 身份/武器/关系/目标）",
-"view":"一句话说清这个属性现在是什么","aliases":["别名1"]}],
- "events":[{"subject":"谁","text":"发生了什么（一句话，含结果）","tick":"第几章或时间词"}]}
+Chỉ xuất JSON, không giải thích gì thêm, định dạng:
+{"memories":[{"subject":"tên nhân vật hoặc thế lực hoặc địa điểm","topic":"tên thuộc tính (như thân phận/vũ khí/quan hệ/mục tiêu)",
+"view":"một câu nói rõ thuộc tính này hiện tại là gì","aliases":["biệt danh 1"]}],
+ "events":[{"subject":"ai","text":"đã xảy ra chuyện gì (một câu, kèm kết quả)","tick":"chương thứ mấy hoặc từ chỉ thời gian"}]}
 
-要求：
-- 只写正文里**确实写到**的内容，不要推测、不要补充常识。
-- subject 用正文里的正式称呼；别名放在 aliases。
-- 每条 view 不超过 40 字。最多 20 条 memories、20 条 events。"""
+Yêu cầu:
+- Chỉ ghi nội dung chính văn **thực sự đã viết**, không suy đoán, không bổ sung kiến thức phổ thông.
+- subject dùng cách gọi chính thức trong chính văn; biệt danh đặt trong aliases.
+- Toàn bộ giá trị viết bằng tiếng Việt (tên riêng giữ nguyên như trong chính văn).
+- Mỗi view không quá 40 chữ. Tối đa 20 memories, 20 events."""
 
 
 async def rebuild(slug: str, *, model_key: str = "", progress=None) -> dict:
@@ -50,7 +51,7 @@ async def rebuild(slug: str, *, model_key: str = "", progress=None) -> dict:
                     continue
                 try:
                     raw = await complete(provider, mid, [{"role": "user",
-                                                          "content": EXTRACT_PROMPT + "\n\n【正文】\n" + text}],
+                                                          "content": EXTRACT_PROMPT + "\n\n【Chính văn】\n" + text}],
                                          temperature=0.2, max_tokens=2000)
                     data = _json_of(raw)
                 except Exception:
@@ -130,7 +131,7 @@ def _from_world_engine(slug: str) -> tuple[int, int]:
             n_mem += 1
     for m in list_moments(slug):
         for ep in d.query("SELECT * FROM episode WHERE slug=? AND moment_id=?", (slug, m["id"])):
-            subj = (ep["title"] or ep["summary"] or "全书")[:20]
+            subj = (ep["title"] or ep["summary"] or "Cả sách")[:20]
             _put_event(slug, subj, ep["summary"] or ep["title"], m["label"], m["time_text"],
                        ep["scene_path"] or "")
             n_ev += 1

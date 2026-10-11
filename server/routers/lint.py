@@ -44,9 +44,9 @@ async def lint_scan(request: Request, payload: dict = Body(...)):
         try:
             text = read_text(s, path)
         except FileNotFoundError:
-            raise HTTPException(404, "没有这一章")
+            raise HTTPException(404, "Không có chương này")
     if not text:
-        raise HTTPException(400, "要扫哪一章？给 path 或者 text")
+        raise HTTPException(400, "Quét chương nào? Hãy cho path hoặc text")
     out = L.scan(text, path=path)
     dbm.db().execute(
         "INSERT INTO lint_run(slug,path,created_at,hits_json,stats_json) VALUES(?,?,?,?,?)",
@@ -114,9 +114,9 @@ async def lint_fix(request: Request, payload: dict = Body(...)):
         try:
             text = read_text(s, path)
         except FileNotFoundError:
-            raise HTTPException(404, "没有这一章")
+            raise HTTPException(404, "Không có chương này")
     if not text:
-        raise HTTPException(400, "要修哪一章？给 path 或者 text")
+        raise HTTPException(400, "Sửa chương nào? Hãy cho path hoặc text")
     fixed, n = L.fix(text, rules=payload.get("rules"))
     before = L.scan(text, path=path)
     after = L.scan(fixed, path=path)
@@ -126,8 +126,8 @@ async def lint_fix(request: Request, payload: dict = Body(...)):
            "text": fixed if payload.get("returnText", True) else ""}
     if payload.get("apply"):
         if not path:
-            raise HTTPException(400, "要落盘就得说清是哪一章")
-        res = write_text(s, path, fixed, origin="model", note="质检自动修")
+            raise HTTPException(400, "Muốn ghi file thì phải nói rõ là chương nào")
+        res = write_text(s, path, fixed, origin="model", note="Tự sửa sau kiểm tra chất lượng")
         from .books import sync_book
         sync_book(s)
         out["applied"] = True
@@ -151,7 +151,7 @@ async def lint_llm(request: Request, payload: dict = Body(...)):
             v = dbm.db().jloads(row["value_json"], None)
             model_key = v if isinstance(v, str) else ""
     if not model_key:
-        raise HTTPException(400, "没配模型：这一项要用模型才能看，去「工具 → 模型」加一个")
+        raise HTTPException(400, "Chưa cấu hình mô hình: mục này cần mô hình mới xem được, vào「Công cụ → Mô hình」thêm một cái")
     try:
         provider, mid = provider_of(model_key)
     except LLMError as e:
@@ -162,12 +162,12 @@ async def lint_llm(request: Request, payload: dict = Body(...)):
         files = chapter_files(s)
         text = "\n\n".join(read_text(s, c["path"]) for c in files[:4])
     from ..llm.prompts import book_context
-    system = ("你是长篇小说的责任编辑。只挑**语境级**的硬伤：人物前后不一致、"
-              "时间线矛盾、情节断裂、设定自相矛盾。不要挑文笔风格。"
-              "输出格式：每条一行，`问题｜原文片段｜为什么不对`。没有硬伤就回「没发现硬伤」。")
+    system = ("Bạn là biên tập viên phụ trách của tiểu thuyết dài. Chỉ bắt **lỗi nặng ở cấp ngữ cảnh**: nhân vật trước sau không nhất quán, "
+              "dòng thời gian mâu thuẫn, tình tiết đứt gãy, thiết lập tự mâu thuẫn. Đừng bắt lỗi văn phong."
+              "Định dạng đầu ra: mỗi mục một dòng, `vấn đề｜đoạn văn gốc｜vì sao sai`. Không có lỗi nặng thì trả lời「Không phát hiện lỗi nặng」. Viết bằng tiếng Việt.")
     try:
         out = await complete(provider, mid, [{"role": "user", "content":
-                              book_context(s, tail_chars=600) + "\n\n【待查正文】\n" + text[:12000]}],
+                              book_context(s, tail_chars=600) + "\n\n【Chính văn cần kiểm tra】\n" + text[:12000]}],
                              system=system, temperature=0.2)
     except LLMError as e:
         raise HTTPException(502, str(e))

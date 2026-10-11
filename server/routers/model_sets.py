@@ -23,10 +23,10 @@ router = APIRouter(tags=["models"])
 
 # 用途清单（前后端共用，改这里就够了）
 PURPOSES = [
-    ("planner", "规划", "写细纲、理大纲、想剧情走向 —— 需要脑子好使的模型"),
-    ("writer", "写正文", "真正落笔写正文的那一个"),
-    ("polish", "润色改写", "润色、改写、行内 AI —— 要快、要听话"),
-    ("fast", "杂活", "摘要、起名、抽取信息这类小活"),
+    ("planner", "Lên kế hoạch", "Viết đề cương chi tiết, sắp xếp dàn ý, nghĩ hướng đi cốt truyện —— cần mô hình thông minh"),
+    ("writer", "Viết chính văn", "Mô hình thực sự đặt bút viết chính văn"),
+    ("polish", "Trau chuốt / viết lại", "Trau chuốt, viết lại, AI nội tuyến —— cần nhanh, cần nghe lời"),
+    ("fast", "Việc vặt", "Những việc nhỏ như tóm tắt, đặt tên, trích xuất thông tin"),
 ]
 PURPOSE_KEYS = tuple(p[0] for p in PURPOSES)
 
@@ -105,13 +105,13 @@ async def model_sets_save(request: Request, payload: dict = Body(...)):
     current_user(request)
     name = str(payload.get("name") or "").strip()
     if not name or len(name) > 40:
-        raise HTTPException(400, "模型组得有个 40 字以内的名字")
+        raise HTTPException(400, "Nhóm mô hình phải có tên trong vòng 40 chữ")
     members = payload.get("members") or {}
     if not isinstance(members, dict):
-        raise HTTPException(400, "members 得是「用途 → 模型」的对象")
+        raise HTTPException(400, "members phải là đối tượng「mục đích → mô hình」")
     bad = [k for k in members if k not in PURPOSE_KEYS]
     if bad:
-        raise HTTPException(400, "不认识的用途：" + "、".join(bad))
+        raise HTTPException(400, "Không nhận ra mục đích: " + "、".join(bad))
     rows = []
     for purpose, key in members.items():
         key = str(key or "").strip()
@@ -119,7 +119,7 @@ async def model_sets_save(request: Request, payload: dict = Body(...)):
             continue
         p = _provider_by_key(key)
         if not p:
-            raise HTTPException(400, f"模型库里没有这个模型：{key}")
+            raise HTTPException(400, f"Kho mô hình không có mô hình này: {key}")
         rows.append((purpose, p["id"], key.rsplit("/", 1)[1]))
     d = dbm.db()
     with d.tx() as conn:
@@ -145,7 +145,7 @@ async def model_sets_delete(request: Request, name: str):
     d = dbm.db()
     row = d.one("SELECT id FROM model_set WHERE name=?", (name,))
     if not row:
-        raise HTTPException(404, "没有这个模型组")
+        raise HTTPException(404, "Không có nhóm mô hình này")
     with d.tx() as conn:
         conn.execute("DELETE FROM model_set_member WHERE set_id=?", (row["id"],))
         conn.execute("DELETE FROM model_set WHERE id=?", (row["id"],))
@@ -162,7 +162,7 @@ async def model_sets_activate(request: Request, payload: dict = Body(...)):
     current_user(request)
     name = str(payload.get("name") or "").strip()
     if name and not _set_of(name):
-        raise HTTPException(404, "没有这个模型组")
+        raise HTTPException(404, "Không có nhóm mô hình này")
     dbm.db().execute("INSERT INTO setting(key,value_json,updated_at) VALUES(?,?,?)"
                      " ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json,"
                      " updated_at=excluded.updated_at",
@@ -175,14 +175,14 @@ async def model_sets_resolve(request: Request, slug: str = "", purpose: str = "w
     """这个用途最后会落到哪个模型上（把三个来源摊开给人看）。"""
     current_user(request)
     if purpose not in PURPOSE_KEYS:
-        raise HTTPException(400, "不认识的用途：" + purpose)
+        raise HTTPException(400, "Không nhận ra mục đích: " + purpose)
     from .books import model_options
     from .write import _default_model, _preset_model
     opts = model_options()
     used = purpose_model(slug, purpose)
-    via = "模型组" if used else ""
+    via = "Nhóm mô hình" if used else ""
     mk = used or _preset_model(slug, purpose) or _default_model(slug)
     if not via:
-        via = "预设" if _preset_model(slug, purpose) else "全局默认"
+        via = "Cài đặt sẵn" if _preset_model(slug, purpose) else "Mặc định toàn cục"
     return {"purpose": purpose, "modelKey": mk, "via": via, "activeSet": _active_set(),
             "setModel": used, "default": opts.get("default")}

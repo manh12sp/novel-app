@@ -30,7 +30,7 @@ def _need_sid(sid) -> int:
     try:
         return int(sid)
     except (TypeError, ValueError):
-        raise HTTPException(400, "会话标识不合法")
+        raise HTTPException(400, "Mã phiên hội thoại không hợp lệ")
 
 
 def _clip(text: str, term: str) -> str:
@@ -131,7 +131,7 @@ async def session_new(request: Request, payload: dict = Body(...)):
     current_user(request)
     pk = payload.get("profileKey") or "leader.default"
     if pk not in PROFILES:
-        raise HTTPException(400, f"没有这个档案：{pk}")
+        raise HTTPException(400, f"Không có hồ sơ này: {pk}")
     slug = payload.get("currentProjectRoot") or payload.get("projectRoot") or ""
     return rt.create_session(pk, slug, payload.get("title") or "",
                              payload.get("modelKey") or "")
@@ -143,7 +143,7 @@ async def session_get(sid: str, request: Request):
     try:
         return rt.session_snapshot(_need_sid(sid))
     except KeyError:
-        raise HTTPException(404, "没有这个会话")
+        raise HTTPException(404, "Không có phiên hội thoại này")
 
 
 @router.delete("/agent/sessions/{sid}")
@@ -160,15 +160,15 @@ async def session_invoke(sid: str, request: Request, payload: dict = Body(...)):
     i = _need_sid(sid)
     row = dbm.db().one("SELECT * FROM chat_session WHERE id=?", (i,))
     if not row:
-        raise HTTPException(404, "没有这个会话")
+        raise HTTPException(404, "Không có phiên hội thoại này")
     if row["status"] == "running":
-        raise HTTPException(409, "这个会话还在回复，等它说完或先按停")
+        raise HTTPException(409, "Phiên này vẫn đang trả lời, chờ nó nói xong hoặc bấm dừng trước")
     text = ((payload.get("message") or {}).get("text") or payload.get("text") or "").strip()
     if not text:
-        raise HTTPException(400, "没有要发的内容")
+        raise HTTPException(400, "Không có nội dung để gửi")
     mode = str(payload.get("mode") or "").strip()
     if mode and mode not in orchestra.MODES:
-        raise HTTPException(400, f"不认识的模式：{mode}（可选 {list(orchestra.MODES)}）")
+        raise HTTPException(400, f"Không nhận ra chế độ: {mode} (có thể chọn {list(orchestra.MODES)})")
     inv = rt.start_invocation(i, text, model_key=payload.get("modelKey") or "",
                               payload={"mode": mode, "path": payload.get("path") or "",
                                          "divided": payload.get("divided", True)})
@@ -191,7 +191,7 @@ async def session_command(sid: str, request: Request, payload: dict = Body(...))
     d = dbm.db()
     if cmd == "rename":
         d.execute("UPDATE chat_session SET title=?, updated_at=? WHERE id=?",
-                  (payload.get("title") or "未命名", now_ms(), i))
+                  (payload.get("title") or "Chưa đặt tên", now_ms(), i))
     elif cmd == "archive":
         d.execute("UPDATE chat_session SET archived=1, updated_at=? WHERE id=?", (now_ms(), i))
     elif cmd == "restore":
@@ -200,7 +200,7 @@ async def session_command(sid: str, request: Request, payload: dict = Body(...))
         d.execute("UPDATE chat_session SET model_key=?, updated_at=? WHERE id=?",
                   (payload.get("modelKey") or "", now_ms(), i))
     else:
-        raise HTTPException(400, f"不认识的命令：{cmd}")
+        raise HTTPException(400, f"Không nhận ra lệnh: {cmd}")
     events.emit(i, "session_state_changed",
                 {"type": "session_state_changed", "state": rt._state(i)})
     return {"ok": True, "command": cmd}
@@ -235,7 +235,7 @@ async def session_events(sid: str, request: Request, after: int = 0):
     current_user(request)
     i = _need_sid(sid)
     if not dbm.db().one("SELECT id FROM chat_session WHERE id=?", (i,)):
-        raise HTTPException(404, "没有这个会话")
+        raise HTTPException(404, "Không có phiên hội thoại này")
     return StreamingResponse(events.sse(i, after), media_type="text/event-stream",
                              headers={"cache-control": "no-cache", "x-accel-buffering": "no",
                                       "connection": "keep-alive"})
@@ -284,7 +284,7 @@ async def profiles_source(request: Request, payload: dict = Body(default={})):
         key = fname.split("/")[-1].split(".")[0]
     key = key or str((payload or {}).get("profileKey") or "")
     if key not in PROFILES:
-        raise HTTPException(400, f"没有这个档案：{key}")
+        raise HTTPException(400, f"Không có hồ sơ này: {key}")
     p = PROFILES[key]
     return {"profileKey": key, "toolKeys": p["tools"], "source": p["system"],
             "catalogItem": {"name": p["name"], "description": p["description"]}}
@@ -352,7 +352,7 @@ async def job_detail(job_id: str, request: Request):
     current_user(request)
     r = dbm.db().one("SELECT * FROM job WHERE job_id=?", (job_id,))
     if not r:
-        raise HTTPException(404, "没有这个任务")
+        raise HTTPException(404, "Không có tác vụ này")
     return _job_doc(r, with_result=True)
 
 
@@ -375,7 +375,7 @@ async def job_pause(job_id: str, request: Request):
     n = dbm.db().rowcount("UPDATE job SET status='paused', updated_at=? WHERE job_id=?"
                           " AND status='running'", (now_ms(), job_id))
     if not n:
-        raise HTTPException(409, "这个任务现在不是「正在跑」，暂停不了")
+        raise HTTPException(409, "Tác vụ này hiện không「đang chạy」, không tạm dừng được")
     return {"ok": True, "status": "paused"}
 
 
@@ -385,7 +385,7 @@ async def job_resume(job_id: str, request: Request):
     n = dbm.db().rowcount("UPDATE job SET status='running', updated_at=? WHERE job_id=?"
                           " AND status='paused'", (now_ms(), job_id))
     if not n:
-        raise HTTPException(409, "这个任务不在暂停中")
+        raise HTTPException(409, "Tác vụ này không ở trạng thái tạm dừng")
     return {"ok": True, "status": "running"}
 
 

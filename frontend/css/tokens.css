@@ -79,8 +79,8 @@
   --shadow:0 1px 2px rgba(58,51,43,.06),0 2px 8px rgba(58,51,43,.05);
   --safe-t:env(safe-area-inset-top,0px);
   --safe-b:env(safe-area-inset-bottom,0px);
-  --ui-font:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;
-  --serif:"Songti SC","Noto Serif CJK SC","Source Han Serif SC",serif;
+  --ui-font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans",Arial,"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;
+  --serif:"Noto Serif","Times New Roman",Cambria,"Songti SC","Noto Serif CJK SC","Source Han Serif SC",serif;
   --font-read:var(--serif);
   --fs:19px; --lh:1.9; --para-gap:.9em; --page-pad-x:22px;
   --bar-h:44px;                     /* 顶栏跟着收一档（48 → 44，烤进整数） */

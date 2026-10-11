@@ -33,7 +33,7 @@ def main():
     bad = []
     req_text = open(REQ, encoding='utf-8').read() if os.path.exists(REQ) else ''
     if not req_text:
-        print('❌ 没有 requirements.txt')
+        print('❌ Không có requirements.txt')
         return 1
     req = names_in_req(req_text)
 
@@ -62,19 +62,19 @@ def main():
     third = sorted(m for m in seen if m not in std and m not in ('server', '__future__'))
     for m in third:
         if m.lower() not in req and ALIAS.get(m, '').lower() not in req:
-            bad.append('代码 import 了 %s，requirements.txt 里没有' % m)
+            bad.append('Mã nguồn import %s, nhưng requirements.txt không có' % m)
 
     # ③ Form/File 的隐式依赖
     if uses_form and 'python-multipart' not in req:
-        bad.append('代码用了 Form/File/UploadFile → requirements.txt 必须有 python-multipart（隐式依赖，import 扫不出来）')
+        bad.append('Mã nguồn dùng Form/File/UploadFile → requirements.txt bắt buộc phải có python-multipart (phụ thuộc ngầm, quét import không ra)')
 
     if bad:
-        print('❌ 依赖有问题（别人 clone 下来会起不来）：')
+        print('❌ Phụ thuộc có vấn đề (người khác clone về sẽ không chạy được):')
         for b in bad:
             print('   ·', b)
         return 1
-    print('✅ 依赖自检通过：requirements.txt 齐全（%d 个包）' % len(req))
-    print('   代码里 import 的第三方：%s' % (', '.join(third) or '无'))
+    print('✅ Tự kiểm tra phụ thuộc đạt: requirements.txt đầy đủ (%d gói)' % len(req))
+    print('   Thư viện bên thứ ba được import trong mã: %s' % (', '.join(third) or 'không có'))
     return 0
 
 

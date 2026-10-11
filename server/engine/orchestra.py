@@ -40,7 +40,7 @@ HANDOFF_CHARS = 6000
 #   all   —— 全书都能改（只有 leader）
 ROLES: dict[str, dict] = {
     "leader": {
-        "name": "主创",
+        "name": "Tác giả chính",
         "profile": "leader.default",
         "scope": "all",
         "tools": ["list_files", "read_file", "search_book", "world_state", "promise_list",
@@ -48,52 +48,52 @@ ROLES: dict[str, dict] = {
                   "outline_write", "term_list", "material_list", "reference_list",
                   "reference_read", "lint_check", "consistency_check", "pacing_check",
                   "notes_read", "web_search", "web_fetch", "write_file", "report_result"],
-        "sees": ["全书现状", "世界事实", "未兑现伏笔", "相关记忆", "上游交接"],
-        "duty": "排计划、派活、汇总；影响面大的改动先说清楚再动。",
+        "sees": ["Hiện trạng cả sách", "Sự thật thế giới", "Phục bút chưa thu hồi", "Ký ức liên quan", "Bàn giao từ chặng trước"],
+        "duty": "Lập kế hoạch, giao việc, tổng hợp; thay đổi có ảnh hưởng lớn thì nói rõ trước rồi mới làm.",
     },
     "retriever": {
-        "name": "取上下文",
+        "name": "Lấy ngữ cảnh",
         "profile": "retriever",
         "scope": "read",
         "tools": ["list_files", "read_file", "search_book", "world_state", "promise_list",
                   "chapter_list", "lore_list", "lore_read", "memory_search", "outline_read",
                   "notes_read", "term_list", "material_list", "reference_list",
                   "reference_read"],
-        "sees": ["章节索引", "文件清单", "实体与设定索引", "未兑现伏笔", "正文检索"],
-        "duty": "把这一章要用的料找齐，写清出处；不改任何文件。",
+        "sees": ["Chỉ mục chương", "Danh sách file", "Chỉ mục thực thể và thiết lập", "Phục bút chưa thu hồi", "Tìm trong chính văn"],
+        "duty": "Gom đủ tư liệu chương này cần, ghi rõ xuất xứ; không sửa file nào.",
     },
     "researcher": {
-        "name": "查证",
+        "name": "Kiểm chứng",
         "profile": "researcher",
         "scope": "read",
         "tools": ["read_file", "search_book", "world_state", "lore_read", "memory_search",
                   "chapter_list", "term_list", "consistency_check", "lint_check",
                   "reference_list", "reference_read", "web_search", "web_fetch"],
-        "sees": ["设定库", "世界事实", "正文检索", "取上下文交来的清单",
-                 "联网资料（用户在设置里开了才有）"],
-        "duty": "核实名字、称呼、能力、地理、时间线；书里没有就上网查，引用要写来源；"
-                "核实不了就直说，不要编。",
+        "sees": ["Kho thiết lập", "Sự thật thế giới", "Tìm trong chính văn", "Danh sách do bước lấy ngữ cảnh giao",
+                 "Tư liệu trên mạng (chỉ có khi người dùng bật trong cài đặt)"],
+        "duty": "Kiểm chứng tên, xưng hô, năng lực, địa lý, dòng thời gian; trong sách không có thì tra trên mạng, trích dẫn phải ghi nguồn; "
+                "không kiểm chứng được thì nói thẳng, đừng bịa.",
     },
     "writer": {
-        "name": "写手",
+        "name": "Người viết",
         "profile": "writer",
         "scope": "prose",
         "tools": ["read_file", "list_files", "search_book", "world_state", "outline_read",
                   "outline_write", "lore_read", "memory_search", "term_list", "material_list",
                   "reference_list", "reference_read", "lint_check", "chapter_list",
                   "web_search", "web_fetch", "write_file", "report_result"],
-        "sees": ["计划", "上下文包", "查证结论", "世界事实", "相关记忆", "大纲"],
-        "duty": "照计划写正文；只写这一章，不碰设定，也不顺手改别的章节。",
+        "sees": ["Kế hoạch", "Gói ngữ cảnh", "Kết luận kiểm chứng", "Sự thật thế giới", "Ký ức liên quan", "Dàn ý"],
+        "duty": "Viết chính văn theo kế hoạch; chỉ viết chương này, không đụng thiết lập, cũng không tiện tay sửa chương khác.",
     },
     "critic": {
-        "name": "挑刺",
+        "name": "Bắt lỗi",
         "profile": "critic",
         "scope": "read",
         "tools": ["read_file", "search_book", "world_state", "promise_list", "lore_read",
                   "outline_read", "lint_check", "consistency_check", "pacing_check",
                   "memory_search", "chapter_list"],
-        "sees": ["计划", "正文草稿", "机器质检命中", "世界事实", "未兑现伏笔", "大纲"],
-        "duty": "逐条挑具体毛病并给改法；不能改文件，只交批注。",
+        "sees": ["Kế hoạch", "Bản nháp chính văn", "Kết quả kiểm tra tự động", "Sự thật thế giới", "Phục bút chưa thu hồi", "Dàn ý"],
+        "duty": "Bắt từng lỗi cụ thể và đưa cách sửa; không được sửa file, chỉ nộp nhận xét.",
     },
 }
 
@@ -101,39 +101,39 @@ ROLES: dict[str, dict] = {
 # steps 里每一项是 (角色, 这一棒干什么, 输出要求)。
 MODES: dict[str, dict] = {
     "discuss": {
-        "name": "讨论",
-        "desc": "先谈清楚再动笔：主创出主张 → 挑刺逐条反驳 → 主创回应收敛 → 挑刺复审。不动任何文件。",
+        "name": "Thảo luận",
+        "desc": "Bàn rõ trước rồi mới viết: tác giả chính đưa chủ trương → bắt lỗi phản biện từng điểm → tác giả chính phản hồi, chốt lại → bắt lỗi thẩm định lại. Không động vào tệp nào.",
         "writes": False,
         "steps": [
-            ("leader", "出主张", "说清你打算怎么写、为什么这么写、有哪些要用户拍板的地方。别写正文。"),
-            ("critic", "挑刺", "针对主张逐条挑毛病：哪里会和已有设定冲突、哪里会写崩、哪里在自嗨。"),
-            ("leader", "回应与收敛", "逐条回应挑刺，能改的改，不能改的说清为什么，给出一版收敛后的方案。"),
-            ("critic", "复审", "看收敛后的方案还剩哪些真问题；没有就直说没有，别凑数。"),
+            ("leader", "Đưa chủ trương", "Nói rõ bạn định viết thế nào, vì sao viết như vậy, những chỗ nào cần người dùng quyết. Đừng viết chính văn."),
+            ("critic", "Bắt lỗi", "Bắt lỗi từng điểm của chủ trương: chỗ nào sẽ mâu thuẫn với thiết lập sẵn có, chỗ nào sẽ viết hỏng, chỗ nào đang tự sướng."),
+            ("leader", "Phản hồi và chốt lại", "Phản hồi từng lỗi đã bắt, sửa được thì sửa, không sửa được thì nói rõ vì sao, đưa ra một phương án đã chốt gọn."),
+            ("critic", "Thẩm định lại", "Xem phương án đã chốt còn những vấn đề thật nào; không có thì nói thẳng là không có, đừng góp cho đủ số."),
         ],
     },
     "plan": {
-        "name": "计划",
-        "desc": "只出计划：主创排步骤 → 取上下文取料 → 查证核实 → 主创定稿。不写正文、不动文件。",
+        "name": "Kế hoạch",
+        "desc": "Chỉ ra kế hoạch: tác giả chính xếp bước → lấy ngữ cảnh → kiểm chứng → tác giả chính chốt. Không viết chính văn, không động vào tệp.",
         "writes": False,
         "steps": [
-            ("leader", "排计划", "把这件事拆成可执行步骤：写哪几章、每章要发生什么、材料从哪来。"),
-            ("retriever", "取上下文", "按计划把要用的文件、设定、伏笔列出来，写明出处。"),
-            ("researcher", "查证", "核实清单里的事实有没有冲突、有没有书里没写的东西。"),
-            ("leader", "定稿计划", "按取料与查证结果改定计划，逐条列出「下一步做什么」，并写明要动哪个文件（给路径）。"),
+            ("leader", "Lập kế hoạch", "Chia việc này thành các bước làm được: viết những chương nào, mỗi chương xảy ra chuyện gì, tư liệu lấy từ đâu."),
+            ("retriever", "Lấy ngữ cảnh", "Theo kế hoạch liệt kê file, thiết lập, phục bút cần dùng, ghi rõ xuất xứ."),
+            ("researcher", "Kiểm chứng", "Kiểm chứng các sự thật trong danh sách có mâu thuẫn không, có thứ gì sách chưa viết không."),
+            ("leader", "Chốt kế hoạch", "Chốt kế hoạch theo kết quả lấy tư liệu và kiểm chứng, liệt kê từng mục「bước tiếp theo làm gì」, và ghi rõ sẽ động vào file nào (cho đường dẫn)."),
         ],
     },
     "execute": {
-        "name": "执行",
-        "desc": "一竿子到底：计划 → 取料 → 查证 → 写初稿 → 挑刺 → 改稿 → 汇总。",
+        "name": "Thực hiện",
+        "desc": "Làm một mạch: kế hoạch → lấy tư liệu → kiểm chứng → viết nháp → bắt lỗi → sửa bản → tổng hợp.",
         "writes": True,
         "steps": [
-            ("leader", "排计划", "把这件事拆成可执行步骤，指明要写哪个文件、大概写什么。"),
-            ("retriever", "取上下文", "把要用的文件、设定、前情、伏笔列出来，写明出处。"),
-            ("researcher", "查证", "核实清单里的事实；冲突的指出来，书里没写的直说。"),
-            ("writer", "写初稿", "照计划写正文初稿。只写指定的那一章，不碰别的东西。"),
-            ("critic", "挑刺", "读初稿，逐条挑具体毛病：位置 + 为什么 + 改成什么样。"),
-            ("writer", "按批注改稿", "按挑刺逐条改；改完把完整定稿再交一次。"),
-            ("leader", "汇总", "说清这次做了什么、改了哪个文件、还剩什么要用户拍板。"),
+            ("leader", "Lập kế hoạch", "Chia việc này thành các bước làm được, chỉ rõ sẽ viết file nào, đại khái viết gì."),
+            ("retriever", "Lấy ngữ cảnh", "Liệt kê file, thiết lập, tình tiết trước, phục bút cần dùng, ghi rõ xuất xứ."),
+            ("researcher", "Kiểm chứng", "Kiểm chứng các sự thật trong danh sách; chỗ mâu thuẫn thì chỉ ra, cái sách chưa viết thì nói thẳng."),
+            ("writer", "Viết bản nháp", "Viết bản nháp chính văn theo kế hoạch. Chỉ viết đúng chương được chỉ định, không đụng thứ khác."),
+            ("critic", "Bắt lỗi", "Đọc bản nháp, bắt từng lỗi cụ thể: vị trí + vì sao + nên sửa thành thế nào."),
+            ("writer", "Sửa theo chú thích", "Sửa từng điểm theo phần bắt lỗi; sửa xong nộp lại toàn bộ bản hoàn chỉnh."),
+            ("leader", "Tổng hợp", "Nói rõ lần này đã làm gì, sửa file nào, còn gì cần người dùng quyết."),
         ],
     },
 }
@@ -146,42 +146,39 @@ KNOWN_TOOLS: frozenset[str] = frozenset(
 
 # 单人模式：每个"干活方式"一句话说清"一个人从头做到尾"是什么样
 ONE_SHOT: dict[str, str] = {
-    "discuss": """
-【这一轮只有你一个人，你要**依次演完下面几个角色**，一步都不许跳，每步都要留下看得见的东西】
+    "discuss": """【Lượt này chỉ có một mình bạn, bạn phải **lần lượt đóng hết các vai dưới đây**, không được bỏ bước nào, mỗi bước đều phải để lại thứ nhìn thấy được】
 
-① 主创 —— 把这件事的想法讲清楚：方向是什么、为什么这么定。
-② 挑刺 —— 写完立刻**站到对面**，以挑刺者的身份列出最少 3 条问题（哪句空、哪里想当然、有没有更好的做法），要具体到句子，不许说"没什么问题"。
-③ 主创 —— 按上面挑出的问题收敛，给出**最终主张**（说清保留了什么、改掉了什么）。
+① Tác giả chính —— nói rõ ý tưởng cho việc này: hướng đi là gì, vì sao chọn như vậy.
+② Bắt lỗi —— viết xong lập tức **đứng sang phía đối diện**, với tư cách người bắt lỗi liệt kê ít nhất 3 vấn đề (câu nào rỗng, chỗ nào chủ quan, có cách làm tốt hơn không), phải cụ thể đến từng câu, không được nói "không có vấn đề gì".
+③ Tác giả chính —— chốt lại theo các vấn đề đã nêu, đưa ra **chủ trương cuối cùng** (nói rõ giữ lại gì, bỏ đi gì).
 
-**规矩**：不许跳步、不许只列问题不收敛、不许"接下来可以……"式地留给下一步（这一轮没有下一步）。
-**这一轮不动任何文件。**""",
-    "plan": """
-【这一轮只有你一个人，你要**依次演完下面几个角色**，一步都不许跳】
+**Quy tắc**: không được bỏ bước, không được chỉ liệt kê vấn đề mà không chốt, không được để lại cho bước sau kiểu "tiếp theo có thể……" (lượt này không có bước sau).
+**Lượt này không động vào file nào.**""",
+    "plan": """【Lượt này chỉ có một mình bạn, bạn phải **lần lượt đóng hết các vai dưới đây**, không được bỏ bước nào】
 
-① 主创 —— 定方向：这一章/这一段要达成什么。
-② 取料 —— 列出要用的材料（设定、前文、伏笔），把关键的那几条**原样摘出来**。
-③ 主创 —— 把整件事拆成能直接照着做的步骤。
-④ 挑刺 —— 站到对面挑这个计划的毛病：哪里会写崩、哪里缺材料、哪里顺序不对。
+① Tác giả chính —— định hướng: chương/đoạn này cần đạt được gì.
+② Lấy tư liệu —— liệt kê tư liệu cần dùng (thiết lập, phần trước, phục bút), **trích nguyên văn** mấy mục then chốt.
+③ Tác giả chính —— chia cả việc thành các bước có thể làm theo ngay.
+④ Bắt lỗi —— đứng sang phía đối diện bắt lỗi kế hoạch này: chỗ nào sẽ viết hỏng, chỗ nào thiếu tư liệu, chỗ nào sai thứ tự.
 
-**规矩**：不许跳步、不许写正文、不许动任何文件。最后交一份**能直接照做**的计划。""",
-    "execute": """
-【这一轮只有你一个人，你要**依次演完下面四个角色**，一步都不许跳，每一步都要留在回答里】
+**Quy tắc**: không được bỏ bước, không được viết chính văn, không được động vào file nào. Cuối cùng nộp một bản kế hoạch **có thể làm theo ngay**.""",
+    "execute": """【Lượt này chỉ có một mình bạn, bạn phải **lần lượt đóng hết bốn vai dưới đây**, không được bỏ bước nào, mỗi bước đều phải để lại trong câu trả lời】
 
-① 主创（三五行，别长）—— 说清这一章要写什么、写到哪、为什么这么写。
-② 写手 —— **紧接着一口气写完整章正文**。不许省、不许"待续"、不许交回给我、不许写大纲代替正文。
-   该露骨的地方就写透，不许用比喻含混处理，不许"一夜过去"式地跳过关键场面。
-   一章就是一整章（能写多长写多长，别惜字）。
-③ 挑刺 —— 正文写完，立刻**站到挑刺者的位置**，列出最少 3 条真问题：
-   哪里情绪是假的、哪里跳了、哪里该写透却含糊了。要**具体到句子**，不许说"整体不错"。
-④ 润色 —— 按上面挑出的问题**真改一遍**（不是复述问题），把**改好后的完整正文**给出来。
-   改完的地方不许变得更含蓄。
+① Tác giả chính (ba đến năm dòng, đừng dài) —— nói rõ chương này viết gì, viết đến đâu, vì sao viết như vậy.
+② Người viết —— **ngay sau đó viết một mạch trọn chương chính văn**. Không được cắt bớt, không được "còn tiếp", không được trả lại cho tôi, không được viết dàn ý thay chính văn.
+   Chỗ cần táo bạo thì viết thấu, không được dùng ẩn dụ để lấp liếm, không được nhảy qua cảnh then chốt kiểu "một đêm trôi qua".
+   Một chương là một chương trọn vẹn (viết được dài bao nhiêu thì viết bấy nhiêu, đừng tiếc chữ).
+③ Bắt lỗi —— viết xong chính văn, lập tức **đứng vào vị trí người bắt lỗi**, liệt kê ít nhất 3 vấn đề thật:
+   chỗ nào cảm xúc giả, chỗ nào nhảy cóc, chỗ nào đáng viết thấu lại mơ hồ. Phải **cụ thể đến từng câu**, không được nói "nhìn chung ổn".
+④ Trau chuốt —— **sửa thật một lượt** theo các vấn đề đã nêu (không phải nhắc lại vấn đề), đưa ra **toàn bộ chính văn đã sửa xong**.
+   Chỗ đã sửa không được trở nên kín đáo hơn.
 
-**规矩（缺一条都算没做完）**：
- · 四个角色都要出现，①②③④ 一步不跳；
- · ③ 挑出的问题必须**真的**在 ④ 里被改掉；
- · 不许只说"已经很好"、不许只列问题不改、不许把活留给下一步（这一轮没有下一步）；
- · 交代一句你动了哪个文件，以及还剩什么要用户拍板。
-**这一轮你要出文件。**""",
+**Quy tắc (thiếu một điều coi như chưa làm xong)**:
+ · Cả bốn vai đều phải xuất hiện, ①②③④ không bỏ bước nào;
+ · Vấn đề nêu ở ③ phải **thật sự** được sửa ở ④;
+ · Không được chỉ nói "đã rất tốt", không được chỉ liệt kê vấn đề mà không sửa, không được để việc lại cho bước sau (lượt này không có bước sau);
+ · Nói một câu bạn đã động vào file nào, và còn gì cần người dùng quyết.
+**Lượt này bạn phải xuất file.**""",
 }
 
 
@@ -223,15 +220,15 @@ def steps_for(mode: str, slug: str = "", divided: bool = True) -> list[tuple[str
             # 这里曾经把 ONE_SHOT（"一个人演全套：①主创 ②写手——写完整章 ③挑刺 ④润色"）
             # 拼进**每一步**，于是 7 步每一步都被要求"写完整章"→ 连着输出 7 遍正文，
             # 用户看到的是一堆正文、也分不清哪版算数。一个人 ≠ 每步重写一遍。
-            want = ("这一轮由你一个人完成全过程（分工模式下的几个角色，都由你一个人依次扮演）。\n"
-                    "你现在是**第 %d 步 / 共 %d 步**，**这一步只做「%s」这一件事**。\n"
-                    "没轮到的步骤不要抢着做：没轮到写正文就一个字正文都不要写；"
-                    "没轮到挑刺就不要挑刺。做完这一步就停，等下一步。\n"
+            want = ("Lượt này do một mình bạn hoàn thành toàn bộ quy trình (các vai trong chế độ phân công đều do một mình bạn lần lượt đảm nhận).\n"
+                    "Bạn đang ở **bước %d / tổng %d bước**, **bước này chỉ làm đúng một việc「%s」**.\n"
+                    "Bước chưa tới lượt thì đừng tranh làm: chưa tới lượt viết chính văn thì một chữ chính văn cũng đừng viết; "
+                    "chưa tới lượt bắt lỗi thì đừng bắt lỗi. Làm xong bước này thì dừng, chờ bước tiếp theo.\n"
                     % (i, len(allsteps), title))
             _extra = str(_S1.get(_BY_ROLE.get(role, ""), "") or "").strip()
             if _extra:
-                want += "\n【这一步的专门要求（用户写的，照做）】\n" + _extra
-            out.append((role, "第%d步·%s" % (i, title), want, role == "writer"))
+                want += "\n【Yêu cầu riêng cho bước này (người dùng viết, làm theo)】\n" + _extra
+            out.append((role, "Bước %d·%s" % (i, title), want, role == "writer"))
         return out
 
     """这一轮实际要跑的那几棒：`(角色, 标题, 要求, 是不是正文那一棒)`。
@@ -288,23 +285,23 @@ def scope_allows(role: str, tool: str, args: dict, target_path: str = "",
     """
     r = ROLES.get(role)
     if not r:
-        return False, f"没有这个角色：{role}"
+        return False, f"Không có vai trò này: {role}"
     if tool in WRITE_TOOLS and not mode_writes:
-        nm = MODES.get(mode, {}).get("name", mode or "这一步")
-        return False, f"「{nm}」模式不出文件：先把话谈清楚/把计划排好，正文与设定都不动"
+        nm = MODES.get(mode, {}).get("name", mode or "Bước này")
+        return False, f"Chế độ「{nm}」không xuất file: trước hết bàn cho rõ/xếp xong kế hoạch, chính văn và thiết lập đều không động"
     if tool in WRITE_TOOLS and r["scope"] == "read":
-        return False, f"「{r['name']}」只看不改：这一步不允许写文件"
+        return False, f"「{r['name']}」chỉ xem không sửa: bước này không cho phép ghi file"
     if tool not in r["tools"]:
-        return False, f"「{r['name']}」这一步没有 {tool} 权限"
+        return False, f"「{r['name']}」bước này không có quyền {tool}"
     if tool not in WRITE_TOOLS:
         return True, ""
     path = str(args.get("path") or "").strip().lstrip("/")
     if r["scope"] == "prose":
         if not path.startswith("manuscript/"):
-            return False, (f"「{r['name']}」只能写正文（manuscript/），"
-                           f"设定与世界观只有主创能改：{path or '（没给路径）'}")
+            return False, (f"「{r['name']}」chỉ được viết chính văn (manuscript/), "
+                           f"thiết lập và thế giới quan chỉ tác giả chính được sửa: {path or '(không có đường dẫn)'}")
         if target_path and path != target_path:
-            return False, f"「{r['name']}」这一步只写 {target_path}，不能顺手改 {path}"
+            return False, f"「{r['name']}」bước này chỉ viết {target_path}, không được tiện tay sửa {path}"
     return True, ""
 
 
@@ -391,7 +388,7 @@ def _target_path(slug: str, text: str, payload: dict) -> str:
     if _files:
         _cn = "零一二三四五六七八九十百"
         _want_idx = None
-        mm = re.search(r"第\s*(\d+)\s*章", text or "")
+        mm = re.search(r"第\s*(\d+)\s*章", text or "") or re.search(r"(?i)chương\s*(\d+)", text or "")
         if mm:
             _want_idx = int(mm.group(1))
         else:
@@ -428,6 +425,9 @@ def _target_path(slug: str, text: str, payload: dict) -> str:
                 return f["path"]
         except Exception:
             continue
+    if re.match(r"^第\s*\d+\s*章", files[-1]["path"].rsplit("/", 1)[-1]):
+        _ns = [int(x) for f in files for x in re.findall(r"第\s*0*(\d+)\s*章", f["path"].rsplit("/", 1)[-1])[:1]]
+        return f"manuscript/第{(max(_ns) + 1) if _ns else len(files) + 1:03d}章-Chưa đặt tên.md"
     nums, last = [], files[-1]["path"]
     for f in files:
         mm = re.search(r"(\d+)", f["path"].rsplit("/", 1)[-1])
@@ -457,9 +457,9 @@ def _book_state_bits(slug: str, target: str) -> str:
     except Exception:
         files = []
     if not files:
-        return ("【这本书现在的状态】**还没有任何章节** —— 这是全新的一本书，没有任何前情。\n"
-                "你这一章就是开场：把人物、地点、正在发生的事立起来；\n"
-                "**不要**写「如前所述」「话说回来」「接上文」这类承接语（没有上文可接）。")
+        return ("【Trạng thái hiện tại của cuốn sách】**Chưa có chương nào** —— đây là một cuốn sách hoàn toàn mới, không có tình tiết trước nào.\n"
+                "Chương này của bạn chính là phần mở đầu: dựng lên nhân vật, địa điểm, chuyện đang xảy ra;\n"
+                "**đừng** viết những câu nối kiểu「như đã nói ở trên」「nói đi cũng phải nói lại」「tiếp theo phần trước」(không có phần trước để nối).")
     def _empty(f):
         try:
             return int(f.get("words") or 0) <= 0
@@ -467,17 +467,17 @@ def _book_state_bits(slug: str, target: str) -> str:
             return False
     empties = [f for f in files if _empty(f)]
     tgt = next((f for f in files if f.get("path") == target), None)
-    lines = ["【这本书现在的状态】共 %d 章，其中 %d 章还是空的。" % (len(files), len(empties))]
+    lines = ["【Trạng thái hiện tại của cuốn sách】Tổng %d chương, trong đó %d chương vẫn còn trống." % (len(files), len(empties))]
     if tgt is not None and _empty(tgt):
-        lines.append("**这一章（%s）现在还是空的，你要写的就是它** —— "
-                     "这本书还没有正文，直接从头讲起，不要承接任何「上一章」。"
+        lines.append("**Chương này (%s) hiện vẫn còn trống, thứ bạn cần viết chính là nó** —— "
+                     "cuốn sách chưa có chính văn, kể thẳng từ đầu, đừng nối tiếp bất kỳ「chương trước」nào."
                      % (tgt.get("name") or tgt.get("path")))
     elif empties:
-        lines.append("还有空章：%s。这一轮要写的是 %s。"
+        lines.append("Còn chương trống: %s. Lượt này cần viết là %s."
                      % ("、".join(str(e.get("name") or e.get("path") or "?") for e in empties[:5]),
                         target))
     else:
-        lines.append("上一章是 %s，接着往下写。" % (files[-1].get("name") or files[-1].get("path")))
+        lines.append("Chương trước là %s, viết tiếp từ đó." % (files[-1].get("name") or files[-1].get("path")))
     return "\n".join(lines)
 
 
@@ -489,8 +489,8 @@ def _index_bits(slug: str) -> str:
         from ..store import chapter_files
         files = chapter_files(slug)
         if files:
-            bits.append("章节（按顺序）：\n" + "\n".join(
-                f"- {c['path']}（{c['words']} 字）" for c in files[-20:]))
+            bits.append("Các chương (theo thứ tự):\n" + "\n".join(
+                f"- {c['path']} ({c['words']} chữ)" for c in files[-20:]))
     except Exception:
         # 章节清单取不到 = 这次少一段上下文，编排照跑。
         pass
@@ -503,15 +503,15 @@ def _index_bits(slug: str) -> str:
             tag = str(data.get("summary") or data.get("tagline") or data.get("desc")
                       or data.get("性格") or "").strip()
             lines.append(f"- [{e['kind']}] {e['name']}" + (f"：{tag[:60]}" if tag else ""))
-        bits.append("实体：\n" + "\n".join(lines))
+        bits.append("Thực thể:\n" + "\n".join(lines))
     pend = d.query("SELECT name,kind,status,due_chapter FROM promise WHERE slug=? AND status!='paid'"
                    " ORDER BY id LIMIT 15", (slug,))
     if pend:
-        bits.append("未兑现的伏笔：\n" + "\n".join(
+        bits.append("Phục bút chưa thu hồi:\n" + "\n".join(
             f"- {p['name']}（{p['kind']}／{p['status']}）" for p in pend))
     chunks = d.query("SELECT subject,topic,view_text FROM memory WHERE slug=? LIMIT 40", (slug,))
     if chunks:
-        bits.append("记忆索引：\n" + "\n".join(
+        bits.append("Chỉ mục ký ức:\n" + "\n".join(
             f"- {c['subject']}／{c['topic']}：{(c['view_text'] or '')[:50]}" for c in chunks))
     return "\n\n".join(bits)
 
@@ -550,33 +550,33 @@ async def _run_step(ctx: dict, seq: int, role: str, title: str, demand: str,
                           memory_hits=memory_hits if role in ("leader", "writer") else None)
     # 这本书现在的状态：新书/空章必须说清楚，否则 AI 会跳过空的第一章直接写第二章
     system += "\n\n" + _book_state_bits(slug, target)
-    system += ("\n\n【你这一步的角色】" + r["name"] + "：" + r["duty"] +
-               "\n【你只能看到这些】" + "、".join(r["sees"]) +
-               "\n【约束】" + ("你不改任何文件，只交结论。" if r["scope"] == "read" else
-                                ("你只写正文（manuscript/ 下的文件），设定和世界观不要动。"
-                                 if r["scope"] == "prose" else "你可以改文件，但改之前要说清影响面。")))
+    system += ("\n\n【Vai trò của bạn ở bước này】" + r["name"] + "：" + r["duty"] +
+               "\n【Bạn chỉ thấy được những thứ này】" + "、".join(r["sees"]) +
+               "\n【Ràng buộc】" + ("Bạn không sửa file nào, chỉ nộp kết luận." if r["scope"] == "read" else
+                                ("Bạn chỉ viết chính văn (các file trong manuscript/), đừng động vào thiết lập và thế giới quan."
+                                 if r["scope"] == "prose" else "Bạn được sửa file, nhưng trước khi sửa phải nói rõ phạm vi ảnh hưởng.")))
 
-    head = [f"【总目标】{ctx['goal']}", f"【你这一棒】{title}：{demand}"]
+    head = [f"【Mục tiêu chung】{ctx['goal']}", f"【Chặng của bạn】{title}: {demand}"]
     if target and role in ("writer", "leader"):
-        head.append(f"【要写的文件】{target}")
+        head.append(f"【File cần viết】{target}")
     if handoff_from:
         # 必须说清"这是**本轮刚产出的草稿**，不是这本书已有的章节"。
         # 踩过的坑：交接文本就是一篇完整正文，模型看到"上一棒交给你的东西"里有整章文字，
         # 会以为那是**已经存在的上一章**，于是"接着往下写"—— 结果自己把自己的草稿
         # 当成前文，整章重复、或者从中间续写。
         head.append(
-            f"【上一棒「{ROLES[handoff_from]['name']}」交给你的东西 —— 注意】\n"
-            f"下面这段是**本轮刚刚产出的草稿/结论**，**不是这本书已有的章节**，\n"
-            f"也不是上一章。你要做的是在它基础上推进，**不要把它当成前文去续写**，\n"
-            f"更不要把它的内容再抄一遍。\n"
-            f"----- 上一棒产出开始 -----\n{handoff_text[:HANDOFF_CHARS]}\n"
-            f"----- 上一棒产出结束 -----")
+            f"【Thứ mà chặng trước「{ROLES[handoff_from]['name']}」giao cho bạn —— chú ý】\n"
+            f"Đoạn dưới đây là **bản nháp/kết luận vừa tạo ra trong lượt này**, **không phải chương đã có của cuốn sách**,\n"
+            f"cũng không phải chương trước. Việc của bạn là đẩy tiếp trên nền của nó, **đừng coi nó là phần trước để viết tiếp**,\n"
+            f"càng đừng chép lại nội dung của nó.\n"
+            f"----- Bắt đầu sản phẩm của chặng trước -----\n{handoff_text[:HANDOFF_CHARS]}\n"
+            f"----- Kết thúc sản phẩm của chặng trước -----")
     if role == "critic":
-        head.append("【机器质检命中】（这些是规则抓出来的，你在批注里要顺带确认哪些是真问题）\n"
-                    + (ctx.get("lint_bits") or "（没有命中）"))
+        head.append("【Kết quả kiểm tra tự động】(đây là những gì quy tắc bắt được, trong nhận xét bạn cần tiện xác nhận cái nào là vấn đề thật)\n"
+                    + (ctx.get("lint_bits") or "(không trúng mục nào)"))
     if role == "retriever":
-        head.append("【这本书的索引】\n" + _index_bits(slug))
-    head.append("【输出】直接给这一步的结论，不要客套，不要「好的」「以下是」。")
+        head.append("【Chỉ mục của cuốn sách】\n" + _index_bits(slug))
+    head.append("【Đầu ra】Đưa thẳng kết luận của bước này, đừng khách sáo, đừng「vâng」「dưới đây là」.")
     msgs = [{"role": "user", "content": "\n\n".join(head)}]
 
     # 「这一棒用了什么」的账（用户要的"看得见"）：跟单 Agent 那条路同一份算法、同一张卡片，
@@ -639,10 +639,10 @@ async def _run_step(ctx: dict, seq: int, role: str, title: str, demand: str,
                 elif ev["type"] == "error":
                     status = "error"
                     rt.append_entry(sid, "system", [{"type": "text",
-                                                     "content": f"{r['name']}这一步模型出错了：{ev['error']}"}])
+                                                     "content": f"{r['name']}: mô hình gặp lỗi ở bước này: {ev['error']}"}])
         except Exception as e:                       # 一棒挂了不要让整条链断在半路
             status = "error"
-            rt.append_entry(sid, "system", [{"type": "text", "content": f"{r['name']}这一步失败：{e}"}])
+            rt.append_entry(sid, "system", [{"type": "text", "content": f"{r['name']}: bước này thất bại: {e}"}])
             break
 
         raw = "".join(buf)
@@ -690,17 +690,17 @@ async def _run_step(ctx: dict, seq: int, role: str, title: str, demand: str,
                     done_calls[sig] = {"error": "blocked", "why": why}
                     events.emit(sid, "tool_execution_end", {
                         "type": "tool_execution_end", "toolName": n, "args": a, "isError": True,
-                        "result": {"content": [{"type": "text", "text": "被挡下了：" + why}]}},
+                        "result": {"content": [{"type": "text", "text": "Đã bị chặn: " + why}]}},
                         invocation_id=inv)
                 rt.note_tool_call(step_called, step_files, n, a, {"error": "blocked"})
-                msgs.append({"role": "user", "content": f"[tool:{n}] 被挡下了：{why}"})
+                msgs.append({"role": "user", "content": f"[tool:{n}] đã bị chặn: {why}"})
                 ran = True
                 continue
             sig = json.dumps([n, a], ensure_ascii=False, sort_keys=True)
             if sig in done_calls:
                 res = done_calls[sig]
                 msgs.append({"role": "user", "content":
-                             f"[tool:{n}] 这个调用这一步已经做过了，结果同上："
+                             f"[tool:{n}] lệnh gọi này đã làm ở bước này rồi, kết quả như trên: "
                              f"{json.dumps(res, ensure_ascii=False)[:2000]}"})
                 ran = True
                 continue
@@ -726,7 +726,7 @@ async def _run_step(ctx: dict, seq: int, role: str, title: str, demand: str,
                  "content": [{"type": "text",
                               "text": json.dumps(res, ensure_ascii=False)[:6000]}]}])
             msgs.append({"role": "user", "content":
-                         f"[tool:{n}] 结果：{json.dumps(res, ensure_ascii=False)[:6000]}"})
+                         f"[tool:{n}] kết quả: {json.dumps(res, ensure_ascii=False)[:6000]}"})
         if not ran:
             break
 
@@ -734,8 +734,8 @@ async def _run_step(ctx: dict, seq: int, role: str, title: str, demand: str,
     # 必须再问它一次"现在出结论"。不然下一棒拿到的是空气 —— 实跑里"查证"读了三个文件
     # 然后一声不吭，主创只能凭上一棒的材料硬编。
     if not any(t.strip() for t in texts) and calls_made and status == "done":
-        nudge = ("时间到了：不要再调用任何工具。现在直接写结论 —— "
-                 "把上面读到的内容整理成能交给下一棒的东西。")
+        nudge = ("Hết giờ: đừng gọi thêm công cụ nào nữa. Bây giờ viết thẳng kết luận —— "
+                 "sắp xếp những gì đã đọc ở trên thành thứ có thể giao cho chặng sau.")
         msgs.append({"role": "user", "content": nudge})
         # 收口不再另起一个气泡：就续在本棒那个气泡里（原来会多长一个"（收口）"泡泡）
         msg_id = step_msg_id
@@ -757,19 +757,19 @@ async def _run_step(ctx: dict, seq: int, role: str, title: str, demand: str,
                 elif ev["type"] == "error":
                     status = "error"
                     rt.append_entry(sid, "system", [{"type": "text",
-                        "content": f"{r['name']}这一步（收口）模型出错：{ev['error']}"}])
+                        "content": f"{r['name']}: mô hình gặp lỗi ở bước này (chốt lại): {ev['error']}"}])
         except Exception as e:
             # 打磨：以前这里是 `pass` —— 收口那一趟挂了，整棒会安静地"成功结束"，
             # 用户看到的是"写完了"，其实结论没产出。现在记进对话和状态里。
             status = "error"
             rt.append_entry(sid, "system", [{"type": "text",
-                "content": f"{r['name']}这一步（收口）失败：{e}"}])
+                "content": f"{r['name']}: bước này (chốt lại) thất bại: {e}"}])
         final_text = "".join(buf2).strip()
         if final_text:
             texts.append(final_text)
             rt.append_entry(sid, "assistant", [
                 {"type": "role", "role": role, "roleName": r["name"],
-                 "title": title + "（收口）", "seq": seq},
+                 "title": title + "(chốt lại)", "seq": seq},
                 {"type": "text", "content": final_text}],
                 usage={"input": tok_in, "output": tok_out, "model": mid, "role": role,
                        "context": ctx_now()})
@@ -784,9 +784,9 @@ async def _run_step(ctx: dict, seq: int, role: str, title: str, demand: str,
     if must_write:
         msgs.append({"role": "assistant", "content": "\n".join(texts)[:4000]})
         msgs.append({"role": "user", "content":
-                     f"你上面的稿子还没落到文件里。现在**只**输出一行 "
-                     f"[tool:write_file] {{\"path\": \"{target}\", \"content\": \"正文全文\"}}，"
-                     "不要复述正文、不要解释、不要任何别的字。"})
+                     f"Bản thảo ở trên của bạn chưa được ghi vào file. Bây giờ **chỉ** xuất một dòng "
+                     f"[tool:write_file] {{\"path\": \"{target}\", \"content\": \"toàn văn chính văn\"}}, "
+                     "đừng nhắc lại chính văn, đừng giải thích, đừng viết thêm chữ nào khác."})
         # 落盘同样续在本棒气泡里，不再另起一个"（落盘）"泡泡
         msg_id = step_msg_id
         buf3: list[str] = []
@@ -804,14 +804,14 @@ async def _run_step(ctx: dict, seq: int, role: str, title: str, demand: str,
                     tok_out += int(ev["usage"].get("output") or 0)
                 elif ev["type"] == "error":
                     rt.append_entry(sid, "system", [{"type": "text",
-                        "content": f"{r['name']}这一步（落盘）模型出错：{ev['error']}"}])
+                        "content": f"{r['name']}: mô hình gặp lỗi ở bước này (ghi file): {ev['error']}"}])
         except Exception as e:
             # 同上：落盘这一趟挂了最要命 —— 稿子只在聊天里，书里一个字都没有，
             # 而且这一棒的产出就是正文，静默失败等于"写手白干"。
             # 这里**故意不把 status 置成 error**：下面那段「编排代写」要求 status=='done'
             # 才会兜底把聊天里的稿子写进文件，把它置错等于顺手把兜底也关了。
             rt.append_entry(sid, "system", [{"type": "text",
-                "content": f"{r['name']}这一步（落盘）失败：{e}"}])
+                "content": f"{r['name']}: bước này (ghi file) thất bại: {e}"}])
         raw3 = "".join(buf3)
         _vis3, calls3 = rt._split_tool_lines(raw3)
         for n, a in calls3:
@@ -841,17 +841,17 @@ async def _run_step(ctx: dict, seq: int, role: str, title: str, demand: str,
             if not res.get("error"):
                 wrote.append(target)
                 calls_made.append({"tool": "write_file",
-                                   "args": {"path": target, "content": "（编排代写：模型只说没落盘）"},
+                                   "args": {"path": target, "content": "(điều phối ghi thay: mô hình chỉ nói mà không ghi file)"},
                                    "blocked": False, "isError": False, "auto": True})
                 events.emit(sid, "tool_execution_end", {
                     "type": "tool_execution_end", "toolName": "write_file",
                     "args": {"path": target}, "role": role, "isError": False,
                     "result": {"content": [{"type": "text",
-                                            "text": "模型把正文写在回复里没落盘，编排替它写进了 " + target}]}},
+                                            "text": "Mô hình viết chính văn trong câu trả lời mà không ghi file, điều phối đã ghi thay vào " + target}]}},
                     invocation_id=inv)
                 rt.append_entry(sid, "system", [{"type": "text", "content":
-                    "这一步模型只把正文写在回复里、没有落盘，编排已代它写进 " + target +
-                    "（上面那步的 wrote 里带 auto 标记）。"}])
+                    "Ở bước này mô hình chỉ viết chính văn trong câu trả lời, không ghi file, điều phối đã ghi thay vào " + target +
+                    "(wrote của bước trên có kèm đánh dấu auto)."}])
 
 
     # **把"等一下我再继续"这种自言自语从给用户看的产出里去掉。**
@@ -860,7 +860,7 @@ async def _run_step(ctx: dict, seq: int, role: str, title: str, demand: str,
     # 「空出这一行以等待工具执行结果。call:outline_read {}」这类占位句，
     # 把正经话全盖住了。这里整行丢掉（只影响**给用户看的那份**，
     # 工具调用记录在 calls_json 里，一个字没少）。
-    _PH = re.compile(r"^[^\n]*(?:空出这一行以等待工具执行结果|等待工具执行结果)[^\n]*$", re.M)
+    _PH = re.compile(r"^[^\n]*(?:空出这一行以等待工具执行结果|等待工具执行结果|chờ kết quả thực thi công cụ|Chờ kết quả công cụ)[^\n]*$", re.M)
     _PH2 = re.compile(r"^\s*call:[a-zA-Z_]+\s*\{?[^\n]*\}?\s*$", re.M)
     texts = [_PH2.sub("", _PH.sub("", t)) for t in texts]
 
@@ -876,7 +876,7 @@ async def _run_step(ctx: dict, seq: int, role: str, title: str, demand: str,
             except Exception:
                 body = ""
             if body.strip():
-                pieces.append(f"【{path}】（这一步直接写了文件，没有额外说明）\n{body[:4000]}")
+                pieces.append(f"【{path}】(bước này ghi file trực tiếp, không có giải thích thêm)\n{body[:4000]}")
         output = "\n\n".join(pieces)
     elif wrote:      # 说了话又写了文件：把写出来的东西也带上，下一棒才看得到全文
         from ..store import read_text
@@ -886,7 +886,7 @@ async def _run_step(ctx: dict, seq: int, role: str, title: str, demand: str,
             except Exception:
                 continue
             if body.strip():
-                output += f"\n\n【{path} 的当前内容】\n{body[:4000]}"
+                output += f"\n\n【Nội dung hiện tại của {path}】\n{body[:4000]}"
     _step_finish(step_id, output=output, calls=calls_made, rejected=rejected,
                  wrote=list(dict.fromkeys(wrote)),
                  tokens=(tok_in, tok_out), status=status)
@@ -909,10 +909,10 @@ def _run_finally(sid: int, run_id: int, status: str, ctx: dict, prev_role: str,
         try:
             rt.append_entry(sid, "assistant", [
                 {"type": "role", "role": prev_role or "leader",
-                 "roleName": (ROLES[prev_role]["name"] if prev_role else "主创"),
-                 "title": "收尾", "seq": 999, "final": True},
-                {"type": "text", "content": "—— 这轮到此为止。改了：" +
-                 ("、".join(ctx["wrote"]) if ctx["wrote"] else "没有落盘（改动会在「改动」里等你确认）")}])
+                 "roleName": (ROLES[prev_role]["name"] if prev_role else "Tác giả chính"),
+                 "title": "Kết thúc", "seq": 999, "final": True},
+                {"type": "text", "content": "—— Lượt này dừng ở đây. Đã sửa: " +
+                 ("、".join(ctx["wrote"]) if ctx["wrote"] else "Không ghi file (thay đổi sẽ chờ bạn xác nhận trong「Thay đổi」)")}])
         except events.SessionGone:
             pass
     try:
@@ -950,13 +950,13 @@ def _lint_bits(slug: str, path: str) -> str:
     try:
         report = L.scan(text, path=path, limit=40)
     except Exception as e:
-        return f"（质检跑不动：{e}）"
+        return f"(không chạy được kiểm tra: {e})"
     hits = report.get("hits") or []
     if not hits:
-        return "（没有命中）"
-    return f"这一章 {len(text)} 字，评分 {report.get('score')}（{report.get('grade')}），命中 {len(hits)} 条：\n" + \
-        "\n".join(f"- 第 {h.get('line') or '?'} 行 [{h.get('category')}]「{h.get('text')}」"
-                   f"（{h.get('name')}）建议：{h.get('advice')}" for h in hits[:20])
+        return "(không trúng mục nào)"
+    return f"Chương này {len(text)} chữ, điểm {report.get('score')} ({report.get('grade')}), trúng {len(hits)} mục:\n" + \
+        "\n".join(f"- Dòng {h.get('line') or '?'} [{h.get('category')}]「{h.get('text')}」"
+                   f"({h.get('name')}) gợi ý: {h.get('advice')}" for h in hits[:20])
 
 
 async def run(sid: int, text: str, inv: str, payload: dict, model_key: str = "") -> None:
@@ -968,6 +968,12 @@ async def run(sid: int, text: str, inv: str, payload: dict, model_key: str = "")
     mode = str(payload.get("mode") or "execute")
     if mode not in MODES:
         mode = "execute"
+    # Người dùng đang ở chế độ Thảo luận/Kế hoạch nhưng rõ ràng yêu cầu VIẾT chính văn
+    # (vd.「viết tiếp…」「viết chương 2」「viết thẳng chính văn」) → chạy luôn chế độ Thực hiện,
+    # nếu không thì lượt này chỉ bàn suông và không ra chữ nào.
+    if mode in ("discuss", "plan") and re.search(
+            r"(?i)(viết\s*(tiếp|thẳng|luôn|ngay|chương|chính\s*văn|đoạn|cảnh)|chính\s*văn|续写|写正文|写第)", text or ""):
+        mode = "execute"
     d = dbm.db()
     sess = rt.session_row(sid)
     slug = sess["slug"]
@@ -976,7 +982,7 @@ async def run(sid: int, text: str, inv: str, payload: dict, model_key: str = "")
     try:
         provider, mid = provider_of(mk)
     except LLMError as e:
-        rt.append_entry(sid, "system", [{"type": "text", "content": f"模型没配好：{e}"}])
+        rt.append_entry(sid, "system", [{"type": "text", "content": f"Mô hình chưa được cấu hình: {e}"}])
         d.execute("UPDATE chat_session SET status='idle' WHERE id=?", (sid,))
         return
 
@@ -1029,7 +1035,7 @@ async def run(sid: int, text: str, inv: str, payload: dict, model_key: str = "")
     except Exception as e:
         status = "error"
         try:
-            rt.append_entry(sid, "system", [{"type": "text", "content": f"编排出错：{e}"}])
+            rt.append_entry(sid, "system", [{"type": "text", "content": f"Lỗi điều phối: {e}"}])
         except events.SessionGone:
             status = "aborted"
     finally:

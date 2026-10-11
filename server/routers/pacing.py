@@ -29,12 +29,12 @@ async def one(request: Request, slug: str, path: str = ""):
     current_user(request)
     s = _slug(slug)
     if not path:
-        raise HTTPException(400, "要看哪一章（path 不能空）")
+        raise HTTPException(400, "Xem chương nào (path không được trống)")
     from ..store import read_text
     try:
         text = read_text(s, path)
     except Exception as e:
-        raise HTTPException(404, f"读不到这一章：{e}") from e
+        raise HTTPException(404, f"Không đọc được chương này: {e}") from e
     m = P.chapter_metrics(text)
     return {"path": path, "metrics": m}
 
@@ -54,12 +54,12 @@ async def add_alias(request: Request, payload: dict = Body(...)):
     name = str(payload.get("name") or "").strip()
     alias = str(payload.get("alias") or "").strip()
     if not name or not alias:
-        raise HTTPException(400, "得说清是谁的别名（name / alias 都要有）")
+        raise HTTPException(400, "Phải nói rõ là biệt danh của ai (cần cả name / alias)")
     from .. import db as dbm
     from ..engine.world import find_entity
     row = find_entity(s, name)
     if not row:
-        raise HTTPException(404, f"世界里没有「{name}」这个人（先去世界面板建一个）")
+        raise HTTPException(404, f"Thế giới không có người tên「{name}」(hãy vào bảng Thế giới tạo một người trước)")
     d = dbm.db()
     try:
         d.execute("INSERT INTO entity_alias(slug,entity_id,alias) VALUES(?,?,?)",

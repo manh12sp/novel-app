@@ -43,27 +43,27 @@
     const o = opts || {};
     const on = !!(d && d.enabled);
     const hosts = (d && d.hosts) || [];
-    const engines = ((d && d.engines) || []).map((e) => e.name).join('、');
+    const engines = ((d && d.engines) || []).map((e) => e.name).join(', ');
     const rows = hosts.map((h) =>
       '<div class="settings-row"><span class="k">' + esc(h.name) +
-      '<small>' + esc(h.host) + (h.mine ? ' · 我自己加的' : ' · 自带') +
-      (h.search ? ' · 能搜' : '') + '</small></span>' +
-      (h.mine ? '<button class="btn sm btn-danger" data-webdel="' + esc(h.host) + '">移除</button>' : '') +
+      '<small>' + esc(h.host) + (h.mine ? ' · tôi tự thêm' : ' · có sẵn') +
+      (h.search ? ' · tìm được' : '') + '</small></span>' +
+      (h.mine ? '<button class="btn sm btn-danger" data-webdel="' + esc(h.host) + '">Gỡ bỏ</button>' : '') +
       '</div>').join('');
-    return '<h3>联网搜索</h3><div class="settings-group" id="' + (o.id || 'webcfg') + '">' +
-      swRow('enabled', '允许上网', '需要查资料、写同人时，我可以自己上网找样本。关着的时候不会联网', on) +
-      (on ? swRow('openAny', '也读名单外的网页',
-        '默认只读下面这些站点，免得捞回没用的文本', !!(d && d.openAny)) : '') +
+    return '<h3>Tìm trên mạng</h3><div class="settings-group" id="' + (o.id || 'webcfg') + '">' +
+      swRow('enabled', 'Cho phép lên mạng', 'Khi cần tra tư liệu, viết đồng nhân, tôi có thể tự lên mạng tìm mẫu. Khi tắt sẽ không kết nối mạng', on) +
+      (on ? swRow('openAny', 'Đọc cả trang ngoài danh sách',
+        'Mặc định chỉ đọc các trang dưới đây, tránh vớt về văn bản vô dụng', !!(d && d.openAny)) : '') +
       (on ? rows : '') +
-      (on ? '<div class="settings-row"><span class="k">名单外的站</span>' +
-        '<button class="btn sm" data-webadd="1">加一个站点</button></div>' : '') +
+      (on ? '<div class="settings-row"><span class="k">Trang ngoài danh sách</span>' +
+        '<button class="btn sm" data-webadd="1">Thêm một trang</button></div>' : '') +
       /* 「搜一句」这一行**关着也留着**：用户点下去会看到"这一次没有联网" ——
          这比"关掉之后整行消失"有用（看得见开关是干什么的），判据也才有得量。 */
       (o.test !== false ? '<div class="settings-row stack">' +
-        '<span class="k">搜一句试试<small>现在能搜：' + esc(engines || '还没有可用的站点') +
+        '<span class="k">Thử tìm một câu<small>Hiện tìm được: ' + esc(engines || 'Chưa có trang khả dụng') +
         '</small></span><div class="web-try">' +
-        '<input class="input" id="web-try-q" placeholder="比如：某个世界的 能力体系 设定" ' +
-        'aria-label="要搜的关键词"><button class="btn sm" data-webtry="1">搜一句</button></div>' +
+        '<input class="input" id="web-try-q" placeholder="VD: hệ thống năng lực thiết lập của một thế giới nào đó" ' +
+        'aria-label="Từ khóa cần tìm"><button class="btn sm" data-webtry="1">Tìm</button></div>' +
         '<div id="web-try-out" class="web-try-out"></div></div>' : '') +
       '</div>';
   }
@@ -71,15 +71,15 @@
   /** 把「加一个站点」的小表单画成一张卡（放在弹层里用）。 */
   function addFormHtml() {
     return '<div class="sheet-note" style="margin:0 var(--sp-4) var(--sp-3)">' +
-      '填一个域名，我就把它当成信得过的来源。想让我**在这个站里搜**，' +
-      '再填一行搜索地址（带 <code>{q}</code> 的那一行）—— ' +
-      '不填也行，那样只会读你直接给我的链接。</div>' +
+      ' Điền một tên miền, tôi sẽ coi đó là nguồn đáng tin. Muốn tôi **tìm trong trang này**, ' +
+      ' thì điền thêm một dòng địa chỉ tìm kiếm (dòng có <code>{q}</code> ) ——— ' +
+      ' không điền cũng được, khi đó tôi chỉ đọc các link bạn đưa trực tiếp.</div>' +
       '<div class="settings-group">' +
-      '<div class="settings-row"><span class="k">名字</span>' +
-      '<input class="input" id="ws-name" placeholder="随便起，比如 我的同人站"></div>' +
-      '<div class="settings-row"><span class="k">域名</span>' +
+      '<div class="settings-row"><span class="k">Tên</span>' +
+      '<input class="input" id="ws-name" placeholder="Đặt tùy ý, ví dụ trang đồng nhân của tôi"></div>' +
+      '<div class="settings-row"><span class="k">Tên miền</span>' +
       '<input class="input" id="ws-host" placeholder="example.com"></div>' +
-      '<div class="settings-row"><span class="k">搜索地址<small>可选</small></span>' +
+      '<div class="settings-row"><span class="k">Địa chỉ tìm kiếm<small>tùy chọn</small></span>' +
       '<input class="input" id="ws-search" placeholder="https://…/search?q={q}"></div>' +
       '</div><div id="ws-out" class="sheet-note" style="margin:var(--sp-3) var(--sp-4)"></div>';
   }
@@ -101,8 +101,8 @@
 
   /** 「加一个站点」的弹层。`done` 在保存成功后回调（调用方负责重画）。 */
   function addSheet(d, done) {
-    App.sheet('<div class="sheet-head"><h3>加一个站点</h3>' +
-      '<button class="btn sm" data-close>关闭</button></div>' + addFormHtml(),
+    App.sheet('<div class="sheet-head"><h3>Thêm một trang</h3>' +
+      '<button class="btn sm" data-close>Đóng</button></div>' + addFormHtml(),
     {
       onMount(p) {
         const go = p.querySelector('#ws-name');
@@ -115,18 +115,18 @@
           const host = (p.querySelector('#ws-host').value || '').trim().toLowerCase()
             .replace(/^https?:\/\//, '').replace(/\/.*$/, '');
           const search = (p.querySelector('#ws-search').value || '').trim();
-          if (!host) { out.textContent = '先填域名'; return; }
+          if (!host) { out.textContent = 'Hãy điền tên miền trước'; return; }
           if (search && search.indexOf('{q}') < 0) {
-            out.textContent = '搜索地址里要有 {q} 那一截（它是我换成关键词的地方）';
+            out.textContent = 'Địa chỉ tìm kiếm phải có đoạn {q} (chỗ tôi thay bằng từ khóa)';
             return;
           }
           const list = mineOf(d).filter((x) => x.host !== host);
           list.push({ name: name || host, host: host, weight: 4, search: search });
-          out.textContent = '正在保存…';
+          out.textContent = 'Đang lưu…';
           saveHosts(list, (e) => {
-            if (e) { out.textContent = '没存上：' + e.message; return; }
+            if (e) { out.textContent = 'Không lưu được: ' + e.message; return; }
             App.closeSheet();
-            App.toast('加好了：' + (name || host));
+            App.toast('Đã thêm: ' + (name || host));
             done && done();
           });
         }
@@ -136,7 +136,7 @@
         /* 保存按钮就是弹层底部那一颗（沿用全站 sheet 的动作区样式） */
         const acts = document.createElement('div');
         acts.className = 'sheet-acts';
-        acts.innerHTML = '<button class="btn sm btn-primary" id="ws-save">加进去</button>';
+        acts.innerHTML = '<button class="btn sm btn-primary" id="ws-save">Thêm vào</button>';
         p.appendChild(acts);
         p.querySelector('#ws-save').addEventListener('click', save);
       },
@@ -148,36 +148,36 @@
     if (!out) return;
     if (!r) { out.innerHTML = ''; return; }
     if (!r.enabled) {
-      out.innerHTML = '<div class="web-try-none">还没打开「允许上网」，所以这一次没有联网。</div>';
+      out.innerHTML = '<div class="web-try-none">Chưa bật «Cho phép lên mạng», nên lần này không kết nối mạng.</div>';
       return;
     }
     if (!r.ok) {
-      out.innerHTML = '<div class="web-try-none">' + esc(r.error || '没搜到') +
-        ((r.engineErrors || []).length ? '<small>' + esc(r.engineErrors.join('；')) + '</small>' : '') +
+      out.innerHTML = '<div class="web-try-none">' + esc(r.error || 'Không tìm thấy') +
+        ((r.engineErrors || []).length ? '<small>' + esc(r.engineErrors.join('; ')) + '</small>' : '') +
         '</div>';
       return;
     }
     const one = (x) => '<li><a href="#" data-webtrylink="' + esc(x.url) + '">' + esc(x.title) +
       '</a><small>' + esc(x.source || '') + ' · ' + esc((x.snippet || '').slice(0, 60)) + '</small></li>';
-    out.innerHTML = '<div class="web-try-note">搜到 ' + r.results.length + ' 条（' +
-      esc((r.engines || []).join('、')) + '）；' + esc(r.note || '') + '</div>' +
+    out.innerHTML = '<div class="web-try-note">Tìm được ' + r.results.length + ' kết quả (' +
+      esc((r.engines || []).join(', ')) + '); ' + esc(r.note || '') + '</div>' +
       '<ul class="web-try-list">' + r.results.map(one).join('') + '</ul>' +
-      ((r.dropped || []).length ? '<div class="web-try-note">没用这几条：' +
-        esc(r.dropped.map((x) => x.host + '（' + x.why + '）').join('；')) + '</div>' : '');
+      ((r.dropped || []).length ? '<div class="web-try-note">Không dùng mấy kết quả này: ' +
+        esc(r.dropped.map((x) => x.host + '(' + x.why + ')').join('; ')) + '</div>' : '');
   }
 
   async function trySearch(root) {
     const q = (($('#web-try-q', root) || {}).value || '').trim();
     const out = $('#web-try-out', root);
-    if (!q) { if (out) out.innerHTML = '<div class="web-try-none">先写一个关键词</div>'; return; }
+    if (!q) { if (out) out.innerHTML = '<div class="web-try-none">Hãy viết một từ khóa trước</div>'; return; }
     const btn = $('[data-webtry]', root);
-    if (btn) { btn.disabled = true; btn.textContent = '搜…'; }
-    if (out) out.innerHTML = '<div class="web-try-none">正在搜…</div>';
+    if (btn) { btn.disabled = true; btn.textContent = 'Đang tìm…'; }
+    if (out) out.innerHTML = '<div class="web-try-none">Đang tìm…</div>';
     let r = null;
     try { r = await API.webTest({ q: q }); }
-    catch (e) { r = { enabled: true, ok: false, error: '搜不了：' + e.message }; }
+    catch (e) { r = { enabled: true, ok: false, error: 'Không tìm được: ' + e.message }; }
     paintTry(out, r);
-    if (btn) { btn.disabled = false; btn.textContent = '搜一句'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Tìm'; }
   }
 
   /** 绑定这一块的所有交互。`redraw` 由调用方给（重画它自己那一屏）。 */
@@ -194,16 +194,16 @@
         const r = await API.webSave(body);
         invalidate();
         if (r && r.enabled !== undefined) CACHE = r;
-      } catch (e) { App.toast('没存上：' + e.message); }
+      } catch (e) { App.toast('Không lưu được: ' + e.message); }
       c.redraw ? c.redraw() : null;      // 开关会带出/收起下面几行，重画一遍
     }));
     box.querySelectorAll('[data-webdel]').forEach((b) => b.addEventListener('click', () => {
       const host = b.dataset.webdel;
-      App.confirm('把 ' + host + ' 从名单里去掉？', async () => {
+      App.confirm('Bỏ ' + host + ' khỏi danh sách?', async () => {
         await saveHosts(mineOf(c.data || CACHE).filter((x) => x.host !== host));
-        App.toast('去掉了');
+        App.toast('Đã bỏ');
         c.redraw && c.redraw();
-      }, '去掉');
+      }, 'Bỏ');
     }));
     const add = box.querySelector('[data-webadd]');
     if (add) add.addEventListener('click', () => addSheet(c.data || CACHE, () => c.redraw && c.redraw()));

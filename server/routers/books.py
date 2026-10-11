@@ -84,7 +84,7 @@ def ensure_book_row(slug: str) -> dict:
 def require_book(slug: str) -> str:
     s = safe_slug(slug)
     if not s or not book_dir(s).is_dir():
-        raise HTTPException(404, "没有这本书")
+        raise HTTPException(404, "Không có cuốn sách này")
     return s
 
 
@@ -92,7 +92,7 @@ def require_path(slug: str, path: str) -> str:
     from ..paths import safe_rel
     p = safe_rel(path)
     if not p:
-        raise HTTPException(400, "路径不合法")
+        raise HTTPException(400, "Đường dẫn không hợp lệ")
     return p
 
 
@@ -139,9 +139,9 @@ async def projects(request: Request):
 async def projects_create(request: Request, payload: dict = Body(...)):
     current_user(request)
     try:
-        out = create_book(args.s(payload.get("title"), name="书名"),
-                          args.s(payload.get("summary"), name="简介"),
-                          args.s(payload.get("kind"), name="类型") or "novel")
+        out = create_book(args.s(payload.get("title"), name="Tên sách"),
+                          args.s(payload.get("summary"), name="Giới thiệu"),
+                          args.s(payload.get("kind"), name="Thể loại") or "novel")
     except ValueError as e:
         raise HTTPException(400, str(e))
     return {**out, "projectRoot": out["slug"]}
@@ -154,7 +154,7 @@ async def projects_open(request: Request, payload: dict = Body(default={})):
     current_user(request)
     slug = safe_slug((payload or {}).get("projectRoot") or (payload or {}).get("slug") or "")
     if slug and not book_dir(slug).is_dir():
-        raise HTTPException(404, "没有这本书")
+        raise HTTPException(404, "Không có cuốn sách này")
     return {"ok": True, "projectRoot": slug or ""}
 
 
@@ -162,9 +162,9 @@ async def projects_open(request: Request, payload: dict = Body(default={})):
 async def projects_rename(request: Request, payload: dict = Body(...), projectRoot: str = ""):
     current_user(request)
     slug = require_book(projectRoot or payload.get("projectRoot") or payload.get("slug"))
-    title = args.s(payload.get("title"), name="书名").strip()
+    title = args.s(payload.get("title"), name="Tên sách").strip()
     if not title:
-        raise HTTPException(400, "书名不能为空")
+        raise HTTPException(400, "Tên sách không được để trống")
     dbm.db().execute("UPDATE book SET title=?, updated_at=? WHERE slug=?", (title, now_ms(), slug))
     py = _project_yaml(slug)
     write_project_yaml(slug, {**py, "title": title})
@@ -288,7 +288,7 @@ async def chapter(slug: str, path: str, request: Request):
     try:
         content = read_text(s, p)
     except FileNotFoundError:
-        raise HTTPException(404, "没有这一章")
+        raise HTTPException(404, "Không có chương này")
     except (ValueError, OSError) as e:
         raise HTTPException(400, str(e))
     files = chapter_files(s)
@@ -322,8 +322,8 @@ async def save_chapter(request: Request, payload: dict = Body(...)):
     p = require_path(s, payload.get("path") or "")
     content = payload.get("content")
     if content is None:
-        raise HTTPException(400, "没有正文内容")
-    content = args.s(content, name="正文")     # 数组/对象 → 400 说人话，别 500
+        raise HTTPException(400, "Không có nội dung chính văn")
+    content = args.s(content, name="Chính văn")     # 数组/对象 → 400 说人话，别 500
     expected = payload.get("expectedMtimeMs")
     if expected and not payload.get("force"):
         cur = _mtime(s, p)
@@ -338,14 +338,14 @@ async def save_chapter(request: Request, payload: dict = Body(...)):
             cid = record_conflict(s, p, base=int(float(expected)), local_text=str(content),
                                   server_text=server_text, server_mtime=int(cur))
             return JSONResponse(status_code=409, content={
-                "detail": "这一章在别处也改过 —— 两边的内容都留着，你挑一版",
+                "detail": "Chương này đã được sửa ở nơi khác —— nội dung của cả hai bên đều được giữ, bạn chọn một bản",
                 "conflict": True, "conflictId": cid, "path": p,
                 "serverMtimeMs": cur, "localMtimeMs": int(float(expected)),
                 "serverText": server_text})
     try:
-        out = write_text(s, p, str(content), origin="user", note="编辑正文")
+        out = write_text(s, p, str(content), origin="user", note="Sửa chính văn")
     except FileNotFoundError:
-        raise HTTPException(404, "没有这个文件")
+        raise HTTPException(404, "Không có file này")
     _touch(s)
     sync_book(s)
     _note_writing(s, len(str(content)))
@@ -394,7 +394,7 @@ def _note_writing(slug: str, chars: int) -> None:
 async def book_new(request: Request, payload: dict = Body(...)):
     current_user(request)
     try:
-        out = create_book(args.s(payload.get("title"), name="书名"))
+        out = create_book(args.s(payload.get("title"), name="Tên sách"))
     except ValueError as e:
         raise HTTPException(400, str(e))
     return out
@@ -420,9 +420,9 @@ async def chapter_new(request: Request, payload: dict = Body(...)):
     p = require_path(s, payload.get("path") or "")
     from ..store import create_file
     try:
-        out = create_file(s, p, args.s(payload.get("content"), name="正文"))
+        out = create_file(s, p, args.s(payload.get("content"), name="Chính văn"))
     except FileExistsError:
-        raise HTTPException(400, "已经有一章叫这个名字了")
+        raise HTTPException(400, "Đã có một chương tên này rồi")
     _touch(s)
     sync_book(s)
     return {**out, "slug": s}
@@ -437,7 +437,7 @@ async def chapter_delete(request: Request, payload: dict = Body(...)):
     try:
         out = delete_path(s, p)
     except FileNotFoundError:
-        raise HTTPException(404, "没有这一章")
+        raise HTTPException(404, "Không có chương này")
     _touch(s)
     sync_book(s)
     return {**out, "slug": s}
@@ -453,9 +453,9 @@ async def chapter_rename(request: Request, payload: dict = Body(...)):
     try:
         out = rename_path(s, a, b)
     except FileNotFoundError:
-        raise HTTPException(404, "原文件不在了")
+        raise HTTPException(404, "File gốc không còn nữa")
     except FileExistsError:
-        raise HTTPException(400, "目标名字已经被占用")
+        raise HTTPException(400, "Tên đích đã bị dùng")
     dbm.db().execute("UPDATE chapter SET path=?, title=? WHERE slug=? AND path=?",
                      (b, chapter_title(b), s, a))
     _touch(s)
@@ -510,7 +510,7 @@ async def cover_get(slug: str, request: Request):
     s = require_book(slug)
     f = _cover_file(s)
     if not f:
-        raise HTTPException(404, "没有封面")
+        raise HTTPException(404, "Không có ảnh bìa")
     return FileResponse(str(f), media_type=IMAGE_CT.get(f.suffix.lower(), "image/jpeg"),
                         headers={"Cache-Control": "public, max-age=30"})
 
@@ -521,9 +521,9 @@ async def cover_put(slug: str, request: Request, file: UploadFile = File(...)):
     s = require_book(slug)
     data = await file.read()
     if not data:
-        raise HTTPException(400, "文件是空的")
+        raise HTTPException(400, "File trống")
     if len(data) > 20 * 1024 * 1024:
-        raise HTTPException(413, "封面超过 20MB")
+        raise HTTPException(413, "Ảnh bìa quá 20MB")
     ext = Path(file.filename or "cover.jpg").suffix.lower()
     if ext not in IMAGE_CT:
         head = data[:4]
@@ -559,7 +559,7 @@ async def project_cover_put(projectRoot: str, request: Request):
     form = await request.form()
     f = form.get("file")
     if f is None or not hasattr(f, "read"):
-        raise HTTPException(400, "没有收到文件")
+        raise HTTPException(400, "Không nhận được file")
     data = await f.read()
     return await _put_cover_bytes(projectRoot, data, getattr(f, "filename", "cover.jpg"))
 
@@ -572,7 +572,7 @@ async def project_cover_del(projectRoot: str, request: Request):
 async def _put_cover_bytes(slug: str, data: bytes, filename: str) -> dict:
     s = require_book(slug)
     if not data:
-        raise HTTPException(400, "文件是空的")
+        raise HTTPException(400, "File trống")
     ext = Path(filename or "cover.jpg").suffix.lower()
     if ext not in IMAGE_CT:
         ext = ".png" if data[:4] == b"\x89PNG" else ".jpg"

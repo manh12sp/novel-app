@@ -54,7 +54,7 @@ ABORTS: set[int] = set()
 def session_row(sid: int) -> dict:
     row = dbm.db().one("SELECT * FROM chat_session WHERE id=?", (sid,))
     if not row:
-        raise KeyError("没有这个会话")
+        raise KeyError("Không có phiên hội thoại này")
     return row
 
 
@@ -131,7 +131,7 @@ def append_entry(sid: int, type_: str, blocks: list, *, usage: dict | None = Non
     except Exception as e:
         # 会话被删了（编排还在跑）：抛 SessionGone 让上游安静收尾，别刷一屏 traceback
         if not events.session_alive(sid):
-            raise events.SessionGone(f"会话 {sid} 已经被删掉，这一条不再写入") from e
+            raise events.SessionGone(f"Phiên hội thoại {sid} đã bị xóa, mục này không ghi nữa") from e
         raise
     d.execute("UPDATE chat_session SET updated_at=? WHERE id=?", (dbm.now_ms(), sid))
     if emit_event:
@@ -154,7 +154,7 @@ def create_session(profile_key: str, slug: str = "", title: str = "",
         "INSERT INTO chat_session(identity,slug,profile_key,title,summary,status,model_key,"
         "created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)",
         (uuid.uuid4().hex, slug, profile_key or "leader.default",
-         title or (profile_of(profile_key)["name"] + "会话"), "", "idle", mk, n, n))
+         title or (profile_of(profile_key)["name"] + " · hội thoại"), "", "idle", mk, n, n))
     events.emit(sid, "session_state_changed",
                 {"type": "session_state_changed", "state": _state(sid)})
     return session_snapshot(sid)
@@ -186,7 +186,7 @@ def _tool_read_file(slug: str, args: dict) -> dict:
     try:
         text = read_text(slug, p)
     except Exception as e:
-        return {"error": f"读不了 {p}：{e}"}
+        return {"error": f"Không đọc được {p}: {e}"}
     return {"path": p, "content": text[:20000], "truncated": len(text) > 20000}
 
 
@@ -194,7 +194,7 @@ def _tool_search_book(slug: str, args: dict) -> dict:
     from ..store import chapter_files, read_text
     kw = str(args.get("q") or "").strip()
     if not kw:
-        return {"error": "缺少 q"}
+        return {"error": "Thiếu q"}
     hits = []
     for ch in chapter_files(slug):
         try:
@@ -224,7 +224,7 @@ def _tool_write_file(slug: str, args: dict) -> dict:
     p = str(args.get("path") or "")
     content = args.get("content")
     if not p or content is None:
-        return {"error": "缺少 path 或 content"}
+        return {"error": "Thiếu path hoặc content"}
     before = ""
     try:
         before = read_text(slug, p)
@@ -242,9 +242,9 @@ def _tool_write_file(slug: str, args: dict) -> dict:
         _auto = False   # 读不到预设就当"要确认"，宁可多一步确认，也不能悄悄改用户的稿子
     try:
         write_text(slug, p, str(content), origin="model",
-                   note=str(args.get("note") or "AI 写稿"), pending=(not _auto))
+                   note=str(args.get("note") or "AI viết bản thảo"), pending=(not _auto))
     except Exception as e:
-        return {"error": f"写不了 {p}：{e}"}
+        return {"error": f"Không ghi được {p}: {e}"}
     from ..routers.books import sync_book
     try:
         sync_book(slug)
@@ -254,8 +254,8 @@ def _tool_write_file(slug: str, args: dict) -> dict:
     return {"ok": True, "path": p, "beforeChars": len(before), "afterChars": len(str(content)),
             # 说清"这次到底算不算数"：用户选了「直接用」时别再让 AI 告诉用户"等确认"
             # （那样用户去「改动」里找会找不到，反而以为丢了）。
-            "note": ("已直接写入（预设里「改动感知」选了「直接用」；版本快照仍在，可换回）"
-                     if _auto else "改动已进入「改动」列表，等用户确认")}
+            "note": ("Đã ghi thẳng (trong cài đặt sẵn「Nhận biết thay đổi」chọn「Dùng luôn」; ảnh chụp phiên bản vẫn còn, có thể đổi lại)"
+                     if _auto else "Thay đổi đã vào danh sách「Thay đổi」, chờ người dùng xác nhận")}
 
 
 def _tool_report_result(slug: str, args: dict) -> dict:
@@ -296,7 +296,7 @@ def _tool_lore_read(slug: str, args: dict) -> dict:
     """某个设定的**事实明细**（含"哪一刻改成什么样"）—— 写正文前查一眼，避免设定吃书。"""
     ent = str(args.get("entity") or "").strip()
     if not ent:
-        return {"error": "缺少 entity"}
+        return {"error": "Thiếu entity"}
     state = _tool_world_state(slug, {"entity": ent, "at": args.get("at")})
     if state.get("error"):
         return state
@@ -313,7 +313,7 @@ def _tool_memory_search(slug: str, args: dict) -> dict:
     from . import memory as mem
     q = str(args.get("q") or "").strip()
     if not q:
-        return {"error": "缺少 q"}
+        return {"error": "Thiếu q"}
     r = mem.search(slug, str(args.get("subject") or ""), q, int(args.get("limit") or 8))
     hits = r.get("candidates") or []
     return {"query": q, "count": len(hits),
@@ -331,9 +331,9 @@ def _tool_lint_check(slug: str, args: dict) -> dict:
         try:
             text = read_text(slug, path)
         except Exception as e:
-            return {"error": f"读不了 {path}：{e}"}
+            return {"error": f"Không đọc được {path}: {e}"}
     if not text:
-        return {"error": "要么给 text，要么给 path"}
+        return {"error": "Hoặc cho text, hoặc cho path"}
     r = lintmod.scan(text, path=path, limit=int(args.get("limit") or 40))
     return {"score": r.get("score"), "grade": r.get("grade"),
             "chars": r.get("chars"), "count": len(r.get("hits") or []),
@@ -375,7 +375,7 @@ def _tool_outline_read(slug: str, args: dict) -> dict:
             "outlines": [{"chapter": r["chapter_path"], "level": r["level"],
                           "body": (r["body"] or "")[:600], "approved": bool(r["approved"])}
                          for r in ol[:40]],
-            "note": "用户手改过的条目（edited=user）优先，AI 不得自行覆盖；要改先说明理由"}
+            "note": "Mục người dùng đã tự sửa (edited=user) được ưu tiên, AI không được tự ý ghi đè; muốn sửa thì phải nói lý do trước"}
 
 
 def _tool_outline_write(slug: str, args: dict) -> dict:
@@ -389,19 +389,19 @@ def _tool_outline_write(slug: str, args: dict) -> dict:
     d = dbm.db()
     name = str(args.get("name") or "").strip()
     if not name:
-        return {"error": "缺少 name（这条大纲叫什么）"}
+        return {"error": "Thiếu name (mục dàn ý này tên gì)"}
     summary = str(args.get("summary") or "")[:2000]
     kind = str(args.get("kind") or "main")
     row = d.one("SELECT * FROM thread WHERE slug=? AND name=?", (slug, name))
     if row and (row["origin"] or "user") == "user":
         return {"ok": False, "blocked": True, "name": name,
-                "why": "「%s」是用户自己定的，AI 不覆盖。要改请先跟用户确认。" % name,
+                "why": "「%s」là do người dùng tự định, AI không ghi đè. Muốn sửa thì xác nhận với người dùng trước." % name,
                 "current": (row["summary"] or "")[:400]}
     if row:
         d.execute("UPDATE thread SET summary=?, kind=?, updated_at=? WHERE id=?",
                   (summary or row["summary"], kind, __import__("time").time() * 1000, row["id"]))
         return {"ok": True, "name": name, "mode": "updated",
-                "note": "改动已进入「改动」列表，等用户确认"}
+                "note": "Thay đổi đã vào danh sách「Thay đổi」, chờ người dùng xác nhận"}
     d.execute("INSERT INTO thread(slug,name,kind,status,summary,order_no,origin,updated_at)"
               " VALUES(?,?,?,?,?,?,?,?)",
               # status 用界面那一套（open/done/paused）—— 以前写的是 "active"，
@@ -459,12 +459,12 @@ def _tool_reference_read(slug: str, args: dict) -> dict:
     title = str(args.get("title") or "").strip()
     q = str(args.get("q") or "").strip()
     if not title and not q:
-        return {"error": "要么给 title，要么给 q"}
+        return {"error": "Hoặc cho title, hoặc cho q"}
     rows = dbm.db().query("SELECT title,text FROM reference WHERE slug=?"
                           " AND (title LIKE ? OR source LIKE ?)",
                           (slug, "%" + (title or q) + "%", "%" + (title or q) + "%"))
     if not rows:
-        return {"error": "没有这条参考资料（先用 reference_list 看看有哪些）"}
+        return {"error": "Không có tài liệu tham khảo này (dùng reference_list xem có những gì trước)"}
     r = rows[0]
     text = r["text"] or ""
     if q:
@@ -496,7 +496,7 @@ def _tool_web_search(slug: str, args: dict) -> dict:
     if not r.get("ok"):
         # 搜不到时**也要把原因带出去**（哪个引擎、什么错）—— 否则用户只看到"没搜到"，
         # 判据也没法说清是网络的问题还是过滤的问题（踩到过）。
-        return {"error": r.get("error") or "没搜到", "engines": r.get("engines"),
+        return {"error": r.get("error") or "Không tìm thấy", "engines": r.get("engines"),
                 "engineErrors": r.get("errors"), "dropped": (r.get("dropped") or [])[:5]}
     return {"query": r["query"], "note": r["note"], "count": r["count"],
             "results": [{"title": x["title"], "url": x["url"], "source": x["source"],
@@ -512,10 +512,10 @@ def _tool_web_fetch(slug: str, args: dict) -> dict:
     from . import websearch as web
     r = asyncio.run(web.fetch(str(args.get("url") or ""), str(args.get("q") or "")))
     if not r.get("ok"):
-        return {"error": r.get("error") or "抓不到"}
+        return {"error": r.get("error") or "Không lấy được"}
     return {"url": r["url"], "source": r["source"], "chars": r["chars"],
             "excerpt": r["excerpt"], "truncated": r.get("truncated"),
-            "note": "引用时请写清来源（%s）" % r["source"]}
+            "note": "Khi trích dẫn hãy ghi rõ nguồn (%s)" % r["source"]}
 
 
 TOOLS = {
@@ -553,17 +553,17 @@ WEB_TOOLS = ("web_search", "web_fetch")
 def run_tool(slug: str, name: str, args: dict) -> dict:
     fn = TOOLS.get(name)
     if not fn:
-        return {"error": f"没有这个工具：{name}"}
+        return {"error": f"Không có công cụ này: {name}"}
     if name in WEB_TOOLS:
         # 联网是**用户开关**说了算（）：这里再拦一道，
         # 不管提示词怎么写、哪个角色来调，"没开就一个请求都不发"都必须成立。
         from . import websearch as web
         if not web.enabled():
-            return {"error": "联网搜索没开（设置里打开我才能上网）"}
+            return {"error": "Tìm kiếm trên mạng chưa bật (bật trong cài đặt thì tôi mới lên mạng được)"}
     try:
         return fn(slug, args or {})
     except Exception as e:
-        return {"error": f"{name} 出错：{e}"}
+        return {"error": f"{name} bị lỗi: {e}"}
 
 
 # ── 一次调用 ────────────────────────────────────────────────────────────────
@@ -587,6 +587,19 @@ def abort(sid: int) -> bool:
     t = RUNNING.get(sid)
     if t and not t.done():
         t.cancel()
+        return True
+    # Không còn tác vụ nào thật sự chạy (vd. máy chủ đã khởi động lại giữa chừng)
+    # → trạng thái "running" trong cơ sở dữ liệu là mồ côi: gỡ kẹt ngay để gửi tin mới được.
+    try:
+        d = dbm.db()
+        d.execute("UPDATE chat_session SET status='idle' WHERE id=?", (sid,))
+        d.execute("UPDATE orchestra_run SET status='aborted', ended_at=? WHERE session_id=? AND status='running'",
+                  (int(time.time() * 1000), sid))
+        ABORTS.discard(sid)
+        events.emit(sid, "session_state_changed",
+                    {"type": "session_state_changed", "state": _state(sid)})
+    except Exception:
+        pass
     return True
 
 
@@ -603,7 +616,7 @@ def _history_messages(sid: int, limit: int = 24) -> list[dict]:
             txt = "".join(str(b.get("content", "")) for b in blocks if b.get("type") == "text")
             out.append({"role": "assistant", "content": txt})
         elif r["type"] == "tool_result":
-            out.append({"role": "user", "content": "工具结果：" + json.dumps(
+            out.append({"role": "user", "content": "Kết quả công cụ: " + json.dumps(
                 blocks, ensure_ascii=False)[:4000]})
     return out
 
@@ -647,7 +660,7 @@ async def _run(sid: int, text: str, inv: str, model_key: str = "",
                 RUNNING.pop(sid, None)
                 ABORTS.discard(sid)
                 d.execute("UPDATE chat_session SET status='idle' WHERE id=?", (sid,))
-                if not sess["title"] or sess["title"].endswith("会话"):
+                if not sess["title"] or sess["title"].endswith("hội thoại"):
                     title = (text or "").strip().splitlines()[0][:18] or sess["title"]
                     d.execute("UPDATE chat_session SET title=? WHERE id=?", (title, sid))
                 try:
@@ -675,7 +688,7 @@ async def _run(sid: int, text: str, inv: str, model_key: str = "",
         try:
             provider, mid = provider_of(mk)
         except LLMError as e:
-            append_entry(sid, "system", [{"type": "text", "content": f"模型没配好：{e}"}])
+            append_entry(sid, "system", [{"type": "text", "content": f"Mô hình chưa được cấu hình: {e}"}])
             raise
         values = preset_values(slug)
         memory_hits = _memory_hits(slug, text)
@@ -733,7 +746,7 @@ async def _run(sid: int, text: str, inv: str, model_key: str = "",
                 raise
             except Exception as e:
                 stop_reason = "error"
-                append_entry(sid, "system", [{"type": "text", "content": f"模型调用失败：{e}"}])
+                append_entry(sid, "system", [{"type": "text", "content": f"Gọi mô hình thất bại: {e}"}])
                 break
 
             raw = "".join(buf)
@@ -773,7 +786,7 @@ async def _run(sid: int, text: str, inv: str, model_key: str = "",
                      "content": [{"type": "text",
                                   "text": json.dumps(res, ensure_ascii=False)[:6000]}]}])
                 msgs.append({"role": "user", "content":
-                             f"[tool:{n}] 结果：{json.dumps(res, ensure_ascii=False)[:6000]}"})
+                             f"[tool:{n}] kết quả: {json.dumps(res, ensure_ascii=False)[:6000]}"})
         else:
             stop_reason = "max_rounds"
     except asyncio.CancelledError:
@@ -781,7 +794,7 @@ async def _run(sid: int, text: str, inv: str, model_key: str = "",
     except Exception as e:
         stop_reason = "error"
         try:
-            append_entry(sid, "system", [{"type": "text", "content": f"执行出错：{e}"}])
+            append_entry(sid, "system", [{"type": "text", "content": f"Lỗi khi thực thi: {e}"}])
         except Exception:
             # 这是「尽量把出错原因写进会话」；写不进去时别把真正的异常盖掉。
             pass
@@ -790,7 +803,7 @@ async def _run(sid: int, text: str, inv: str, model_key: str = "",
         ABORTS.discard(sid)
         d.execute("UPDATE chat_session SET status='idle' WHERE id=?", (sid,))
         total = usage_total["input"] + usage_total["output"]
-        if not sess["title"] or sess["title"].endswith("会话"):
+        if not sess["title"] or sess["title"].endswith("hội thoại"):
             title = (text or "").strip().splitlines()[0][:18] or sess["title"]
             d.execute("UPDATE chat_session SET title=? WHERE id=?", (title, sid))
         d.execute("INSERT INTO trace(session_id,invocation_id,slug,provider,model,kind,stop_reason,"

@@ -126,13 +126,13 @@ def report(slug: str) -> dict:
         if len(vals) >= 2 and vals[-1] - vals[0] >= 2:
             issues.append({
                 "level": "warn", "key": "age_drift", "who": who,
-                "text": "%s 的年龄前后差 %d 岁（%s）" % (who, vals[-1] - vals[0],
-                                                       "、".join(f"{v}岁" for v in vals)),
-                "advice": "要么中间写清过了几年，要么把一个岁数改掉（成长弧线也要跟着改）",
+                "text": "Tuổi của %s trước sau chênh %d tuổi (%s)" % (who, vals[-1] - vals[0],
+                                                       "、".join(f"{v} tuổi" for v in vals)),
+                "advice": "Hoặc viết rõ ở giữa đã qua mấy năm, hoặc sửa một trong hai số tuổi (đường phát triển cũng phải sửa theo)",
                 "where": [{"path": i["path"], "line": i["line"], "quote": i["quote"]}
                           for i in items[:6]]})
     # ② 外貌冲突：发色/瞳色/身材/疤各有两种以上互相排斥的说法
-    for kind, label in (("hair", "发色"), ("eyes", "瞳色"), ("build", "身材"), ("mark", "标记位置")):
+    for kind, label in (("hair", "Màu tóc"), ("eyes", "Màu mắt"), ("build", "Vóc dáng"), ("mark", "Vị trí dấu vết")):
         seen: dict[str, list[dict]] = {}
         for h in hits:
             if h["kind"] != kind:
@@ -145,8 +145,8 @@ def report(slug: str) -> dict:
             if len(vals) >= 2:
                 issues.append({
                     "level": "warn", "key": kind + "_conflict", "who": who,
-                    "text": "%s 的%s前后不一致（%s）" % (who, label, "、".join(vals)),
-                    "advice": "定一个为准，其余的地方统一改；改不动就把变化写进剧情（染了、伤了）",
+                    "text": "%s: %s trước sau không nhất quán (%s)" % (who, label, "、".join(vals)),
+                    "advice": "Chọn một cái làm chuẩn, các chỗ khác sửa thống nhất; không sửa được thì đưa sự thay đổi vào cốt truyện (nhuộm, bị thương)",
                     "where": [{"path": i["path"], "line": i["line"], "quote": i["quote"]}
                               for i in items[:6]]})
     # ③ 代词混用：同一个角色在自己名字附近一会儿"他"一会儿"她"
@@ -164,8 +164,8 @@ def report(slug: str) -> dict:
         if len(vals) >= 2:
             issues.append({
                 "level": "warn", "key": "pronoun_mix", "who": who,
-                "text": "%s 既被写成「他」又被写成「她」" % who,
-                "advice": "确认是这个人的性别写错，还是旁边有另一个人（那就把名字补上）",
+                "text": "%s vừa bị viết là「anh」lại vừa bị viết là「cô」" % who,
+                "advice": "Xác nhận là viết sai giới tính của người này, hay bên cạnh còn một người khác (thì bổ sung tên vào)",
                 "where": [{"path": i["path"], "line": i["line"], "quote": i["quote"]}
                           for i in pron_hits[who][:6]]})
     # ④ 名字近似：正文里出现和已登记角色差一个字的名字 → 是笔误还是两个人
@@ -206,8 +206,8 @@ def report(slug: str) -> dict:
                 seen_pairs.add((hit, nm))
                 issues.append({
                     "level": "info", "key": "similar_name", "who": hit,
-                    "text": "正文里有「%s」，和已登记的「%s」只差一个字" % (nm, hit),
-                    "advice": "是笔误就统一改；真是另一个人的话，给他建个角色（不然出场统计会漏）",
+                    "text": "Chính văn có「%s」, chỉ khác「%s」đã đăng ký đúng một chữ" % (nm, hit),
+                    "advice": "Nếu là lỗi gõ thì sửa thống nhất; nếu thật là người khác, hãy tạo nhân vật cho người đó (không thì thống kê xuất hiện sẽ sót)",
                     "where": [], "suggestAlias": [hit, nm]})
 
     # ⑤ 消失的角色：世界里有他，但最近 6 章没露面（在本地算，不调接口）
@@ -225,9 +225,9 @@ def report(slug: str) -> dict:
         if seen_at and total and (total - seen_at[-1]) >= 6:
             issues.append({
                 "level": "info", "key": "missing_character", "who": e["name"],
-                "text": "%s 已经 %d 章没露面了（最后出现在第 %d 章）" % (
+                "text": "%s đã %d chương không xuất hiện (lần cuối ở chương %d)" % (
                     e["name"], total - seen_at[-1], seen_at[-1]),
-                "advice": "长篇里人不见了最容易被读者记住：要么让他回来，要么交代一句他去哪了",
+                "advice": "Trong truyện dài, nhân vật biến mất là thứ người đọc dễ nhớ nhất: hoặc cho họ quay lại, hoặc nói một câu họ đã đi đâu",
                 "where": [{"path": chap_texts[seen_at[-1] - 1][0], "line": 0, "quote": ""}]})
 
     warn = sum(1 for i in issues if i["level"] == "warn")

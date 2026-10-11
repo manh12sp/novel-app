@@ -37,20 +37,20 @@ async def health():
 # ── 门面 ────────────────────────────────────────────────────────────────────
 @router.get("/app/info")
 async def app_info():
-    return {"name": CFG.get("app_name", "小说"), "authEnabled": True,
+    return {"name": CFG.get("app_name", "Tiểu thuyết"), "authEnabled": False,
             "voice": CFG.get("default_voice")}
 
 
 @router.get("/app/status")
 async def app_status(request: Request):
-    return {"loggedIn": bool(user_of(token_from(request)))}
+    return {"loggedIn": True}
 
 
 @router.post("/app/login")
 async def app_login(request: Request, response: Response, payload: dict = Body(...)):
     ip = request.client.host if request.client else "?"
     if not login_allowed(ip):
-        raise HTTPException(429, "密码输错太多次，等 10 分钟再试")
+        raise HTTPException(429, "Nhập sai mật khẩu quá nhiều lần, đợi 10 phút rồi thử lại")
     pw = str(payload.get("password", ""))
     row = dbm.db().one("SELECT * FROM user WHERE status='active' ORDER BY id LIMIT 1")
     # 手机上（App 自带后端）网页是本地起的，让用户输密码没意义：
@@ -67,7 +67,7 @@ async def app_login(request: Request, response: Response, payload: dict = Body(.
     if not row or not verify_password(pw, row["password_hash"], row["salt"]):
         note_login_fail(ip)
         time.sleep(1.0)
-        raise HTTPException(401, "密码不对")
+        raise HTTPException(401, "Mật khẩu không đúng")
     clear_login_fail(ip)
     raw = issue_token(row["id"], request.headers.get("user-agent", ""))
     set_cookie(response, raw)
@@ -92,11 +92,19 @@ async def app_logout(request: Request, response: Response):
 
 @router.get("/auth/me")
 async def auth_me(request: Request):
+    # Bỏ xác thực: luôn trả về user (guest hoặc user thật)
     u = user_of(token_from(request))
     if not u:
-        # 与旧层一致：未登录也回 200，只是 user=null（前端据此决定弹不弹登录）
-        return {"authEnabled": True, "user": None}
-    return {"authEnabled": True, "user": {
+        row = dbm.db().one("SELECT * FROM user WHERE status='active' ORDER BY id LIMIT 1")
+        if row:
+            return {"authEnabled": False, "user": {
+                "id": str(row["id"]), "username": row["username"],
+                "displayName": row["display_name"] or row["username"],
+                "role": row["role"], "sessionVersion": row["session_version"]}}
+        return {"authEnabled": False, "user": {
+            "id": "1", "username": "guest", "displayName": "Khách",
+            "role": "admin", "sessionVersion": 0}}
+    return {"authEnabled": False, "user": {
         "id": str(u["id"]), "username": u["username"], "displayName": u["display_name"] or u["username"],
         "role": u["role"], "sessionVersion": u["session_version"]}}
 
@@ -107,16 +115,16 @@ async def change_password(request: Request, payload: dict = Body(...)):
     old = str(payload.get("oldPassword") or payload.get("old") or "")
     new = str(payload.get("newPassword") or payload.get("new") or "")
     if len(new) < 4:
-        raise HTTPException(400, "新密码太短（至少 4 位）")
+        raise HTTPException(400, "Mật khẩu mới quá ngắn (ít nhất 4 ký tự)")
     row = dbm.db().one("SELECT * FROM user WHERE id=?", (me["id"],))
     if not verify_password(old, row["password_hash"], row["salt"]):
-        raise HTTPException(400, "原密码不对")
+        raise HTTPException(400, "Mật khẩu cũ không đúng")
     h, salt = hash_password(new)
     remember_password(new)      # 界面里改的也要记牢（不然"口令去哪儿找"又断了）
     dbm.db().execute("UPDATE user SET password_hash=?, salt=?, session_version=session_version+1,"
                      " updated_at=? WHERE id=?", (h, salt, now_ms(), me["id"]))
     dbm.db().execute("UPDATE session_token SET revoked=1 WHERE user_id=?", (me["id"],))
-    return {"ok": True, "note": "密码改了，请重新登录"}
+    return {"ok": True, "note": "Đã đổi mật khẩu, vui lòng đăng nhập lại"}
 
 
 
@@ -148,10 +156,10 @@ def remember_password(pw: str) -> None:
     try:
         data = Paths(CFG).data
         data.mkdir(parents=True, exist_ok=True)
-        f = data / "口令.txt"
-        f.write_text("App 登录口令：%s\n\n"
-                     "(改口令： python3 tools/set_password.py 新口令；\n"
-                     " 也能在 App 的「设置」里改)\n" % pw, encoding="utf-8")
+        f = data / "ma-dang-nhap.txt"
+        f.write_text("Mã đăng nhập App: %s\n\n"
+                     "(Đổi mã: python3 tools/set_password.py mã_mới;\n"
+                     " cũng có thể đổi trong「Cài đặt」của App)\n" % pw, encoding="utf-8")
         os.chmod(f, 0o600)
         # **两个文件都要跟着最新口令走**：以前 initial-password.txt 只在不存在时写一次，
         # 用户改了口令它就成"过期文件"——别人照着它输永远进不去（自己相关记录（）。
@@ -180,23 +188,25 @@ async def app_password(request: Request):
     except Exception:
         pw = ""
     if not pw:                      # 老部署没记进 setting 表 → 回退读文件
-        for name in ("initial-password.txt", "口令.txt"):
+        for name in ("initial-password.txt", "ma-dang-nhap.txt", "口令.txt"):
             try:
                 f = Paths(CFG).data / name
                 if not f.exists():
                     continue
                 t = f.read_text("utf-8")
-                pw = (t.split("：", 1)[1].splitlines()[0] if "：" in t else t.splitlines()[0]).strip()
+                _l0 = (t.splitlines() or [""])[0]
+                _m = __import__("re").search(r"[：:]\s*(\S+)\s*$", _l0)
+                pw = (_m.group(1) if _m else _l0).strip()
                 if pw:
                     break
             except Exception:
                 continue
     return {"password": pw, "known": bool(pw),
-            "howto": ["启动时控制台会直接打印",
-                      "data/口令.txt 和 data/initial-password.txt",
-                      "python3 tools/set_password.py 新口令",
-                      "改完后立刻生效，不用重启"],
-            "file": str(Paths(CFG).data / "口令.txt")}
+            "howto": ["Khi khởi động, bảng điều khiển sẽ in thẳng ra",
+                      "data/ma-dang-nhap.txt và data/initial-password.txt",
+                      "python3 tools/set_password.py mã_mới",
+                      "Đổi xong có hiệu lực ngay, không cần khởi động lại"],
+            "file": str(Paths(CFG).data / "ma-dang-nhap.txt")}
 
 
 @router.post("/app/password/rotate")
@@ -217,7 +227,7 @@ async def app_password_rotate(request: Request):
 async def admin_users(request: Request):
     me = current_user(request)
     if me["role"] != "admin":
-        raise HTTPException(403, "只有管理员能看账号列表")
+        raise HTTPException(403, "Chỉ quản trị viên mới xem được danh sách tài khoản")
     rows = dbm.db().query("SELECT * FROM user ORDER BY id")
     out = []
     for r in rows:
@@ -235,13 +245,13 @@ async def admin_users(request: Request):
 async def admin_user_create(request: Request, payload: dict = Body(...)):
     me = current_user(request)
     if me["role"] != "admin":
-        raise HTTPException(403, "只有管理员能建账号")
+        raise HTTPException(403, "Chỉ quản trị viên mới tạo được tài khoản")
     name = (payload.get("username") or "").strip()
     pw = str(payload.get("password") or "")
     if not name or len(pw) < 4:
-        raise HTTPException(400, "用户名不能空，密码至少 4 位")
+        raise HTTPException(400, "Tên người dùng không được trống, mật khẩu ít nhất 4 ký tự")
     if dbm.db().one("SELECT id FROM user WHERE username=?", (name,)):
-        raise HTTPException(400, "这个名字已经有了")
+        raise HTTPException(400, "Tên này đã có rồi")
     h, salt = hash_password(pw)
     n = now_ms()
     dbm.db().execute(
@@ -257,7 +267,7 @@ async def admin_user_create(request: Request, payload: dict = Body(...)):
 # ── 版本与日志 ──────────────────────────────────────────────────────────────
 @router.get("/app/version")
 async def app_version():
-    return {"versionLabel": f"小说 App 自研后端 {VERSION}",
+    return {"versionLabel": f"Backend tự phát triển của App Tiểu thuyết {VERSION}",
             "versionKind": "release", "githubUrl": ""}
 
 
@@ -284,7 +294,7 @@ async def logs_download(request: Request, file: str = ""):
     name = Path(file or "server.jsonl").name          # 只认文件名，防穿越
     f = P.logs / name
     if not f.exists():
-        raise HTTPException(404, "没有这个日志文件")
+        raise HTTPException(404, "Không có file nhật ký này")
     return FileResponse(str(f), media_type="application/octet-stream", filename=name)
 
 
@@ -302,7 +312,7 @@ async def apk_version():
                 d.setdefault("url", "/api/apk")
                 return d
             except Exception:
-                raise HTTPException(500, "版本清单读不出来")
+                raise HTTPException(500, "Không đọc được danh sách phiên bản")
     return {"versionCode": None, "versionName": None, "available": False}
 
 
@@ -314,7 +324,7 @@ async def apk_download():
         if cand.exists():
             return FileResponse(str(cand), media_type="application/vnd.android.package-archive",
                                 filename="xiezuotai.apk")
-    raise HTTPException(404, "apk 还没打包")
+    raise HTTPException(404, "Chưa đóng gói apk")
 
 
 STARTED_AT = time.time()

@@ -13,14 +13,14 @@ SERVER_DIR = Path(__file__).resolve().parent
 CONFIG_PATH = Path(os.environ.get("NOVELAPP_CONFIG", SERVER_DIR / "config.json"))
 
 DEFAULTS = {
-    "app_name": "小说",
+    "app_name": "Tiểu thuyết",
     "host": "127.0.0.1",
     "port": 8899,
     "data_root": "data",
     "log_dir": "logs",
     "frontend_dir": "frontend",
     "apk_dir": "apk",
-    "default_voice": "zh-CN-YunxiNeural",
+    "default_voice": "vi-VN-HoaiMyNeural",
     "tts_engine": "edge",
     "tts_segment_chars": 220,
     "token_ttl_days": 180,
@@ -29,14 +29,16 @@ DEFAULTS = {
     "log_level": "warning",
     # 可选音色（前端 audio 选择器直接渲染这个列表）
     "voices": [
-        {"id": "zh-CN-YunxiNeural", "name": "云希·男声", "engine": "edge"},
-        {"id": "zh-CN-YunjianNeural", "name": "云健·男声（沉稳）", "engine": "edge"},
-        {"id": "zh-CN-XiaoxiaoNeural", "name": "晓晓·女声", "engine": "edge"},
-        {"id": "zh-CN-XiaoyiNeural", "name": "晓伊·女声（活泼）", "engine": "edge"},
-        {"id": "zh-CN-YunyangNeural", "name": "云扬·男声（播报）", "engine": "edge"},
-        {"id": "zh-CN-liaoning-XiaobeiNeural", "name": "晓北·女声（东北）", "engine": "edge"},
-        {"id": "zh-TW-HsiaoChenNeural", "name": "曉臻·女声（台湾）", "engine": "edge"},
-        {"id": "zh-HK-HiuMaanNeural", "name": "曉曼·女声（粤语）", "engine": "edge"},
+        {"id": "vi-VN-HoaiMyNeural", "name": "Hoài My · giọng nữ (tiếng Việt)", "engine": "edge"},
+        {"id": "vi-VN-NamMinhNeural", "name": "Nam Minh · giọng nam (tiếng Việt)", "engine": "edge"},
+        {"id": "zh-CN-YunxiNeural", "name": "Vân Hi · giọng nam (tiếng Trung)", "engine": "edge"},
+        {"id": "zh-CN-YunjianNeural", "name": "Vân Kiện · giọng nam trầm ổn (tiếng Trung)", "engine": "edge"},
+        {"id": "zh-CN-XiaoxiaoNeural", "name": "Hiểu Hiểu · giọng nữ (tiếng Trung)", "engine": "edge"},
+        {"id": "zh-CN-XiaoyiNeural", "name": "Hiểu Y · giọng nữ hoạt bát (tiếng Trung)", "engine": "edge"},
+        {"id": "zh-CN-YunyangNeural", "name": "Vân Dương · giọng nam phát thanh (tiếng Trung)", "engine": "edge"},
+        {"id": "zh-CN-liaoning-XiaobeiNeural", "name": "Hiểu Bắc · giọng nữ Đông Bắc (tiếng Trung)", "engine": "edge"},
+        {"id": "zh-TW-HsiaoChenNeural", "name": "Hiểu Trăn · giọng nữ Đài Loan (tiếng Trung)", "engine": "edge"},
+        {"id": "zh-HK-HiuMaanNeural", "name": "Hiểu Mạn · giọng nữ Quảng Đông", "engine": "edge"},
     ],
 }
 
@@ -58,7 +60,7 @@ def load() -> Config:
         try:
             data = json.loads(CONFIG_PATH.read_text("utf-8"))
         except Exception as e:
-            raise SystemExit(f"配置文件读不出来：{CONFIG_PATH} —— {e}")
+            raise SystemExit(f"Không đọc được file cấu hình: {CONFIG_PATH} —— {e}")
     return Config(data)
 
 

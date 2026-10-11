@@ -54,7 +54,7 @@ def _proxy() -> str:
         ok = sk.connect_ex(("127.0.0.1", PORT)) == 0
         sk.close()
         if ok:
-            return "http://本地代理"
+            return "http://proxy-cuc-bo"
     except Exception:
         pass
     return ""
@@ -73,9 +73,9 @@ def _git(args: list, timeout: int = 30, proxy: str = "") -> tuple:
         out = ((p.stdout or "") + (p.stderr or "")).strip()
         return p.returncode, out
     except subprocess.TimeoutExpired:
-        return 124, "超时（连不上 GitHub？）"
+        return 124, "Quá thời gian (không kết nối được GitHub?)"
     except FileNotFoundError:
-        return 127, "这台机器上没装 git"
+        return 127, "Máy này chưa cài git"
     except Exception as e:
         return 1, str(e)[:200]
 
@@ -90,7 +90,7 @@ def _git_net(args: list, timeout: int = 30) -> tuple:
         code2, out2 = _git(args, timeout=timeout, proxy=px)
         if code2 == 0:
             return code2, out2
-        return code2, out2 + "（走代理 %s 也没通）" % px
+        return code2, out2 + " (qua proxy %s cũng không thông)" % px
     return code, out
 
 
@@ -108,7 +108,7 @@ async def update_check(request: Request):
     """看有没有新版本。**不联网也能用**：连不上就明说，不会假装是最新。"""
     current_user(request)
     if not os.path.isdir(os.path.join(_repo(), ".git")):
-        return {"ok": False, "canUpdate": False, "reason": "这不是一个 git 副本（可能是下载的压缩包），只能手动更新",
+        return {"ok": False, "canUpdate": False, "reason": "Đây không phải bản sao git (có thể là gói nén tải về), chỉ có thể cập nhật thủ công",
                 "local": "", "remote": "", "hasUpdate": False}
     branch = _branch()
     local = _local()
@@ -120,7 +120,7 @@ async def update_check(request: Request):
     if code != 0:
         return {"ok": False, "canUpdate": True, "hasUpdate": False, "local": local, "remote": "",
                 "branch": branch,
-                "reason": "查不到（网络连不上 GitHub，10 秒超时）。不影响你用，先手动更新也行。"}
+                "reason": "Không kiểm tra được (mạng không kết nối được GitHub, quá 10 giây). Không ảnh hưởng việc dùng, cập nhật thủ công trước cũng được."}
     code2, out2 = _git(["rev-list", "--count", "HEAD..origin/" + branch], timeout=20)
     behind = out2.strip() if code2 == 0 and out2.strip().isdigit() else "0"
     code3, out3 = _git(["rev-parse", "--short", "origin/" + branch], timeout=20)
@@ -140,16 +140,16 @@ async def update_apply(request: Request):
     current_user(request)
     repo = _repo()
     if not os.path.isdir(os.path.join(repo, ".git")):
-        raise HTTPException(400, "这不是一个 git 副本，没法自动更新 —— 手动换新版吧")
+        raise HTTPException(400, "Đây không phải bản sao git, không tự cập nhật được —— hãy thay bản mới thủ công")
     before = _local()
     # 本地有改动就先别动，免得把人家改的东西冲了
     code, dirty = _git(["status", "--porcelain"])
     if code == 0 and dirty:
-        raise HTTPException(409, "你这台机器上改过代码（git status 不干净），"
-                                 "自动更新怕把你的改动冲掉。先自己 git stash 或提交一下再点更新。")
+        raise HTTPException(409, "Máy này đã sửa mã nguồn (git status không sạch), "
+                                 "tự cập nhật sợ ghi đè mất thay đổi của bạn. Hãy tự git stash hoặc commit trước rồi mới bấm cập nhật.")
     code, out = _git_net(["pull", "--ff-only", "origin", _branch()], timeout=120)
     if code != 0:
-        raise HTTPException(400, "拉取失败：" + out[:300])
+        raise HTTPException(400, "Kéo về thất bại: " + out[:300])
     after = _local()
     changed = after != before
     if changed:
@@ -164,5 +164,5 @@ async def update_apply(request: Request):
             pass
     return {"ok": True, "from": before, "to": after, "changed": changed,
             "restarting": changed, "service": SERVICE,
-            "note": ("已拉到新版，2 秒后自动重启；等十几秒刷新页面即可"
-                     if changed else "已经是最新，什么都不用做")}
+            "note": ("Đã kéo bản mới, 2 giây nữa tự khởi động lại; đợi mười mấy giây rồi làm mới trang là được"
+                     if changed else "Đã là bản mới nhất, không cần làm gì")}

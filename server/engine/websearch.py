@@ -55,23 +55,23 @@ TIMEOUT = httpx.Timeout(12.0, connect=6.0)
 
 # ── 白名单：能当"文本样本"的来源（权重越高越可信）────────────────────────────
 CONTENT_HOSTS = [
-    {"host": "zh.moegirl.org.cn", "name": "萌娘百科", "weight": 5},
-    {"host": "wiki.biligame.com", "name": "B 站 wiki", "weight": 4},
+    {"host": "zh.moegirl.org.cn", "name": "Moegirlpedia", "weight": 5},
+    {"host": "wiki.biligame.com", "name": "Bilibili wiki", "weight": 4},
 ]
 
 ENGINES = [
     # 可信站**自己的**全文搜索（HTML 版）。为什么不用 MediaWiki 的 api.php：
     # 2026-09-21 实测它回 `{"error":{"code":"action-notallowed"}}` —— 匿名调用被挡了
     # （当时只看 HTTP 200 就当成能用，**没看正文**，白改一版）。HTML 全文搜索这条路是通的。
-    {"id": "moegirl", "name": "萌娘百科", "kind": "mwsearch",
+    {"id": "moegirl", "name": "Moegirlpedia", "kind": "mwsearch",
      "url": "https://zh.moegirl.org.cn/index.php?search={q}&fulltext=1"},
 ]
 
 # 通用搜索：**只当线索**。它的结果大多数不在白名单里（实测 `site:` 还被必应忽略），
 # 所以命中的条目只用来"顺便告诉用户有这么个网页"，**不进可信结果**。
 DISCOVERY = [
-    {"id": "bing", "name": "必应", "kind": "bing",
-     "url": "https://cn.bing.com/search?q={q}"},
+    {"id": "bing", "name": "Bing", "kind": "bing",
+     "url": "https://www.bing.com/search?q={q}&setlang=vi&cc=VN"},
 ]
 
 MENGNIANG = "https://zh.moegirl.org.cn"     # 默认站点（搜索结果拼绝对地址时的兜底）
@@ -213,11 +213,11 @@ def _parse_bing(body: str) -> list[dict]:
         url, title = a.group(1), strip_html(a.group(2))
         sn = re.search(r'(?is)<p[^>]*>(.*?)</p>', blk)
         out.append({"title": title, "url": url, "snippet": strip_html(sn.group(1)) if sn else "",
-                    "engine": "必应"})
+                    "engine": "Bing"})
     return out
 
 
-def _parse_mwsearch(body: str, base: str = "", eng_name: str = "萌娘百科") -> list[dict]:
+def _parse_mwsearch(body: str, base: str = "", eng_name: str = "Moegirlpedia") -> list[dict]:
     """解析 MediaWiki 的**搜索页 HTML**（`<li class="mw-search-result">…`）。
 
     每条里拿两样：条目标题（`<a ... title="…">`）和摘要（li 的纯文本）。
@@ -240,7 +240,7 @@ def _parse_mwsearch(body: str, base: str = "", eng_name: str = "萌娘百科") -
     return out
 
 
-def _parse_mediawiki(blob: str, base: str = "", eng_name: str = "萌娘百科") -> list[dict]:
+def _parse_mediawiki(blob: str, base: str = "", eng_name: str = "Moegirlpedia") -> list[dict]:
     try:
         obj = json.loads(blob or "{}")
     except Exception:
@@ -257,31 +257,31 @@ def _parse_mediawiki(blob: str, base: str = "", eng_name: str = "萌娘百科") 
 async def _one_engine(cli: httpx.AsyncClient, eng: dict, q: str) -> tuple[list[dict], str]:
     url = eng["url"].replace("{q}", quote(q))
     try:
-        r = await cli.get(url, headers={"user-agent": UA, "accept-language": "zh-CN,zh;q=0.9"})
+        r = await cli.get(url, headers={"user-agent": UA, "accept-language": "vi-VN,vi;q=0.9,en;q=0.7,zh-CN;q=0.5"})
         if r.status_code >= 400:
-            return [], "%s 返回 %d" % (eng["name"], r.status_code)
+            return [], "%s trả về %d" % (eng["name"], r.status_code)
         kind = eng.get("kind")
         base = eng.get("base") or origin_of(eng.get("url") or "")
         if os.environ.get("AI_WEB_FORCE") == "hardcode-moegirl":
             base = MENGNIANG          # 反证：模拟"相对链接一律拼成萌娘百科"那个 bug
-        name = eng.get("name") or "网页"
+        name = eng.get("name") or "Trang web"
         if kind == "mwsearch":
             return _parse_mwsearch(r.text, base, name), ""
         if kind == "mediawiki":
             return _parse_mediawiki(r.text, base, name), ""
         return _parse_bing(r.text), ""
     except Exception as e:
-        return [], "%s 连不上（%s）" % (eng["name"], type(e).__name__)
+        return [], "%s không kết nối được (%s)" % (eng["name"], type(e).__name__)
 
 
 async def search(q: str, n: int = MAX_RESULTS) -> dict:
     """搜一次。**没开开关就直接回原因、一个请求都不发。**"""
     q = (q or "").strip()
     if not q:
-        return {"ok": False, "error": "缺少 q（要搜什么）"}
+        return {"ok": False, "error": "Thiếu q (tìm gì)"}
     if not enabled():
         return {"ok": False, "enabled": False,
-                "error": "联网搜索没开（设置里打开「联网搜索」我才能上网）"}
+                "error": "Tìm kiếm trên mạng chưa bật (bật「Tìm kiếm trên mạng」trong cài đặt thì tôi mới lên mạng được)"}
     results: list[dict] = []
     errs: list[str] = []
     leads: list[dict] = []
@@ -300,7 +300,7 @@ async def search(q: str, n: int = MAX_RESULTS) -> dict:
                     if err and len(errs) < 4:
                         errs.append(err)
     except Exception as e:
-        return {"ok": False, "enabled": True, "error": "联网出错：%s" % str(e)[:120]}
+        return {"ok": False, "enabled": True, "error": "Lỗi kết nối mạng: %s" % str(e)[:120]}
 
     keep, skipped = [], []
     for r in results:
@@ -310,7 +310,7 @@ async def search(q: str, n: int = MAX_RESULTS) -> dict:
             keep.append(r)
         else:
             skipped.append({"title": r["title"][:60], "host": host_of(r["url"]),
-                            "why": "不在可信站点名单里（怕捞到垃圾文本）"})
+                            "why": "Không nằm trong danh sách trang đáng tin (sợ vớt phải văn bản rác)"})
     keep.sort(key=lambda x: -x["score"])
     keep = keep[:max(1, int(n))]
     # 线索里**去掉已经在可信结果里的**，并且标明"没采信"
@@ -322,16 +322,16 @@ async def search(q: str, n: int = MAX_RESULTS) -> dict:
         x.setdefault("source", x["host"])
         x["trusted"] = bool(weight_of(x["url"]))
     leads = [x for x in leads if not x.get("trusted")][:5]
-    note = ("可信站点：%s（可在设置里自己加站点，填个搜索地址模板就行）"
+    note = ("Trang đáng tin: %s (có thể tự thêm trang trong cài đặt, chỉ cần điền mẫu địa chỉ tìm kiếm)"
             % "、".join(c["name"] for c in hosts()[:4])) if not open_any() \
-        else "现在放开了「任意站点」，结果可能良莠不齐"
+        else "Hiện đã mở「Trang bất kỳ」, kết quả có thể lẫn lộn tốt xấu"
     if not keep and leads:
-        note += "；这些只是线索（没采信）：来源不在可信名单里"
+        note += "; những cái này chỉ là manh mối (chưa được tin dùng): nguồn không nằm trong danh sách đáng tin"
     return {"ok": bool(keep), "enabled": True, "query": q, "count": len(keep),
             "results": keep, "dropped": skipped[:8], "leads": leads, "note": note,
             "engines": [e["name"] for e in _engines()],
             "errors": errs,
-            "error": "" if keep else ("可信站点里没搜到。" +
+            "error": "" if keep else ("Không tìm thấy trong các trang đáng tin." +
                                       ("；".join(errs) if errs else ""))}
 
 
@@ -344,28 +344,28 @@ async def fetch(url: str, q: str = "") -> dict:
     """
     url = (url or "").strip()
     if not url:
-        return {"ok": False, "error": "缺少 url（要抓哪一页）"}
+        return {"ok": False, "error": "Thiếu url (lấy trang nào)"}
     if not enabled():
         return {"ok": False, "enabled": False,
-                "error": "联网搜索没开（设置里打开「联网搜索」我才能上网）"}
+                "error": "Tìm kiếm trên mạng chưa bật (bật「Tìm kiếm trên mạng」trong cài đặt thì tôi mới lên mạng được)"}
     if not re.match(r"^https?://", url):
-        return {"ok": False, "error": "url 要带 http:// 或 https://"}
+        return {"ok": False, "error": "url phải có http:// hoặc https://"}
     if not weight_of(url) and not open_any():
         return {"ok": False, "host": host_of(url),
-                "error": "这个来源不在可信站点名单里（怕捞到垃圾文本）；"
-                         "确实要抓，就在设置里打开「允许任意站点」或把它加进名单"}
+                "error": "Nguồn này không nằm trong danh sách trang đáng tin (sợ vớt phải văn bản rác); "
+                         "nếu thật sự cần lấy, hãy bật「Cho phép trang bất kỳ」trong cài đặt hoặc thêm nó vào danh sách"}
     try:
         async with httpx.AsyncClient(timeout=TIMEOUT, follow_redirects=True) as cli:
             r = await cli.get(url, headers={"user-agent": UA,
-                                            "accept-language": "zh-CN,zh;q=0.9"})
+                                            "accept-language": "vi-VN,vi;q=0.9,en;q=0.7,zh-CN;q=0.5"})
         if r.status_code >= 400:
-            return {"ok": False, "url": url, "error": "这一页打不开（返回 %d）" % r.status_code}
+            return {"ok": False, "url": url, "error": "Trang này không mở được (trả về %d)" % r.status_code}
         txt = strip_html(r.text)
     except Exception as e:
-        return {"ok": False, "url": url, "error": "抓取出错：%s" % str(e)[:120]}
+        return {"ok": False, "url": url, "error": "Lỗi khi lấy trang: %s" % str(e)[:120]}
     if not txt:
         return {"ok": False, "url": url, "source": host_of(url),
-                "error": "这一页抓下来是空的（可能要登录，或正文是脚本渲染的）"}
+                "error": "Trang này lấy về trống (có thể cần đăng nhập, hoặc nội dung do script hiển thị)"}
     truncated = len(txt) > MAX_FETCH_CHARS
     return {"ok": True, "url": url, "source": host_of(url), "chars": len(txt),
             "excerpt": txt[:MAX_FETCH_CHARS], "truncated": truncated,

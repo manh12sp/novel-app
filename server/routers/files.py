@@ -106,10 +106,10 @@ async def read(request: Request, projectRoot: str = "", path: str = "", workspac
     root = ws_root(projectRoot, workspaceKind)
     rel = safe_rel(path)
     if not rel:
-        raise HTTPException(400, "路径不合法")
+        raise HTTPException(400, "Đường dẫn không hợp lệ")
     p = resolve_in(root, rel)
     if not p.exists() or p.is_dir():
-        raise HTTPException(404, "没有这个文件")
+        raise HTTPException(404, "Không có file này")
     ext = p.suffix.lower()
     editable = ext in TEXT_EXT and p.stat().st_size <= 8 * 1024 * 1024
     if not editable:
@@ -135,10 +135,10 @@ async def write(request: Request, projectRoot: str = "", path: str = "", workspa
     workspaceKind = _arg(body, workspaceKind, "workspaceKind")
     rel = safe_rel(path or body.get("path") or "")
     if not rel:
-        raise HTTPException(400, "路径不合法")
+        raise HTTPException(400, "Đường dẫn không hợp lệ")
     content = body.get("content")
     if content is None:
-        raise HTTPException(400, "没有内容")
+        raise HTTPException(400, "Không có nội dung")
     root = ws_root(projectRoot, workspaceKind)
     p = resolve_in(root, rel)
     base_content = body.get("baseContent")
@@ -148,7 +148,7 @@ async def write(request: Request, projectRoot: str = "", path: str = "", workspa
         except Exception:
             cur = None
         if cur is not None and cur != base_content:
-            raise HTTPException(409, "这个文件在别处被改过了，先刷新再保存")
+            raise HTTPException(409, "File này đã bị sửa ở nơi khác, hãy làm mới rồi mới lưu")
     if _is_book_ws(projectRoot, workspaceKind):
         import time as _t
         before = ""
@@ -174,11 +174,11 @@ async def create_f(request: Request, projectRoot: str = "", workspaceKind: str =
     workspaceKind = _arg(body, workspaceKind, "workspaceKind")
     rel = safe_rel(body.get("path") or "")
     if not rel:
-        raise HTTPException(400, "路径不合法")
+        raise HTTPException(400, "Đường dẫn không hợp lệ")
     root = ws_root(projectRoot, workspaceKind)
     p = resolve_in(root, rel)
     if p.exists():
-        raise HTTPException(400, "已经有一个同名文件了")
+        raise HTTPException(400, "Đã có một file cùng tên")
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(body.get("content") or "", encoding="utf-8")
     if _is_book_ws(projectRoot, workspaceKind):
@@ -196,11 +196,11 @@ async def create_d(request: Request, projectRoot: str = "", workspaceKind: str =
     workspaceKind = _arg(payload, workspaceKind, "workspaceKind")
     rel = safe_rel(payload.get("path") or "")
     if not rel:
-        raise HTTPException(400, "路径不合法")
+        raise HTTPException(400, "Đường dẫn không hợp lệ")
     root = ws_root(projectRoot, workspaceKind)
     p = resolve_in(root, rel)
     if p.exists():
-        raise HTTPException(400, "已经有一个同名目录了")
+        raise HTTPException(400, "Đã có một thư mục cùng tên")
     p.mkdir(parents=True, exist_ok=True)
     return {"ok": True, "path": rel}
 
@@ -214,11 +214,11 @@ async def delete(request: Request, projectRoot: str = "", path: str = "", worksp
     workspaceKind = _arg(body, workspaceKind, "workspaceKind")
     rel = safe_rel(path or body.get("path") or "")
     if not rel:
-        raise HTTPException(400, "路径不合法")
+        raise HTTPException(400, "Đường dẫn không hợp lệ")
     root = ws_root(projectRoot, workspaceKind)
     p = resolve_in(root, rel)
     if not p.exists():
-        raise HTTPException(404, "没有这个文件")
+        raise HTTPException(404, "Không có file này")
     dst = P.trash / (projectRoot or "assets") / f"{int(now_ms())}-{p.name}"
     dst.parent.mkdir(parents=True, exist_ok=True)
     os.replace(str(p), str(dst))
@@ -238,13 +238,13 @@ async def rename(request: Request, projectRoot: str = "", workspaceKind: str = "
     a = safe_rel(body.get("from") or "")
     b = safe_rel(body.get("to") or "")
     if not a or not b:
-        raise HTTPException(400, "缺少 from / to")
+        raise HTTPException(400, "Thiếu from / to")
     root = ws_root(projectRoot, workspaceKind)
     src, dst = resolve_in(root, a), resolve_in(root, b)
     if not src.exists():
-        raise HTTPException(404, "原文件不在了")
+        raise HTTPException(404, "File gốc không còn nữa")
     if dst.exists():
-        raise HTTPException(400, "目标已经存在")
+        raise HTTPException(400, "Đích đã tồn tại")
     dst.parent.mkdir(parents=True, exist_ok=True)
     os.replace(str(src), str(dst))
     if _is_book_ws(projectRoot, workspaceKind):
@@ -266,16 +266,16 @@ async def upload(request: Request, projectRoot: str = "", workspaceKind: str = "
         projectRoot = projectRoot or str(form.get("projectRoot") or "")
         path = path or str(form.get("path") or "")
         if file is None:
-            raise HTTPException(400, "没有收到文件")
+            raise HTTPException(400, "Không nhận được file")
     data = await file.read()
     if not data:
-        raise HTTPException(400, "文件是空的")
+        raise HTTPException(400, "File trống")
     if len(data) > 200 * 1024 * 1024:
-        raise HTTPException(413, "文件超过 200MB")
+        raise HTTPException(413, "File vượt quá 200MB")
     name = Path(getattr(file, "filename", "") or "upload.bin").name
     rel = safe_rel(path or "") or safe_rel(f"upload/{name}")
     if not rel:
-        raise HTTPException(400, "路径不合法")
+        raise HTTPException(400, "Đường dẫn không hợp lệ")
     root = ws_root(projectRoot, workspaceKind)
     dst = resolve_in(root, rel)
     dst.parent.mkdir(parents=True, exist_ok=True)
@@ -293,10 +293,10 @@ async def download(request: Request, projectRoot: str = "", path: str = "", work
     root = ws_root(projectRoot, workspaceKind)
     rel = safe_rel(path)
     if not rel:
-        raise HTTPException(400, "路径不合法")
+        raise HTTPException(400, "Đường dẫn không hợp lệ")
     p = resolve_in(root, rel)
     if not p.exists() or p.is_dir():
-        raise HTTPException(404, "没有这个文件")
+        raise HTTPException(404, "Không có file này")
     return FileResponse(str(p), filename=p.name, media_type="application/octet-stream")
 
 
@@ -359,14 +359,14 @@ async def history_diff(request: Request, projectRoot: str = "", path: str = ""):
     rows = dbm.db().query(
         "SELECT * FROM revision WHERE slug=? AND path=? ORDER BY rev DESC LIMIT 2", (s, path))
     if not rows:
-        raise HTTPException(404, "这个文件没有改动记录")
+        raise HTTPException(404, "File này không có lịch sử thay đổi")
     import difflib
     cur = rows[0]
     old = rows[1]["after_text"] if len(rows) > 1 else cur["before_text"]
     diff = "\n".join(difflib.unified_diff(
         (old or "").splitlines(), (cur["after_text"] or "").splitlines(),
-        fromfile="改之前", tofile="改之后", lineterm="", n=2))
-    return {"path": path, "diff": diff or "(内容没变化)", "revision": cur["rev"],
+        fromfile="Trước khi sửa", tofile="Sau khi sửa", lineterm="", n=2))
+    return {"path": path, "diff": diff or "(nội dung không thay đổi)", "revision": cur["rev"],
             "status": cur["status"]}
 
 
@@ -402,7 +402,7 @@ async def history_revert(request: Request, payload: dict = Body(...)):
         "SELECT * FROM revision WHERE slug=? AND path=? AND status='pending'"
         " ORDER BY rev DESC LIMIT 1", (s, path))
     if not row:
-        raise HTTPException(404, "这个文件没有可退回的改动")
+        raise HTTPException(404, "File này không có thay đổi nào để hoàn tác")
     write_text(s, path, row["before_text"] or "", snapshot=False, origin="revert")
     dbm.db().execute(
         "UPDATE revision SET status='reverted' WHERE slug=? AND path=? AND status='pending'",

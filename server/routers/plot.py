@@ -107,14 +107,14 @@ async def overview(request: Request, slug: str):
 async def act_save(request: Request, payload: dict = Body(...)):
     current_user(request)
     s = _slug(payload.get("slug"))
-    number = num(payload.get("number"), 0, name="幕号")
+    number = num(payload.get("number"), 0, name="Số hồi")
     if number <= 0:
         number = (dbm.db().scalar("SELECT MAX(number) FROM act WHERE slug=?", (s,)) or 0) + 1
     dbm.db().execute(
         "INSERT INTO act(slug,number,title,summary,label_ids_json) VALUES(?,?,?,?,?)"
         " ON CONFLICT(slug,number) DO UPDATE SET title=excluded.title, summary=excluded.summary,"
         " label_ids_json=excluded.label_ids_json",
-        (s, number, str(payload.get("title") or f"第{number}卷"),
+        (s, number, str(payload.get("title") or f"Quyển {number}"),
          str(payload.get("summary") or ""), _jd(payload.get("labelIds") or [])))
     return {"ok": True, "number": number}
 
@@ -136,16 +136,16 @@ async def chapter_meta(request: Request, payload: dict = Body(...)):
     if not dbm.db().one("SELECT id FROM chapter WHERE slug=? AND path=?", (s, path)):
         _synced(s)
     if not dbm.db().one("SELECT id FROM chapter WHERE slug=? AND path=?", (s, path)):
-        raise HTTPException(404, "没有这一章")
+        raise HTTPException(404, "Không có chương này")
     cur = dbm.db().one("SELECT * FROM chapter WHERE slug=? AND path=?", (s, path))
     fields = {
         "status": payload.get("status", cur["status"]),
         "target_words": num(payload.get("targetWords"), cur["target_words"] or 0, lo=0,
-                            name="目标字数"),
+                            name="Số chữ mục tiêu"),
         "pov": payload.get("pov", cur["pov"]),
         "summary": payload.get("summary", cur["summary"]),
         "title": payload.get("title", cur["title"]),
-        "act_number": num(payload.get("actNumber"), cur["act_number"] or 1, name="所属幕"),
+        "act_number": num(payload.get("actNumber"), cur["act_number"] or 1, name="Thuộc hồi"),
     }
     meta = payload.get("infoControl")
     info = _jd(meta) if isinstance(meta, dict) else cur["info_control_json"]
@@ -212,14 +212,14 @@ async def outline_save(request: Request, payload: dict = Body(...)):
     oid = payload.get("id")
     body = str(payload.get("body") or "")
     if not body.strip():
-        raise HTTPException(400, "细纲不能是空的")
+        raise HTTPException(400, "Đề cương chi tiết không được để trống")
     level = payload.get("level") or "detail"
     if level not in ("act", "chapter", "detail"):
-        raise HTTPException(400, "level 只能是 act/chapter/detail")
+        raise HTTPException(400, "level chỉ có thể là act/chapter/detail")
     d = dbm.db()
     if oid:
         if not d.one("SELECT id FROM outline WHERE id=? AND slug=?", (oid, s)):
-            raise HTTPException(404, "没有这条细纲")
+            raise HTTPException(404, "Không có đề cương chi tiết này")
         d.execute("UPDATE outline SET body=?, level=?, approved=?, updated_at=? WHERE id=?",
                   (body, level, 1 if payload.get("approved") else 0, _now(), oid))
         return {"ok": True, "id": oid}
@@ -245,7 +245,7 @@ async def outline_delete(request: Request, id: int, slug: str = ""):
     current_user(request)
     s = _slug(slug)
     if not dbm.db().one("SELECT id FROM outline WHERE id=? AND slug=?", (id, s)):
-        raise HTTPException(404, "没有这条细纲")
+        raise HTTPException(404, "Không có đề cương chi tiết này")
     dbm.db().execute("DELETE FROM outline WHERE id=?", (id,))
     return {"ok": True}
 
@@ -263,7 +263,7 @@ async def scene_save(request: Request, payload: dict = Body(...)):
               str(payload.get("status") or "outline"), _jd(payload.get("labelIds") or []))
     if sid:
         if not d.one("SELECT id FROM scene WHERE id=? AND slug=?", (sid, s)):
-            raise HTTPException(404, "没有这个场景")
+            raise HTTPException(404, "Không có cảnh này")
         d.execute("UPDATE scene SET chapter_path=?, title=?, summary=?, world_moment_id=?,"
                   " location_id=?, cast_json=?, status=?, label_ids_json=?, updated_at=?"
                   " WHERE id=?",
@@ -284,7 +284,7 @@ async def scene_delete(request: Request, id: int, slug: str = ""):
     current_user(request)
     s = _slug(slug)
     if not dbm.db().one("SELECT id FROM scene WHERE id=? AND slug=?", (id, s)):
-        raise HTTPException(404, "没有这个场景")
+        raise HTTPException(404, "Không có cảnh này")
     dbm.db().execute("DELETE FROM scene WHERE id=?", (id,))
     return {"ok": True}
 
@@ -298,10 +298,10 @@ async def thread_save(request: Request, payload: dict = Body(...)):
     tid = payload.get("id")
     name = str(payload.get("name") or "").strip()
     if not name:
-        raise HTTPException(400, "剧情线得有名字")
+        raise HTTPException(400, "Tuyến truyện phải có tên")
     if tid:
         if not d.one("SELECT id FROM thread WHERE id=? AND slug=?", (tid, s)):
-            raise HTTPException(404, "没有这条剧情线")
+            raise HTTPException(404, "Không có tuyến truyện này")
         # origin='user'：**这条路是用户在界面上改的**（AI 走 agent_runtime 的
         # outline_write 工具，那条路写 origin='ai'）。用户改过的大纲，AI 不许自行覆盖 ——
         # 所以每次用户存一次就重置成 user（哪怕之前是 AI 补的）。
@@ -320,7 +320,7 @@ async def thread_save(request: Request, payload: dict = Body(...)):
                  (d.scalar("SELECT MAX(order_no) FROM thread WHERE slug=?", (s,)) or 0) + 1,
                  _now()))
         except Exception:
-            raise HTTPException(400, "已经有一条同名剧情线了")
+            raise HTTPException(400, "Đã có một tuyến truyện cùng tên")
     if payload.get("scenes") is not None:
         d.execute("DELETE FROM thread_scene WHERE slug=? AND thread_id=?", (s, tid))
         for i, p in enumerate(payload["scenes"]):
@@ -335,7 +335,7 @@ async def thread_delete(request: Request, id: int, slug: str = ""):
     s = _slug(slug)
     d = dbm.db()
     if not d.one("SELECT id FROM thread WHERE id=? AND slug=?", (id, s)):
-        raise HTTPException(404, "没有这条剧情线")
+        raise HTTPException(404, "Không có tuyến truyện này")
     d.execute("DELETE FROM thread_scene WHERE thread_id=?", (id,))
     d.execute("DELETE FROM thread WHERE id=?", (id,))
     return {"ok": True}
@@ -350,10 +350,10 @@ async def promise_save(request: Request, payload: dict = Body(...)):
     pid = payload.get("id")
     name = str(payload.get("name") or "").strip()
     if not name:
-        raise HTTPException(400, "伏笔得有名字")
+        raise HTTPException(400, "Phục bút phải có tên")
     if pid:
         if not d.one("SELECT id FROM promise WHERE id=? AND slug=?", (pid, s)):
-            raise HTTPException(404, "没有这条伏笔")
+            raise HTTPException(404, "Không có phục bút này")
         d.execute("UPDATE promise SET name=?, kind=?, status=?, setup_scene=?, payoff_scene=?,"
                   " due_chapter=?, note=?, updated_at=? WHERE id=?",
                   (name, str(payload.get("kind") or "foreshadow"),
@@ -372,7 +372,7 @@ async def promise_save(request: Request, payload: dict = Body(...)):
              str(payload.get("payoffScene") or ""), str(payload.get("dueChapter") or ""),
              str(payload.get("note") or ""), _now(), _now()))
     except Exception:
-        raise HTTPException(400, "已经有一条同名伏笔了")
+        raise HTTPException(400, "Đã có một phục bút cùng tên")
     return {"ok": True, "id": pid}
 
 
@@ -384,7 +384,7 @@ async def promise_advance(request: Request, payload: dict = Body(...)):
     d = dbm.db()
     row = d.one("SELECT * FROM promise WHERE id=? AND slug=?", (payload.get("id"), s))
     if not row:
-        raise HTTPException(404, "没有这条伏笔")
+        raise HTTPException(404, "Không có phục bút này")
     steps = _j(row["advance_json"], [])
     if isinstance(steps, dict):
         steps = [steps]
@@ -393,7 +393,7 @@ async def promise_advance(request: Request, payload: dict = Body(...)):
                   "when": _now()})
     status = payload.get("status") or ("paid" if payload.get("payoff") else "advanced")
     if status not in ("open", "advanced", "paid", "dropped"):
-        raise HTTPException(400, "状态只能是 open/advanced/paid/dropped")
+        raise HTTPException(400, "Trạng thái chỉ có thể là open/advanced/paid/dropped")
     d.execute("UPDATE promise SET advance_json=?, status=?, payoff_scene=COALESCE(NULLIF(?,''),"
               " payoff_scene), updated_at=? WHERE id=?",
               (_jd(steps), status, str(payload.get("payoffScene") or ""), _now(), row["id"]))
@@ -405,7 +405,7 @@ async def promise_delete(request: Request, id: int, slug: str = ""):
     current_user(request)
     s = _slug(slug)
     if not dbm.db().one("SELECT id FROM promise WHERE id=? AND slug=?", (id, s)):
-        raise HTTPException(404, "没有这条伏笔")
+        raise HTTPException(404, "Không có phục bút này")
     dbm.db().execute("DELETE FROM promise WHERE id=?", (id,))
     return {"ok": True}
 
@@ -432,7 +432,7 @@ async def decision_save(request: Request, payload: dict = Body(...)):
     s = _slug(payload.get("slug"))
     title = str(payload.get("title") or "").strip()
     if not title:
-        raise HTTPException(400, "决策得有个标题")
+        raise HTTPException(400, "Quyết định phải có tiêu đề")
     did = dbm.db().execute(
         "INSERT INTO decision(slug,at,chapter_path,title,reason,risks,status) VALUES(?,?,?,?,?,?,?)",
         (s, _now(), str(payload.get("chapterPath") or ""), title,
@@ -447,8 +447,8 @@ async def decision_supersede(request: Request, payload: dict = Body(...)):
     s = _slug(payload.get("slug"))
     old = dbm.db().one("SELECT * FROM decision WHERE id=? AND slug=?", (payload.get("id"), s))
     if not old:
-        raise HTTPException(404, "没有这条决策")
-    title = str(payload.get("title") or f"改掉：{old['title']}")
+        raise HTTPException(404, "Không có quyết định này")
+    title = str(payload.get("title") or f"Thay thế: {old['title']}")
     d = dbm.db()
     nid = d.execute(
         "INSERT INTO decision(slug,at,chapter_path,title,reason,risks,status) VALUES(?,?,?,?,?,?,?)",
@@ -463,7 +463,7 @@ async def decision_delete(request: Request, id: int, slug: str = ""):
     current_user(request)
     s = _slug(slug)
     if not dbm.db().one("SELECT id FROM decision WHERE id=? AND slug=?", (id, s)):
-        raise HTTPException(404, "没有这条决策")
+        raise HTTPException(404, "Không có quyết định này")
     dbm.db().execute("DELETE FROM decision WHERE id=?", (id,))
     return {"ok": True}
 

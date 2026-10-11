@@ -55,14 +55,14 @@ def _req(base: str, method: str, path: str, *, cookie: str = "", body=None,
             parsed = {"detail": raw[:200]}
         return e.code, parsed, cookie
     except Exception as e:                       # 连不上：地址错 / 服务器没起 / 没网
-        raise PeerError(f"连不上 {base}：{e}") from e
+        raise PeerError(f"Không kết nối được {base}: {e}") from e
 
 
 def login(base: str, password: str) -> str:
     """用口令换一个会话（口令只在这一步用，不落盘）。"""
     st, body, cookie = _req(base, "POST", "/api/app/login", body={"password": password})
     if st != 200 or not cookie:
-        raise PeerError(f"服务器不认这个口令（HTTP {st}）")
+        raise PeerError(f"Máy chủ không nhận mã đăng nhập này (HTTP {st})")
     return cookie
 
 
@@ -166,10 +166,10 @@ def ensure_local_book(slug: str, base: str, cookie: str) -> dict:
             code, bk, cookie = _req(base, "GET",
                                     f"/api/book?slug={urllib.parse.quote(real)}", cookie=cookie)
     if code != 200 or not bk:
-        raise PeerError(f"服务器上没有叫「{slug}」的书（HTTP {code}）—— 书名或书号核对一下")
+        raise PeerError(f"Trên máy chủ không có sách tên「{slug}」(HTTP {code}) —— hãy kiểm tra lại tên sách hoặc mã sách")
     out = create_book(bk.get("title") or slug, bk.get("summary") or "", bk.get("kind") or "novel")
     made = out["slug"]
-    _log(made, base, "pull", "", "ok", f"本地没有，照服务器建了一本：{bk.get('title')}")
+    _log(made, base, "pull", "", "ok", f"Máy này chưa có, đã tạo một cuốn theo máy chủ: {bk.get('title')}")
     return {"created": True, "slug": made}
 
 
@@ -187,13 +187,13 @@ def ensure_remote_book(slug: str, base: str, cookie: str) -> dict:
                                                    "summary": (row or {}).get("summary") or "",
                                                    "kind": (row or {}).get("kind") or "novel"})
     if code != 200 or not body:
-        raise PeerError(f"在服务器上建这本书失败（HTTP {code}：{str((body or {}).get('detail'))[:60]}）")
+        raise PeerError(f"Tạo cuốn sách này trên máy chủ thất bại (HTTP {code}: {str((body or {}).get('detail'))[:60]})")
     made = str(body.get("slug") or body.get("projectRoot") or "")
     if made and made != slug:
         # 服务器上已经有一本同名书（书号被占了）→ 两边书号对不上，硬同步会把两本书搅在一起
-        raise PeerError(f"服务器上已经有一本叫「{title}」的书（书号 {made}），"
-                        f"跟手机上这本（{slug}）不同 —— 先把服务器那本改名或删掉再推")
-    _log(slug, base, "push", "", "ok", f"服务器上没有，照手机这版建了一本：{title}")
+        raise PeerError(f"Trên máy chủ đã có một cuốn tên「{title}」(mã sách {made}), "
+                        f"khác với cuốn trên điện thoại ({slug}) —— hãy đổi tên hoặc xóa cuốn trên máy chủ trước rồi mới đẩy")
+    _log(slug, base, "push", "", "ok", f"Trên máy chủ chưa có, đã tạo một cuốn theo bản trên điện thoại: {title}")
     return {"created": True, "slug": made or slug}
 
 
@@ -222,11 +222,11 @@ def pull(slug: str, base: str, cookie: str, *, limit: int = 200) -> dict:
                                f"/api/sync/changes?slug={urllib.parse.quote(slug)}&since={since}",
                                cookie=cookie)
     if st_code == 404:
-        raise PeerError(f"服务器上没有叫「{slug}」的书 —— 书名或书号核对一下")
+        raise PeerError(f"Trên máy chủ không có sách tên「{slug}」—— hãy kiểm tra lại tên sách hoặc mã sách")
     if st_code == 401:
-        raise PeerError("服务器不认这个口令（大小写/空格核对一下）")
+        raise PeerError("Máy chủ không nhận mã đăng nhập này (kiểm tra chữ hoa/thường/khoảng trắng)")
     if st_code != 200:
-        raise PeerError(f"问服务器「变了哪些章」失败（HTTP {st_code}）")
+        raise PeerError(f"Hỏi máy chủ「những chương nào đã thay đổi」thất bại (HTTP {st_code})")
     server_time = int((ch or {}).get("serverTime") or now_ms())
     changed = (ch or {}).get("changed") or []
     all_paths = [str(p) for p in ((ch or {}).get("all") or [])]
@@ -253,7 +253,7 @@ def pull(slug: str, base: str, cookie: str, *, limit: int = 200) -> dict:
                 conf_id = _conflict(slug, p, base_mtime=known, local_text=read_text(slug, p),
                                     server_text=body.get("content") or "",
                                     server_mtime=int(body.get("mtimeMs") or s_mtime))
-                _log(slug, base, "pull", p, "conflict", f"冲突 #{conf_id}")
+                _log(slug, base, "pull", p, "conflict", f"Xung đột #{conf_id}")
                 conflicts += 1
                 continue
         # 本地没动过（或者压根没有）→ 直接拿服务器那版。
@@ -282,7 +282,7 @@ def pull(slug: str, base: str, cookie: str, *, limit: int = 200) -> dict:
         if known == 0 and local.exists() and read_text(slug, p) == server_text:
             # 首次同步 + 两边一模一样（本地自带的那一版碰巧相同）→ 不算"拉了"，记上基准就行
             _set_base(slug, p, int(body.get("mtimeMs") or s_mtime))
-            _log(slug, base, "pull", p, "unchanged", "首次同步，两边一样")
+            _log(slug, base, "pull", p, "unchanged", "Đồng bộ lần đầu, hai bên giống nhau")
             same += 1
             continue
         if known == 0 and local.exists() and read_text(slug, p) != server_text:
@@ -290,13 +290,13 @@ def pull(slug: str, base: str, cookie: str, *, limit: int = 200) -> dict:
             conf_id = _conflict(slug, p, base_mtime=0, local_text=read_text(slug, p),
                                 server_text=server_text,
                                 server_mtime=int(body.get("mtimeMs") or s_mtime))
-            _log(slug, base, "pull", p, "conflict", f"首次同步两边不同 → 冲突 #{conf_id}")
+            _log(slug, base, "pull", p, "conflict", f"Đồng bộ lần đầu hai bên khác nhau → xung đột #{conf_id}")
             conflicts += 1
             continue
-        write_text(slug, p, server_text, origin="peer", note="从服务器拉下来的")
+        write_text(slug, p, server_text, origin="peer", note="Kéo về từ máy chủ")
         _set_base(slug, p, int(body.get("mtimeMs") or s_mtime))
         got += 1
-        _log(slug, base, "pull", p, "ok", f"{len(body.get('content') or '')} 字")
+        _log(slug, base, "pull", p, "ok", f"{len(body.get('content') or '')} chữ")
 
     for r in dbm.db().query("SELECT path FROM chapter WHERE slug=?", (slug,)):
         if r["path"] not in all_paths:
@@ -318,9 +318,9 @@ def pull(slug: str, base: str, cookie: str, *, limit: int = 200) -> dict:
     else:
         next_since, more = server_time, 0
     _save_state(slug, base, next_since,
-                f"拉下 {got} 章" + (f"，{conflicts} 条冲突" if conflicts else "")
-                + (f"，{skipped} 章没取到" if skipped else "")
-                + (f"，还有 {more} 章没拉完（再点一次接着拉）" if more else ""))
+                f"Đã kéo {got} chương" + (f", {conflicts} xung đột" if conflicts else "")
+                + (f", {skipped} chương không lấy được" if skipped else "")
+                + (f", còn {more} chương chưa kéo xong (bấm lần nữa để kéo tiếp)" if more else ""))
     return {"slug": slug, "base": base, "serverTime": server_time, "since": since,
             "changed": len(changed), "pulled": got, "unchanged": same, "conflicts": conflicts,
             "errors": skipped, "failed": failed, "serverHas": len(all_paths),
@@ -387,11 +387,11 @@ def push(slug: str, base: str, cookie: str, paths: list[str] | None = None,
                 if c_code == 200 and srv_text is not None:
                     if srv_text == local_text:
                         _set_base(slug, p, srv_mt)
-                        _log(slug, base, "push", p, "unchanged", "没同步过，两边一样 → 只记基准")
+                        _log(slug, base, "push", p, "unchanged", "Chưa từng đồng bộ, hai bên giống nhau → chỉ ghi mốc")
                         continue
                     cid = _conflict(slug, p, base_mtime=0, local_text=local_text,
                                     server_text=srv_text, server_mtime=srv_mt)
-                    _log(slug, base, "push", p, "conflict", f"没同步过且两边不同 → 冲突 #{cid}")
+                    _log(slug, base, "push", p, "conflict", f"Chưa từng đồng bộ và hai bên khác nhau → xung đột #{cid}")
                     results_all.append({"path": p, "status": "conflict", "conflictId": cid,
                                         "serverMtimeMs": srv_mt, "serverText": srv_text})
                     continue
@@ -408,7 +408,7 @@ def push(slug: str, base: str, cookie: str, paths: list[str] | None = None,
             code, body, cookie = _req(base, "POST", "/api/sync/push",
                                       cookie=cookie, body={"slug": slug, "items": items})
         if code != 200:
-            raise PeerError(f"往服务器推失败（HTTP {code}："
+            raise PeerError(f"Đẩy lên máy chủ thất bại (HTTP {code}: "
                             + str((body or {}).get("detail"))[:80] + "）")
         results_all.extend((body or {}).get("results") or [])
     more = len(paths) - len(use)
@@ -433,12 +433,12 @@ def push(slug: str, base: str, cookie: str, paths: list[str] | None = None,
             cid = _conflict(slug, p, base_mtime=base_of(slug, p), local_text=read_text(slug, p),
                             server_text=r.get("serverText") or r.get("content") or "",
                             server_mtime=int(r.get("serverMtimeMs") or 0))
-            _log(slug, base, "push", p, "conflict", f"冲突 #{cid}")
+            _log(slug, base, "push", p, "conflict", f"Xung đột #{cid}")
         else:
             _log(slug, base, "push", p, "error", str(s)[:80])
     _save_state(slug, base, server_time,
-                f"推上 {ok} 章" + (f"，{conf} 条冲突" if conf else "")
-                + (f"，还有 {more} 章等下次推" if more else ""))
+                f"Đã đẩy {ok} chương" + (f", {conf} xung đột" if conf else "")
+                + (f", còn {more} chương chờ lần đẩy sau" if more else ""))
     return {"slug": slug, "base": base, "pushed": ok, "conflicts": conf, "unchanged": unch,
             "results": results_all, "batches": min(total_batches, MAX_BATCH), "more": more,
             "preflight": preflight}

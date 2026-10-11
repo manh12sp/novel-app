@@ -77,7 +77,7 @@ def emit(session_id: int, kind: str, event: dict, *, invocation_id: str = "",
                    dbm.now_ms()))
     except Exception as e:
         if not session_alive(session_id):
-            raise SessionGone(f"会话 {session_id} 已经被删掉，事件不再写入") from e
+            raise SessionGone(f"Phiên hội thoại {session_id} đã bị xóa, sự kiện không ghi nữa") from e
         raise
     BUS.push(session_id, payload)
     return payload

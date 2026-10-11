@@ -87,3 +87,9 @@ tools/*
 docs/*
 !docs/功能清单.md
 !docs/更新记录.md
+
+# Build archives, IDE configs and backup folders
+*.zip
+*.bak-zh/
+.vscode/
+

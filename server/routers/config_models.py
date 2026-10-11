@@ -46,17 +46,17 @@ TEMPLATES = [
      "defaultModelApi": "openai-responses", "models": []},
     {"id": "deepseek", "name": "DeepSeek", "baseUrl": "https://api.deepseek.com/v1",
      "defaultModelApi": "openai-completions", "models": []},
-    {"id": "moonshot", "name": "月之暗面 Kimi", "baseUrl": "https://api.moonshot.cn/v1",
+    {"id": "moonshot", "name": "Moonshot Kimi", "baseUrl": "https://api.moonshot.cn/v1",
      "defaultModelApi": "openai-completions", "models": []},
-    {"id": "zhipu", "name": "智谱 GLM", "baseUrl": "https://open.bigmodel.cn/api/paas/v4",
+    {"id": "zhipu", "name": "Zhipu GLM", "baseUrl": "https://open.bigmodel.cn/api/paas/v4",
      "defaultModelApi": "openai-completions", "models": []},
-    {"id": "dashscope", "name": "通义千问", "baseUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    {"id": "dashscope", "name": "Tongyi Qianwen (Qwen)", "baseUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1",
      "defaultModelApi": "openai-completions", "models": []},
-    {"id": "siliconflow", "name": "硅基流动", "baseUrl": "https://api.siliconflow.cn/v1",
+    {"id": "siliconflow", "name": "SiliconFlow", "baseUrl": "https://api.siliconflow.cn/v1",
      "defaultModelApi": "openai-completions", "models": []},
-    {"id": "ollama", "name": "本机 Ollama", "baseUrl": "http://127.0.0.1:11434/v1",
+    {"id": "ollama", "name": "Ollama trên máy này", "baseUrl": "http://127.0.0.1:11434/v1",
      "defaultModelApi": "openai-completions", "models": []},
-    {"id": "custom", "name": "自定义（OpenAI 兼容）", "baseUrl": "",
+    {"id": "custom", "name": "Tùy chỉnh (tương thích OpenAI)", "baseUrl": "",
      "defaultModelApi": "openai-completions", "models": []},
 ]
 
@@ -132,7 +132,7 @@ async def model_settings_save(request: Request, payload: dict = Body(default={})
     source = str(p.get("source") or "").strip()
     mid = str(p.get("id") or "").strip()
     if not mid:
-        raise HTTPException(400, "缺 model id")
+        raise HTTPException(400, "Thiếu model id")
 
     prov = None
     for row in d.query("SELECT * FROM provider ORDER BY sort, id"):
@@ -140,11 +140,11 @@ async def model_settings_save(request: Request, payload: dict = Body(default={})
             prov = row
             break
     if prov is None:
-        raise HTTPException(404, "找不到这个渠道")
+        raise HTTPException(404, "Không tìm thấy kênh này")
     mrow = d.one("SELECT * FROM provider_model WHERE provider_id=? AND model_id=?",
                  (prov["id"], mid))
     if mrow is None:
-        raise HTTPException(404, "找不到这个模型")
+        raise HTTPException(404, "Không tìm thấy mô hình này")
 
     def _num(v, fallback):
         try:
@@ -170,11 +170,11 @@ async def model_settings_save(request: Request, payload: dict = Body(default={})
             try:
                 extra = json.loads(raw)
                 if not isinstance(extra, dict):
-                    raise ValueError("要是一个 JSON 对象，比如 {\"thinking\": {\"type\": \"enabled\"}}")
+                    raise ValueError("Phải là một đối tượng JSON, ví dụ {\"thinking\": {\"type\": \"enabled\"}}")
             except HTTPException:
                 raise
             except Exception as e:
-                raise HTTPException(400, "高级参数不是合法 JSON：%s" % e)
+                raise HTTPException(400, "Tham số nâng cao không phải JSON hợp lệ: %s" % e)
         else:
             extra = {}
         bym = opts.get("modelParams")
@@ -207,7 +207,7 @@ async def config_snapshot(request: Request, workspaceKind: str = "", projectRoot
                    "providers": providers_doc()}},
         "meta": {"workspaceKind": workspaceKind or "user-assets",
                  "projectRoot": projectRoot, "generatedAt": now_ms(),
-                 "app": CFG.get("app_name", "小说")}}
+                 "app": CFG.get("app_name", "Tiểu thuyết")}}
     if projectRoot:
         row = d.one("SELECT settings_json FROM book WHERE slug=?", (projectRoot,))
         doc["project"] = d.jloads(row["settings_json"], {}) if row else {}
@@ -311,12 +311,12 @@ async def provider_save(request: Request, payload: dict = Body(...)):
     pid = payload.get("id")
     name = (payload.get("name") or "").strip()
     if not name:
-        raise HTTPException(400, "供应商名字不能空")
+        raise HTTPException(400, "Tên nhà cung cấp không được để trống")
     grp = (payload.get("group") or name).strip()
     if pid:
         row = d.one("SELECT * FROM provider WHERE id=?", (pid,))
         if not row:
-            raise HTTPException(404, "没有这个供应商")
+            raise HTTPException(404, "Không có nhà cung cấp này")
         d.execute("UPDATE provider SET name=?, grp=?, model_api=?, base_url=?, enabled=?,"
                   " updated_at=? WHERE id=?",
                   (name, grp, payload.get("modelApi") or row["model_api"],
@@ -365,11 +365,11 @@ async def model_test(request: Request, payload: dict = Body(default={})):
         d = dbm.db()
         key = (d.scalar("SELECT value_json FROM setting WHERE key='models.default'") or "").strip('"')
     if not key:
-        raise HTTPException(400, "还没选模型")
+        raise HTTPException(400, "Chưa chọn mô hình")
     try:
         provider, mid = provider_of(key)
         t0 = now_ms()
-        text = await complete(provider, mid, [{"role": "user", "content": "说一句「连通正常」就行"}],
+        text = await complete(provider, mid, [{"role": "user", "content": "Chỉ cần nói một câu「kết nối bình thường」là được"}],
                               max_tokens=32, temperature=0)
         return {"ok": True, "modelKey": key, "ms": now_ms() - t0, "reply": text[:120]}
     except LLMError as e:
@@ -472,11 +472,11 @@ async def models_pull(request: Request, payload: dict = Body(default={})):
     if pid:
         row = d.one("SELECT * FROM provider WHERE id=?", (int(pid),))
         if not row:
-            raise HTTPException(404, "没有这个渠道")
+            raise HTTPException(404, "Không có kênh này")
     base = ((payload or {}).get("baseUrl") or (row or {}).get("base_url") or "").strip().rstrip("/")
     key = ((payload or {}).get("apiKey") or (row or {}).get("api_key") or "").strip()
     if not base:
-        raise HTTPException(400, "还没填地址（base_url）")
+        raise HTTPException(400, "Chưa điền địa chỉ (base_url)")
     url = base + "/models"
     headers = {"content-type": "application/json"}
     if key:
@@ -487,22 +487,22 @@ async def models_pull(request: Request, payload: dict = Body(default={})):
             code = r.status_code
             text = r.text
     except Exception as e:
-        return {"ok": False, "url": url, "error": f"连不上这个地址：{type(e).__name__}",
-                "hint": "检查地址写没写错（要以 /v1 结尾的多）／这台机器能不能出网"}
+        return {"ok": False, "url": url, "error": f"Không kết nối được địa chỉ này: {type(e).__name__}",
+                "hint": "Kiểm tra địa chỉ có viết sai không (phần lớn kết thúc bằng /v1)／máy này có ra mạng được không"}
     if code >= 400:
         return {"ok": False, "url": url, "status": code, "error": f"{code}：{text[:200]}",
-                "hint": "密钥不对或者这家不支持 /models（可以手填模型名）"}
+                "hint": "Khóa không đúng hoặc nhà này không hỗ trợ /models (có thể tự điền tên mô hình)"}
     try:
         obj = json.loads(text)
     except Exception:
-        return {"ok": False, "url": url, "status": code, "error": "返回的不是 JSON：%s" % text[:160],
-                "hint": "这家可能不是 OpenAI 兼容接口"}
+        return {"ok": False, "url": url, "status": code, "error": "Trả về không phải JSON: %s" % text[:160],
+                "hint": "Nhà này có thể không phải giao diện tương thích OpenAI"}
     items = obj.get("data") if isinstance(obj, dict) else None
     if items is None and isinstance(obj, dict):
         items = obj.get("models")
     if not isinstance(items, list):
-        return {"ok": False, "url": url, "status": code, "error": "返回里没有模型清单",
-                "hint": "这家可能不是 OpenAI 兼容接口（/models 里应该有 data[]）"}
+        return {"ok": False, "url": url, "status": code, "error": "Trả về không có danh sách mô hình",
+                "hint": "Nhà này có thể không phải giao diện tương thích OpenAI (/models phải có data[])"}
     added, seen = 0, []
     for it in items:
         mid = str((it or {}).get("id") or (it or {}).get("name") or "").strip()
@@ -523,7 +523,7 @@ async def models_pull(request: Request, payload: dict = Body(default={})):
         added += 1
     return {"ok": True, "url": url, "found": len(seen), "saved": added,
             "models": seen[:200], "savedToProvider": bool(pid),
-            "note": "" if pid else "这次只是试用没存；先保存渠道再拉取，模型才会进库"}
+            "note": "" if pid else "Lần này chỉ thử chứ chưa lưu; hãy lưu kênh trước rồi mới kéo, mô hình mới vào kho"}
 
 
 @router.post("/config/models/fallback")
@@ -547,7 +547,7 @@ async def model_book_set(request: Request, payload: dict = Body(default={})):
     current_user(request)
     slug = ((payload or {}).get("slug") or "").strip()
     if not slug:
-        raise HTTPException(400, "没说是哪本书")
+        raise HTTPException(400, "Chưa nói là cuốn sách nào")
     key = ((payload or {}).get("modelKey") or "").strip()
     if key:
         from ..llm.providers import provider_of, LLMError
@@ -587,7 +587,7 @@ async def web_config_set(request: Request, payload: dict = Body(default={})):
     if "sources" in p:
         arr = p.get("sources") or []
         if not isinstance(arr, list):
-            raise HTTPException(400, "sources 要是数组")
+            raise HTTPException(400, "sources phải là mảng")
         clean = []
         for x in arr:
             if isinstance(x, dict) and str(x.get("host") or "").strip():
@@ -615,7 +615,7 @@ async def web_config_test(request: Request, payload: dict = Body(default={})):
     from ..engine import websearch as web
     q = str((payload or {}).get("q") or "").strip()[:80]
     if not q:
-        raise HTTPException(400, "要搜什么？（q）")
+        raise HTTPException(400, "Tìm gì? (q)")
     r = await asyncio.to_thread(lambda: asyncio.run(web.search(q, 5)))
     return {
         "ok": bool(r.get("ok")), "enabled": bool(r.get("enabled")),

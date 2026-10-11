@@ -60,9 +60,9 @@ def _scope_of(scope: str, slug: str) -> tuple[str, str]:
     if s == "book":
         slug = (slug or "").strip()
         if not slug:
-            raise HTTPException(400, "选「这本书」的时候要带上书名说哪一本")
+            raise HTTPException(400, "Khi chọn「Cuốn sách này」phải kèm tên sách để nói là cuốn nào")
         if "/" in slug or "\\" in slug or slug.startswith("."):
-            raise HTTPException(400, "书名不合法")
+            raise HTTPException(400, "Tên sách không hợp lệ")
         return "book:" + slug, "book-" + slug
     return "global", "global"
 
@@ -144,12 +144,12 @@ async def bg_put(request: Request, file: UploadFile = File(...),
     key, prefix = _scope_of(scope, slug)
     data = await file.read()
     if not data:
-        raise HTTPException(400, "收到的文件是空的，换一张试试")
+        raise HTTPException(400, "File nhận được trống, thử ảnh khác xem")
     if len(data) > MAX_BYTES:
-        raise HTTPException(413, "图太大（超过 8MB），先压一压再传")
+        raise HTTPException(413, "Ảnh quá lớn (trên 8MB), hãy nén bớt rồi tải lên")
     kind = _kind(data)
     if not kind:
-        raise HTTPException(415, "这不是一张图（只认 jpg / png / webp / gif）")
+        raise HTTPException(415, "Đây không phải ảnh (chỉ nhận jpg / png / webp / gif)")
     ext, ct = kind
     m = str(mode or "cover").lower()
     if m not in MODES:
@@ -177,10 +177,10 @@ async def bg_mode(request: Request, payload: dict = Body(default={})):
     key, _ = _scope_of(str(p.get("scope") or "global"), str(p.get("slug") or ""))
     m = str(p.get("mode") or "").lower()
     if m not in MODES:
-        raise HTTPException(400, "铺法只有这三种：铺满 / 平铺 / 居中")
+        raise HTTPException(400, "Cách trải ảnh chỉ có ba kiểu: phủ kín / lát gạch / căn giữa")
     cur = _one(key)
     if not cur["has"]:
-        raise HTTPException(404, "这一档还没有图，先传一张")
+        raise HTTPException(404, "Mức này chưa có ảnh, hãy tải lên một ảnh trước")
     _setting_set("appearance.bg." + key,
                  json.dumps({"file": cur["file"], "mode": m, "at": cur["updatedAt"]}, ensure_ascii=False))
     return {"ok": True, "mode": m}
@@ -207,7 +207,7 @@ async def bg_file(request: Request, scope: str = "global", slug: str = ""):
         # 单本没传 → 落回全局（前端一般不会走到这儿，但直接贴链接的人会）
         one = _one("global")
         if not one["has"]:
-            raise HTTPException(404, "还没有自定义背景图")
+            raise HTTPException(404, "Chưa có ảnh nền tùy chỉnh")
     p = _dir() / one["file"]
     ext = p.suffix.lower()
     ct = {".jpg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif"}.get(ext, "image/jpeg")

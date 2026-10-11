@@ -21,8 +21,8 @@ import re
 
 # ── 内置：公历（proleptic Gregorian，跨公元前可用） ──────────────────────────
 GREGORIAN: dict = {
-    "name": "公历",
-    "epoch": "公元 1 年 1 月 1 日（绝对序号 1）",
+    "name": "Dương lịch",
+    "epoch": "Công nguyên năm 1 tháng 1 ngày 1 (số thứ tự tuyệt đối 1)",
     "anchor": {"year": 1, "month": 1, "day": 1, "abs": 1},
     "months": [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
     "leap_month": 2,
@@ -30,10 +30,10 @@ GREGORIAN: dict = {
     "leap_rule": {"every": 4, "skip_every": 100, "keep_every": 400},
     "year_zero": False,
     "week": 7,
-    "eras": [{"name": "公元", "sign": 1}, {"name": "公元前", "sign": -1}],
+    "eras": [{"name": "Công nguyên", "sign": 1}, {"name": "Trước Công nguyên", "sign": -1}],
 }
 
-DEFAULT_NAME = "公历"
+DEFAULT_NAME = "Dương lịch"
 
 
 def normalize(cal: dict | None) -> dict:
@@ -155,7 +155,7 @@ def to_abs(cal: dict, year: int, month: int = 1, day: int = 1) -> int:
     acy = civil_year(cal, a["year"])
     m = int(month)
     if not 1 <= m <= len(cal["months"]):
-        raise ValueError(f"月份 {month} 不在这套历法里（只有 1~{len(cal['months'])} 月）")
+        raise ValueError(f"Tháng {month} không có trong lịch này (chỉ có tháng 1~{len(cal['months'])})")
     d = max(1, min(int(day), month_len(cal, cy, m)))
     return (int(a["abs"]) + _days_before_year(cal, cy) - _days_before_year(cal, acy)
             + _days_before_month(cal, cy, m) + (d - 1))
@@ -200,7 +200,7 @@ def format_abs(cal: dict, abs_day: int) -> str:
     d = from_abs(cal, abs_day)
     era = d.get("era") or ""
     year = abs(d["year"]) if era else d["year"]
-    return f"{era}{year}年{d['month']}月{d['day']}日"
+    return f"{era} năm {year} tháng {d['month']} ngày {d['day']}".strip()
 
 
 # ── 中文时间文本 → 绝对序号 ────────────────────────────────────────────────
@@ -230,9 +230,21 @@ _TIME_RE = re.compile(
     r"(?:\s*(?P<day>\d{1,2}|[零一二三四五六七八九十]{1,3})\s*日?)?\s*$")
 
 
+# Cách viết thời gian tiếng Việt: 「Khai Nguyên năm 1024 tháng 3 ngày 15」「năm 221 TCN」「ngày 15 tháng 3 năm 1024」
+_TIME_RE_VI = re.compile(
+    r"^\s*(?:(?P<era>[^\d]{1,24}?)\s+)?năm\s+(?P<year>\d{1,6})"
+    r"(?:\s*,?\s*tháng\s+(?P<month>\d{1,2}))?"
+    r"(?:\s*,?\s*ngày\s+(?P<day>\d{1,2}))?"
+    r"(?:\s*(?P<bc>TCN|trước Công nguyên))?\s*$", re.I)
+_TIME_RE_VI2 = re.compile(
+    r"^\s*(?:ngày\s+(?P<day>\d{1,2})\s*,?\s*)?(?:tháng\s+(?P<month>\d{1,2})\s*,?\s*)?"
+    r"năm\s+(?P<year>\d{1,6})(?:\s+(?P<era>[^\d]{1,24}?))?"
+    r"(?:\s*(?P<bc>TCN))?\s*$", re.I)
+
+
 def parse(text: str, cal: dict) -> dict | None:
     """「开元 1024 年 3 月 15 日」「公元前 221 年」「第三纪 12 年」→ 绝对序号。"""
-    m = _TIME_RE.match(text or "")
+    m = _TIME_RE.match(text or "") or _TIME_RE_VI.match(text or "") or _TIME_RE_VI2.match(text or "")
     if not m:
         return None
     cal = normalize(cal)
@@ -259,16 +271,16 @@ def describe(cal: dict) -> dict:
     cal = normalize(cal)
     r = cal.get("leap_rule") or {}
     if r.get("leap_years"):
-        leap = "手写闰年：" + "、".join(str(y) for y in r["leap_years"][:2]) + "…"
+        leap = "Năm nhuận tự định: " + "、".join(str(y) for y in r["leap_years"][:2]) + "…"
     elif r.get("every"):
-        leap = f"每 {r['every']} 年闰一次"
+        leap = f"Cứ {r['every']} năm nhuận một lần"
         if r.get("skip_every"):
-            leap += f"，但跳过 {r['skip_every']} 的整数倍"
+            leap += f", nhưng bỏ qua các bội số của {r['skip_every']}"
         if r.get("keep_every"):
-            leap += f"（{r['keep_every']} 的整数倍除外）"
-        leap += f"，闰月第 {cal.get('leap_month')} 月多加 {cal.get('leap_days')} 天"
+            leap += f" (trừ các bội số của {r['keep_every']})"
+        leap += f", tháng nhuận là tháng {cal.get('leap_month')} thêm {cal.get('leap_days')} ngày"
     else:
-        leap = "不设闰年"
+        leap = "Không đặt năm nhuận"
     return {"name": cal.get("name") or "", "months": cal["months"],
             "yearDays": sum(cal["months"]), "leapText": leap,
             "eras": [e.get("name") for e in (cal.get("eras") or [])],

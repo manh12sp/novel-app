@@ -22,11 +22,11 @@ router = APIRouter(tags=["authoring"])
 
 # 第一次打开时给的那几条「常用指令」。用户能改能删，这里只是别让他对着空白发呆。
 DEFAULT_QUICK = [
-    "接着往下写，承接现在的场景和情绪，不要重复上文",
-    "把节奏放慢，多写细节和动作，少写解释",
-    "这一段改得口语一点，对话更像真人说的",
-    "加一段对话，把两个人的分歧写出来",
-    "删掉总结句和排比，只留能看见的动作",
+    "Viết tiếp, nối tiếp cảnh và cảm xúc hiện tại, đừng lặp lại phần trên",
+    "Kéo chậm nhịp lại, viết nhiều chi tiết và hành động hơn, ít giải thích",
+    "Sửa đoạn này cho đời thường hơn, lời thoại giống người thật nói hơn",
+    "Thêm một đoạn thoại, viết ra sự bất đồng giữa hai người",
+    "Xóa câu tổng kết và điệp cấu trúc, chỉ giữ hành động nhìn thấy được",
 ]
 
 MAX_SUMMARY = 200
@@ -91,13 +91,13 @@ async def storyline_save(request: Request, payload: dict = Body(...)):
     path = require_path(s, payload.get("path") or "")
     text = str(payload.get("summary") or "").strip()
     if len(text) > MAX_SUMMARY:
-        raise HTTPException(400, f"一句话别超过 {MAX_SUMMARY} 字（现在 {len(text)} 字）")
+        raise HTTPException(400, f"Một câu đừng quá {MAX_SUMMARY} chữ (hiện {len(text)} chữ)")
     d = dbm.db()
     if not d.one("SELECT id FROM chapter WHERE slug=? AND path=?", (s, path)):
         from .books import sync_book
         sync_book(s)                       # 磁盘上有、库里还没索引 → 先补一行
     if not d.one("SELECT id FROM chapter WHERE slug=? AND path=?", (s, path)):
-        raise HTTPException(404, "这一章不在了")
+        raise HTTPException(404, "Chương này không còn nữa")
     d.execute("UPDATE chapter SET summary=?, updated_at=? WHERE slug=? AND path=?",
               (text, dbm.now_ms(), s, path))
     return {"ok": True, "path": path, "summary": text}
@@ -126,9 +126,9 @@ async def margin_add(request: Request, payload: dict = Body(...)):
     path = require_path(s, payload.get("path") or "")
     note = str(payload.get("note") or "").strip()
     if not note:
-        raise HTTPException(400, "批注是空的 —— 写一句你想干什么（例：这里补一场打斗）")
+        raise HTTPException(400, "Ghi chú đang trống —— viết một câu bạn muốn làm gì (VD: chỗ này thêm một trận đánh)")
     if len(note) > MAX_NOTE:
-        raise HTTPException(400, f"批注太长了（上限 {MAX_NOTE} 字）")
+        raise HTTPException(400, f"Ghi chú quá dài (giới hạn {MAX_NOTE} chữ)")
     quote = str(payload.get("quote") or "")[:300]
     try:
         at = int(payload.get("at") or 0)
@@ -148,13 +148,13 @@ async def margin_edit(request: Request, payload: dict = Body(...)):
     rid = int(payload.get("id") or 0)
     note = str(payload.get("note") or "").strip()
     if not rid:
-        raise HTTPException(400, "要改哪一条（id 不能空）")
+        raise HTTPException(400, "Sửa mục nào (id không được trống)")
     if not note:
-        raise HTTPException(400, "批注不能改空；不想留了就删掉它")
+        raise HTTPException(400, "Ghi chú không được sửa thành trống; không muốn giữ thì xóa đi")
     n = dbm.db().rowcount("UPDATE margin_note SET note=?, updated_at=? WHERE slug=? AND id=?",
                           (note[:MAX_NOTE], dbm.now_ms(), s, rid))
     if not n:
-        raise HTTPException(404, "这条批注已经不在了")
+        raise HTTPException(404, "Ghi chú này không còn nữa")
     return {"ok": True, "id": rid}
 
 
@@ -163,10 +163,10 @@ async def margin_del(request: Request, slug: str = "", id: int = 0):
     current_user(request)
     s = require_book(slug)
     if not id:
-        raise HTTPException(400, "要删哪一条（id 不能空）")
+        raise HTTPException(400, "Xóa mục nào (id không được trống)")
     n = dbm.db().rowcount("DELETE FROM margin_note WHERE slug=? AND id=?", (s, id))
     if not n:
-        raise HTTPException(404, "这条批注已经不在了")
+        raise HTTPException(404, "Ghi chú này không còn nữa")
     return {"ok": True, "deleted": n}
 
 
@@ -193,9 +193,9 @@ async def quick_add(request: Request, payload: dict = Body(...)):
     s = require_book(payload.get("slug") or "")
     text = str(payload.get("text") or "").strip()
     if not text:
-        raise HTTPException(400, "指令是空的")
+        raise HTTPException(400, "Lệnh đang trống")
     if len(text) > MAX_CMD:
-        raise HTTPException(400, f"一句话指令别超过 {MAX_CMD} 字")
+        raise HTTPException(400, f"Lệnh một câu đừng quá {MAX_CMD} chữ")
     d = dbm.db()
     # 这一段原来是 `if ...: pass` —— 空分支 = 什么都没做（账本里那 40 条"空实现"的一条）。
     # 它想干的事从条件就看得出来：**同名指令别加两条**。所以正经写成去重：
@@ -214,10 +214,10 @@ async def quick_del(request: Request, slug: str = "", id: int = 0):
     current_user(request)
     s = require_book(slug)
     if not id:
-        raise HTTPException(400, "要删哪一条（id 不能空）")
+        raise HTTPException(400, "Xóa mục nào (id không được trống)")
     n = dbm.db().rowcount("DELETE FROM quick_cmd WHERE slug=? AND id=?", (s, id))
     if not n:
-        raise HTTPException(404, "这条指令已经不在了")
+        raise HTTPException(404, "Lệnh này không còn nữa")
     return {"ok": True, "deleted": n}
 
 
@@ -263,7 +263,7 @@ def _renumber(slug: str, order: list[str]) -> dict[str, str]:
             continue
         name = chapter_title(path)
         pre, rest = _split_no(name)
-        want = "第%03d章-%s.md" % (i, rest or "未命名")
+        want = "第%03d章-%s.md" % (i, rest or "Chưa đặt tên")
         if name + ".md" == want:
             continue
         plans.append((path, "manuscript/" + want))
@@ -327,11 +327,11 @@ async def chapter_move(request: Request, payload: dict = Body(...)):
     path = require_path(s, payload.get("path") or "")
     d = payload.get("dir") or "up"
     if d not in ("up", "down", "top", "bottom"):
-        raise HTTPException(400, "方向只能是 up / down / top / bottom")
+        raise HTTPException(400, "Hướng chỉ có thể là up / down / top / bottom")
     chs = _chapter_list(s)
     order = [c["path"] for c in chs]
     if path not in order:
-        raise HTTPException(404, "这一章不在了")
+        raise HTTPException(404, "Chương này không còn nữa")
     i = order.index(path)
     if d == "up" and i > 0:
         order[i - 1], order[i] = order[i], order[i - 1]
@@ -342,7 +342,7 @@ async def chapter_move(request: Request, payload: dict = Body(...)):
     elif d == "bottom":
         order.append(order.pop(i))
     else:
-        return {"ok": True, "moved": False, "why": "已经在头/尾了", "chapters": chs}
+        return {"ok": True, "moved": False, "why": "Đã ở đầu/cuối rồi", "chapters": chs}
     mapping = _renumber(s, order)
     _rewrite_paths(s, mapping)
     from .books import sync_book
@@ -357,11 +357,11 @@ async def chapter_insert(request: Request, payload: dict = Body(...)):
     current_user(request)
     s = require_book(payload.get("slug") or "")
     after = require_path(s, payload.get("after") or "")
-    title = args.s(payload.get("title"), name="章节名").strip() or "未命名"
+    title = args.s(payload.get("title"), name="Tên chương").strip() or "Chưa đặt tên"
     chs = _chapter_list(s)
     order = [c["path"] for c in chs]
     if after not in order:
-        raise HTTPException(404, "要插在哪一章后面？那一章不在了")
+        raise HTTPException(404, "Chèn sau chương nào? Chương đó không còn nữa")
     at = order.index(after) + 1
     tmp = "manuscript/._insert-%.3f-%s.md" % (at + 0.5, title.replace("/", "_"))
     from ..store import create_file

@@ -83,12 +83,12 @@ async def entity_save(request: Request, payload: dict = Body(...)):
     """新建或更新一个实体。data 里放结构化字段（外貌/性格/目标…），不要一整段文字。"""
     current_user(request)
     s = _slug(payload.get("slug"))
-    name = args.s(payload.get("name"), name="名字").strip()
+    name = args.s(payload.get("name"), name="Tên").strip()
     if not name:
-        raise HTTPException(400, "名字不能为空")
-    kind = (args.s(payload.get("kind"), name="类型") or "character").strip()
+        raise HTTPException(400, "Tên không được để trống")
+    kind = (args.s(payload.get("kind"), name="Loại") or "character").strip()
     if kind not in KINDS:
-        raise HTTPException(400, f"不认识的类型：{kind}")
+        raise HTTPException(400, f"Không nhận ra loại: {kind}")
     data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
     aliases = [str(a).strip() for a in (payload.get("aliases") or []) if str(a).strip()]
     eid = W.upsert_entity(s, kind, name, data, aliases,
@@ -113,7 +113,7 @@ async def entity_delete(request: Request, id: int, slug: str = ""):
     s = _slug(slug)
     row = dbm.db().one("SELECT * FROM entity WHERE id=? AND slug=?", (id, s))
     if not row:
-        raise HTTPException(404, "没有这个实体")
+        raise HTTPException(404, "Không có thực thể này")
     d = dbm.db()
     with d.tx() as conn:
         conn.execute("DELETE FROM entity_relation WHERE from_id=? OR to_id=?", (id, id))
@@ -136,7 +136,7 @@ async def entity_merge(request: Request, payload: dict = Body(...)):
     dst = dbm.db().one("SELECT * FROM entity WHERE id=? AND slug=?",
                        (payload.get("toId"), s))
     if not src or not dst:
-        raise HTTPException(404, "这两个实体得都存在")
+        raise HTTPException(404, "Cả hai thực thể đều phải tồn tại")
     d = dbm.db()
     with d.tx() as conn:
         conn.execute("UPDATE fact SET entity_id=? WHERE entity_id=?", (dst["id"], src["id"]))
@@ -167,11 +167,11 @@ async def fact_add(request: Request, payload: dict = Body(...)):
         e = W.find_entity(s, str(payload["entity"]))
         eid = e["id"] if e else None
     if not eid:
-        raise HTTPException(400, "要给哪个角色记这条？")
-    key = args.s(payload.get("key"), name="属性名").strip()
+        raise HTTPException(400, "Ghi mục này cho nhân vật nào?")
+    key = args.s(payload.get("key"), name="Tên thuộc tính").strip()
     if not key:
-        raise HTTPException(400, "属性名不能为空")
-    fid = W.add_fact(s, num(eid, name="实体号"), key, str(payload.get("value") or ""),
+        raise HTTPException(400, "Tên thuộc tính không được để trống")
+    fid = W.add_fact(s, num(eid, name="Mã thực thể"), key, str(payload.get("value") or ""),
                      from_moment=payload.get("fromMomentId"),
                      to_moment=payload.get("toMomentId"),
                      source_path=payload.get("sourcePath") or "",
@@ -190,7 +190,7 @@ async def fact_close(request: Request, payload: dict = Body(...)):
     fid = payload.get("id")
     row = dbm.db().one("SELECT * FROM fact WHERE id=? AND slug=?", (fid, s))
     if not row:
-        raise HTTPException(404, "没有这条事实")
+        raise HTTPException(404, "Không có sự thật này")
     dbm.db().execute("UPDATE fact SET valid_to_moment_id=?, updated_at=? WHERE id=?",
                      (payload.get("toMomentId"), now_ms(), fid))
     W.invalidate_snapshots(s, row["entity_id"])
@@ -205,7 +205,7 @@ async def fact_delete(request: Request, id: int, slug: str = ""):
     d = dbm.db()
     row = d.one("SELECT * FROM fact WHERE id=? AND slug=?", (id, s))
     if not row:
-        raise HTTPException(404, "没有这条事实")
+        raise HTTPException(404, "Không có sự thật này")
     d.execute("DELETE FROM fact_evidence WHERE fact_id=?", (id,))
     d.execute("DELETE FROM fact WHERE id=?", (id,))
     W.invalidate_snapshots(s, row["entity_id"])
@@ -226,8 +226,8 @@ async def relation_add(request: Request, payload: dict = Body(...)):
     s = _slug(payload.get("slug"))
     try:
         out = W.add_relation(s, str(payload.get("from") or ""), str(payload.get("to") or ""),
-                             str(payload.get("kind") or "认识"),
-                             strength=num(payload.get("strength"), 3, lo=1, hi=10, name="关系强度"),
+                             str(payload.get("kind") or "Quen biết"),
+                             strength=num(payload.get("strength"), 3, lo=1, hi=10, name="Độ mạnh quan hệ"),
                              since_label=str(payload.get("since") or ""),
                              until_label=str(payload.get("until") or ""),
                              note=str(payload.get("note") or ""))
@@ -242,7 +242,7 @@ async def relation_delete(request: Request, id: int, slug: str = ""):
     current_user(request)
     s = _slug(slug)
     if not dbm.db().one("SELECT id FROM entity_relation WHERE id=? AND slug=?", (id, s)):
-        raise HTTPException(404, "没有这条关系")
+        raise HTTPException(404, "Không có quan hệ này")
     dbm.db().execute("DELETE FROM entity_relation WHERE id=?", (id,))
     return {"ok": True}
 
@@ -258,11 +258,11 @@ async def moments(request: Request, slug: str):
 async def moment_add(request: Request, payload: dict = Body(...)):
     current_user(request)
     s = _slug(payload.get("slug"))
-    label = args.s(payload.get("label"), name="时刻名").strip()
+    label = args.s(payload.get("label"), name="Tên thời điểm").strip()
     if not label:
-        raise HTTPException(400, "这一刻得有个名字（比如「入城那晚」）")
+        raise HTTPException(400, "Thời điểm này phải có tên (ví dụ「đêm vào thành」)")
     if W.moment_by_label(s, label):
-        raise HTTPException(400, "已经有一个同名的时刻了")
+        raise HTTPException(400, "Đã có một thời điểm cùng tên")
     mid = W.add_moment(s, label, str(payload.get("timeText") or ""),
                        source_scene=str(payload.get("sourceScene") or ""),
                        note=str(payload.get("note") or ""),
@@ -283,7 +283,7 @@ async def moment_update(request: Request, payload: dict = Body(...)):
     s = _slug(payload.get("slug"))
     mid = payload.get("id")
     if not dbm.db().one("SELECT id FROM moment WHERE id=? AND slug=?", (mid, s)):
-        raise HTTPException(404, "没有这个时刻")
+        raise HTTPException(404, "Không có thời điểm này")
     dbm.db().execute(
         "UPDATE moment SET label=?, time_text=?, note=?, calendar_json=? WHERE id=?",
         (str(payload.get("label") or ""), str(payload.get("timeText") or ""),
@@ -303,7 +303,7 @@ async def moment_delete(request: Request, id: int, slug: str = ""):
     current_user(request)
     s = _slug(slug)
     if not dbm.db().one("SELECT id FROM moment WHERE id=? AND slug=?", (id, s)):
-        raise HTTPException(404, "没有这个时刻")
+        raise HTTPException(404, "Không có thời điểm này")
     d = dbm.db()
     with d.tx() as conn:
         conn.execute("UPDATE fact SET valid_from_moment_id=NULL WHERE valid_from_moment_id=?", (id,))
@@ -360,7 +360,7 @@ async def calendar_delete(request: Request, slug: str, name: str):
     current_user(request)
     out = W.calendar_delete(_slug(slug), name)
     if not out.get("ok"):
-        raise HTTPException(400, out.get("error") or "删不掉")
+        raise HTTPException(400, out.get("error") or "Không xóa được")
     return out
 
 
@@ -371,8 +371,8 @@ async def calendar_convert(request: Request, payload: dict = Body(...)):
     return W.calendar_convert(
         s, str(payload.get("text") or ""), calendar_name=str(payload.get("calendar") or ""),
         year=payload.get("year"),
-        month=num(payload.get("month"), 1, lo=1, hi=12, name="月份"),
-        day=num(payload.get("day"), 1, lo=1, hi=31, name="日"),
+        month=num(payload.get("month"), 1, lo=1, hi=12, name="Tháng"),
+        day=num(payload.get("day"), 1, lo=1, hi=31, name="Ngày"),
         abs_day=payload.get("abs"))
 
 
@@ -380,12 +380,12 @@ async def calendar_convert(request: Request, payload: dict = Body(...)):
 async def moment_time(request: Request, payload: dict = Body(...)):
     current_user(request)
     s = _slug(payload.get("slug"))
-    out = W.set_moment_time(s, num(payload.get("momentId"), 0, name="时刻号"),
+    out = W.set_moment_time(s, num(payload.get("momentId"), 0, name="Mã thời điểm"),
                             text=str(payload.get("text") or ""),
                             abs_day=payload.get("abs"),
                             calendar_name=str(payload.get("calendar") or ""))
     if not out.get("ok"):
-        raise HTTPException(400, out.get("error") or "定不了这个时刻")
+        raise HTTPException(400, out.get("error") or "Không xác định được thời điểm này")
     return out
 
 
@@ -447,7 +447,7 @@ async def episode_add(request: Request, payload: dict = Body(...)):
     s = _slug(payload.get("slug"))
     title = (payload.get("title") or "").strip()
     if not title:
-        raise HTTPException(400, "事件得有标题")
+        raise HTTPException(400, "Sự kiện phải có tiêu đề")
     eid = dbm.db().execute(
         "INSERT INTO episode(slug,moment_id,title,summary,scene_path,created_at)"
         " VALUES(?,?,?,?,?,?)",
@@ -461,7 +461,7 @@ async def episode_delete(request: Request, id: int, slug: str = ""):
     current_user(request)
     s = _slug(slug)
     if not dbm.db().one("SELECT id FROM episode WHERE id=? AND slug=?", (id, s)):
-        raise HTTPException(404, "没有这件事")
+        raise HTTPException(404, "Không có sự kiện này")
     dbm.db().execute("DELETE FROM episode WHERE id=?", (id,))
     return {"ok": True}
 
@@ -484,7 +484,7 @@ async def arc_save(request: Request, payload: dict = Body(...)):
     s = _slug(payload.get("slug"))
     eid = payload.get("entityId")
     if not dbm.db().one("SELECT id FROM entity WHERE id=? AND slug=?", (eid, s)):
-        raise HTTPException(404, "没有这个角色")
+        raise HTTPException(404, "Không có nhân vật này")
     d = dbm.db()
     d.execute("INSERT INTO arc(slug,entity_id,goal,motive,turning_points_json,updated_at)"
               " VALUES(?,?,?,?,?,?) ON CONFLICT(slug,entity_id) DO UPDATE SET"
@@ -560,7 +560,7 @@ async def extract_facts(request: Request, payload: dict = Body(default={})):
     s = _slug((payload or {}).get("slug"))
     base = book_dir(s) / "lorebook"
     if not base.is_dir():
-        return {"ok": True, "facts": [], "relations": [], "hint": "这本书没有 lorebook 目录"}
+        return {"ok": True, "facts": [], "relations": [], "hint": "Cuốn sách này không có thư mục lorebook"}
 
     ents = W.entity_list(s)
     by_name = {str(e["name"]).strip(): e for e in ents}
@@ -736,7 +736,7 @@ async def import_lorebook(request: Request, payload: dict = Body(default={})):
     force = bool((payload or {}).get("force"))
     base = book_dir(s) / "lorebook"
     if not base.is_dir():
-        return {"ok": True, "imported": 0, "skipped": 0, "hint": "这本书没有 lorebook 目录"}
+        return {"ok": True, "imported": 0, "skipped": 0, "hint": "Cuốn sách này không có thư mục lorebook"}
     d = dbm.db()
     imported, skipped = 0, 0
     for f in sorted(base.rglob("*.md")):

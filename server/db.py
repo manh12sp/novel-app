@@ -56,7 +56,7 @@ class Database:
                 try:
                     c.executescript(sql)
                 except Exception as e:
-                    raise RuntimeError(f"迁移 {f.name} 执行失败：{e}") from e
+                    raise RuntimeError(f"Thực thi migration {f.name} thất bại: {e}") from e
                 c.execute("INSERT INTO schema_migration(name, applied_at) VALUES(?,?)",
                           (f.name, now_ms()))
 
@@ -143,5 +143,5 @@ def init(path: Path) -> Database:
 
 
 def db() -> Database:
-    assert _db is not None, "db.init() 没被调用"
+    assert _db is not None, "db.init() chưa được gọi"
     return _db

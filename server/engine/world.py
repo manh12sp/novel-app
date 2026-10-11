@@ -58,7 +58,7 @@ def calendars(slug: str) -> list[dict]:
     """这本书定义过的历法（公历永远都在，不用建）。"""
     from . import calendar as cal
     rows = dbm.db().query("SELECT * FROM calendar WHERE slug=? ORDER BY name", (slug,))
-    out = [{"id": 0, "name": cal.DEFAULT_NAME, "builtin": True, "note": "（内置）",
+    out = [{"id": 0, "name": cal.DEFAULT_NAME, "builtin": True, "note": "(có sẵn)",
             "def": cal.GREGORIAN, "desc": cal.describe(cal.GREGORIAN)}]
     for r in rows:
         defn = dbm.db().jloads(r["def_json"], {})
@@ -74,7 +74,7 @@ def calendar_get(slug: str, name: str = "") -> dict:
         return dict(cal.GREGORIAN)
     row = dbm.db().one("SELECT * FROM calendar WHERE slug=? AND name=?", (slug, name))
     if not row:
-        raise ValueError(f"这本书里没有叫「{name}」的历法")
+        raise ValueError(f"Cuốn sách này không có lịch nào tên「{name}」")
     return dbm.db().jloads(row["def_json"], {})
 
 
@@ -82,9 +82,9 @@ def calendar_save(slug: str, name: str, defn: dict, note: str = "") -> dict:
     from . import calendar as cal
     name = (name or "").strip()
     if not name:
-        raise ValueError("历法得有个名字")
+        raise ValueError("Lịch phải có tên")
     if name == cal.DEFAULT_NAME:
-        raise ValueError("「公历」是内置的，改不了；换个名字建你自己的历法")
+        raise ValueError("「Dương lịch」là lịch có sẵn, không sửa được; đổi tên khác để tạo lịch của riêng bạn")
     defn = cal.normalize({**(defn or {}), "name": name})
     d = dbm.db()
     d.execute("INSERT INTO calendar(slug,name,def_json,note,created_at,updated_at)"
@@ -102,7 +102,7 @@ def calendar_delete(slug: str, name: str) -> dict:
     used = d.scalar("SELECT COUNT(*) FROM moment_abs ma JOIN calendar c ON c.id=ma.calendar_id"
                     " WHERE c.slug=? AND c.name=?", (slug, name)) or 0
     if used:
-        return {"ok": False, "error": f"还有 {used} 个时刻在用这套历法，先改掉它们的时刻"}
+        return {"ok": False, "error": f"Còn {used} thời điểm đang dùng lịch này, hãy sửa thời điểm của chúng trước"}
     d.execute("DELETE FROM calendar WHERE slug=? AND name=?", (slug, name))
     _audit("world.calendar.delete", slug, name=name)
     return {"ok": True}
@@ -117,16 +117,16 @@ def calendar_convert(slug: str, text: str = "", *, calendar_name: str = "",
     if abs_day is not None:
         got = cal.from_abs(defn, int(abs_day))
         got["date_text"] = cal.format_abs(defn, int(abs_day))
-        return {"ok": True, "direction": "abs→日期", "calendar": defn.get("name"), **got}
+        return {"ok": True, "direction": "abs→ngày tháng", "calendar": defn.get("name"), **got}
     if year is not None:
         z = cal.to_abs(defn, int(year), int(month or 1), int(day or 1))
-        return {"ok": True, "direction": "日期→abs", "calendar": defn.get("name"),
+        return {"ok": True, "direction": "ngày tháng→abs", "calendar": defn.get("name"),
                 "abs": z, "date_text": cal.format_abs(defn, z)}
     parsed = cal.parse(text or "", defn)
     if not parsed:
-        return {"ok": False, "error": "看不懂这个时间：写成「开元 1024 年 3 月 15 日」这样"}
+        return {"ok": False, "error": "Không hiểu thời gian này: hãy viết dạng「Khai Nguyên năm 1024 tháng 3 ngày 15」"}
     parsed["date_text"] = cal.format_abs(defn, parsed["abs"])
-    return {"ok": True, "direction": "文本→abs", "calendar": defn.get("name"), **parsed}
+    return {"ok": True, "direction": "văn bản→abs", "calendar": defn.get("name"), **parsed}
 
 
 def set_moment_time(slug: str, moment_id: int, *, text: str = "", abs_day: int | None = None,
@@ -136,7 +136,7 @@ def set_moment_time(slug: str, moment_id: int, *, text: str = "", abs_day: int |
     d = dbm.db()
     m = d.one("SELECT * FROM moment WHERE slug=? AND id=?", (slug, moment_id))
     if not m:
-        return {"ok": False, "error": "没这个时刻"}
+        return {"ok": False, "error": "Không có thời điểm này"}
     defn = calendar_get(slug, calendar_name)
     cid = None
     if calendar_name and calendar_name != cal.DEFAULT_NAME:
@@ -146,7 +146,7 @@ def set_moment_time(slug: str, moment_id: int, *, text: str = "", abs_day: int |
     if abs_day is None:
         parsed = cal.parse(text or "", defn)
         if not parsed:
-            return {"ok": False, "error": "看不懂这个时间：写成「开元 1024 年 3 月 15 日」这样"}
+            return {"ok": False, "error": "Không hiểu thời gian này: hãy viết dạng「Khai Nguyên năm 1024 tháng 3 ngày 15」"}
         abs_day = parsed["abs"]
         date_text = cal.format_abs(defn, abs_day)
     else:
@@ -542,13 +542,13 @@ def state_of_entity(slug: str, name: str, at: str | int | None = None) -> dict:
     """某个实体在**某一时刻**的状态（没给时刻 = 最新状态）。"""
     from ..store import safe_slug
     if not safe_slug(slug):
-        return {"error": "作品标识不合法"}
+        return {"error": "Mã tác phẩm không hợp lệ"}
     ent = find_entity(slug, name)
     if not ent:
-        return {"error": f"没找到「{name}」这个实体", "hint": "先用世界引擎建一个，或换个叫法"}
+        return {"error": f"Không tìm thấy thực thể「{name}」", "hint": "Hãy tạo một cái bằng động cơ thế giới trước, hoặc đổi cách gọi"}
     cutoff = _cutoff_of(slug, at)
     if isinstance(at, str) and at.strip() and cutoff is None:
-        return {"error": f"没有「{at}」这个时刻"}
+        return {"error": f"Không có thời điểm「{at}」"}
     calc = compute_state(slug, ent["id"], cutoff)
     return {"entity": {"id": ent["id"], "kind": ent["kind"], "name": ent["name"],
                        "data": dbm.db().jloads(ent["data_json"], {}),
@@ -571,12 +571,12 @@ def retro(slug: str, at=None, subject: str = "", *, limit: int = 40) -> dict:
     d = dbm.db()
     cutoff = _cutoff_of(slug, at)
     if isinstance(at, str) and at.strip() and cutoff is None:
-        return {"error": f"没有「{at}」这个时刻", "hint": "先在时间线上建这个时刻，或用章节序号"}
+        return {"error": f"Không có thời điểm「{at}」", "hint": "Hãy tạo thời điểm này trên dòng thời gian trước, hoặc dùng số thứ tự chương"}
     marks = {m["order_no"]: m for m in list_moments(slug)}
     if subject:
         ents = [e for e in [find_entity(slug, subject)] if e]
         if not ents:
-            return {"error": f"没找到「{subject}」这个实体"}
+            return {"error": f"Không tìm thấy thực thể「{subject}」"}
     else:
         ents = d.query("SELECT * FROM entity WHERE slug=? ORDER BY kind,name LIMIT ?", (slug, limit))
     out_ents = []
@@ -588,7 +588,7 @@ def retro(slug: str, at=None, subject: str = "", *, limit: int = 40) -> dict:
             fm = marks.get(rec["from"]) if rec["from"] is not None else None
             items.append({
                 "key": key, "value": rec["value"],
-                "since": rec["from"], "sinceLabel": (fm or {}).get("label", "") if fm else "一开始就有",
+                "since": rec["from"], "sinceLabel": (fm or {}).get("label", "") if fm else "Có từ đầu",
                 "sinceDate": (fm or {}).get("date_text", "") if fm else "",
                 "until": rec["to"],
                 "source": rec["source"], "confidence": rec["confidence"],
@@ -599,7 +599,7 @@ def retro(slug: str, at=None, subject: str = "", *, limit: int = 40) -> dict:
     return {"slug": slug, "at": at, "cutoff": cutoff,
             "cutoffLabel": (marks.get(cutoff) or {}).get("label", "") if cutoff is not None else "",
             "entities": out_ents, "entityCount": len(out_ents),
-            "note": "state 是那一刻的完整状态；每条都标了它是从哪个场景/章、哪一行来的"}
+            "note": "state là trạng thái đầy đủ tại thời điểm đó; mỗi mục đều ghi rõ nó đến từ cảnh/chương nào, dòng nào"}
 
 
 # ── 关系网 ──────────────────────────────────────────────────────────────────
@@ -633,7 +633,7 @@ def add_relation(slug: str, from_name: str, to_name: str, kind: str, *,
     a = find_entity(slug, from_name)
     b = find_entity(slug, to_name)
     if not a or not b:
-        raise ValueError("两个角色都得先在世界引擎里存在")
+        raise ValueError("Cả hai nhân vật đều phải tồn tại trong động cơ thế giới trước")
     sid = moment_by_label(slug, since_label)["id"] if since_label and moment_by_label(slug, since_label) else None
     uid = moment_by_label(slug, until_label)["id"] if until_label and moment_by_label(slug, until_label) else None
     rid = dbm.db().execute(
@@ -702,18 +702,18 @@ def conflicts(slug: str) -> list[dict]:
                                    "to": a["to"], "source": a["source"]},
                                   {"id": b["id"], "value": b["value"], "from": b["from"],
                                    "to": b["to"], "source": b["source"]}],
-                        "hint": f"「{e['name']}」的「{key}」在{_span_text(marks, lo, hi)}同时有两个值："
-                                f"「{a['value']}」和「{b['value']}」，改掉一条或改掉时间"})
+                        "hint": f"「{key}」của「{e['name']}」trong {_span_text(marks, lo, hi)} có hai giá trị cùng lúc: "
+                                f"「{a['value']}」và「{b['value']}」, hãy sửa một mục hoặc sửa thời gian"})
     return out
 
 
 def _span_text(marks: dict, lo: int, hi: int) -> str:
     left = marks.get(lo)
     right = marks.get(hi)
-    a = (left or {}).get("label") or "开头"
+    a = (left or {}).get("label") or "Mở đầu"
     if hi >= 10 ** 9:
-        return f"{a}之后"
-    b = (right or {}).get("label") or "现在"
+        return f"sau {a}"
+    b = (right or {}).get("label") or "Hiện tại"
     return f"{a}~{b}"
 
 

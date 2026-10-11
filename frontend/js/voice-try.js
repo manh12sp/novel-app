@@ -52,12 +52,12 @@
     a.onended = () => done('');
     /* 三种失败都要收敛到同一句人话：出声这件事全靠服务器。
        （以前这里是"什么都不做"—— 用户只看到点了没反应。） */
-    a.onerror = () => done('没出声：连不上服务器，或这一段合成失败（试听要走服务器）');
+    a.onerror = () => done('Không có tiếng: không kết nối được máy chủ, hoặc đoạn này tổng hợp thất bại (nghe thử phải đi qua máy chủ)');
     try {
       const p = a.play();
-      if (p && p.catch) p.catch(() => done('没出声：连不上服务器，或这一段合成失败（试听要走服务器）'));
+      if (p && p.catch) p.catch(() => done('Không có tiếng: không kết nối được máy chủ, hoặc đoạn này tổng hợp thất bại (nghe thử phải đi qua máy chủ)'));
     } catch (e) {
-      done('没出声：连不上服务器，或这一段合成失败（试听要走服务器）');
+      done('Không có tiếng: không kết nối được máy chủ, hoặc đoạn này tổng hợp thất bại (nghe thử phải đi qua máy chủ)');
     }
     return true;
   }

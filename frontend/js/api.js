@@ -125,19 +125,19 @@
     let env = null;
     try { env = JSON.parse(raw); } catch (e) { env = null; }
     if (!env) {
-      const err = new Error('本机后端返回看不懂的东西');
+      const err = new Error('Backend trên máy trả về dữ liệu không đọc được');
       err.status = 0; throw err;
     }
     if (!env.status) {
-      const err = new Error(env.error || '本机后端没起来');
+      const err = new Error(env.error || 'Backend trên máy chưa chạy');
       err.status = 0; err.offline = true; throw err;
     }
     let data = null;
     try { data = env.body ? JSON.parse(env.body) : null; } catch (e) { data = env.body; }
-    if (env.status === 401) { App.needLogin(); throw new Error('未登录'); }
+    if (env.status === 401) { App.needLogin(); throw new Error('Chưa đăng nhập'); }
     if (env.status >= 400) {
-      const msg = (data && (data.detail || data.message)) || ('请求失败 ' + env.status);
-      const err = new Error(typeof msg === 'string' ? msg : '请求失败 ' + env.status);
+      const msg = (data && (data.detail || data.message)) || ('Yêu cầu thất bại ' + env.status);
+      const err = new Error(typeof msg === 'string' ? msg : 'Yêu cầu thất bại ' + env.status);
       err.status = env.status; err.data = data;
       throw err;
     }
@@ -193,7 +193,7 @@
        直接给一句人话，**不要**往 file:///…/api/… 上打一发注定失败的请求 ——
        那样网络面板里会留下一串打不出去的地址，排错时特别误导人。 */
     if (ON_FILE && !baseOf()) {
-      const err = new Error('App 还在启动后端的服务，稍等一下');
+      const err = new Error('App vẫn đang khởi động dịch vụ backend, chờ một chút');
       err.offline = true; err.status = 0;
       throw err;
     }
@@ -211,17 +211,17 @@
       });
     } catch (netErr) {
       // fetch 直接抛 = 压根没连上（断网 / 服务器没起来），跟 401 是两回事
-      const err = new Error('连不上服务器');
+      const err = new Error('Không kết nối được máy chủ');
       err.offline = true;
       throw err;
     }
-    if (r.status === 401) { App.needLogin(); throw new Error('未登录'); }
+    if (r.status === 401) { App.needLogin(); throw new Error('Chưa đăng nhập'); }
     const txt = await r.text();
     let data = null;
     try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = txt; }
     if (!r.ok) {
-      const msg = (data && (data.detail || data.message)) || ('请求失败 ' + r.status);
-      const err = new Error(typeof msg === 'string' ? msg : '请求失败 ' + r.status);
+      const msg = (data && (data.detail || data.message)) || ('Yêu cầu thất bại ' + r.status);
+      const err = new Error(typeof msg === 'string' ? msg : 'Yêu cầu thất bại ' + r.status);
       err.status = r.status; err.data = data;
       try { noteReq(path, (performance.now() - __t0), false); } catch (e2) {}
       throw err;

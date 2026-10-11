@@ -47,10 +47,10 @@ async def bookmark_add(request: Request, payload: dict = Body(...)):
     s = _slug(payload.get("slug"))
     path = str(payload.get("path") or "")
     if not path:
-        raise HTTPException(400, "得说清是哪一章")
+        raise HTTPException(400, "Phải nói rõ là chương nào")
     bid = dbm.db().execute(
         "INSERT INTO bookmark(slug,path,percent,text,created_at) VALUES(?,?,?,?,?)",
-        (s, path, num(payload.get("percent"), 0.0, kind=float, lo=0, hi=100, name="书签位置"),
+        (s, path, num(payload.get("percent"), 0.0, kind=float, lo=0, hi=100, name="Vị trí dấu trang"),
          str(payload.get("text") or "")[:200],
          now_ms()))
     return {"ok": True, "id": bid}
@@ -68,7 +68,7 @@ async def bookmark_delete(request: Request, id: int = 0, slug: str = "", path: s
         d.execute("DELETE FROM bookmark WHERE slug=? AND path=? AND percent BETWEEN ? AND ?",
                   (s, path, max(0.0, percent - 0.005), percent + 0.005))
     else:
-        raise HTTPException(400, "要删哪个书签？")
+        raise HTTPException(400, "Xóa dấu trang nào?")
     return {"ok": True}
 
 
@@ -97,7 +97,7 @@ async def progress_set(request: Request, payload: dict = Body(...)):
         " percent=excluded.percent, extra_json=excluded.extra_json,"
         " updated_at=excluded.updated_at",
         (s, str(payload.get("path") or ""),
-         num(payload.get("percent"), 0.0, kind=float, lo=0, hi=100, name="阅读进度"),
+         num(payload.get("percent"), 0.0, kind=float, lo=0, hi=100, name="Tiến độ đọc"),
          dbm.Database.jdumps(payload.get("extra") or {}), now_ms()))
     return {"ok": True}
 
@@ -123,13 +123,13 @@ async def term_save(request: Request, payload: dict = Body(...)):
     s = _slug(payload.get("slug"))
     name = str(payload.get("name") or "").strip()
     if not name:
-        raise HTTPException(400, "术语得有名字")
+        raise HTTPException(400, "Thuật ngữ phải có tên")
     aliases = [str(a).strip() for a in (payload.get("aliases") or []) if str(a).strip()]
     tid = payload.get("id")
     d = dbm.db()
     if tid:
         if not d.one("SELECT id FROM term WHERE id=? AND slug=?", (tid, s)):
-            raise HTTPException(404, "没有这条术语")
+            raise HTTPException(404, "Không có thuật ngữ này")
         d.execute("UPDATE term SET name=?, aliases_json=?, kind=?, note=?, updated_at=?"
                   " WHERE id=?",
                   (name, dbm.Database.jdumps(aliases), str(payload.get("kind") or ""),
@@ -142,7 +142,7 @@ async def term_save(request: Request, payload: dict = Body(...)):
                          str(payload.get("kind") or ""), str(payload.get("note") or ""),
                          now_ms()))
     except Exception:
-        raise HTTPException(400, "已经有一条同名术语了")
+        raise HTTPException(400, "Đã có một thuật ngữ cùng tên")
     return {"ok": True, "id": tid}
 
 
@@ -151,7 +151,7 @@ async def term_delete(request: Request, id: int, slug: str = ""):
     current_user(request)
     s = _slug(slug)
     if not dbm.db().one("SELECT id FROM term WHERE id=? AND slug=?", (id, s)):
-        raise HTTPException(404, "没有这条术语")
+        raise HTTPException(404, "Không có thuật ngữ này")
     dbm.db().execute("DELETE FROM term WHERE id=?", (id,))
     return {"ok": True}
 
@@ -177,7 +177,7 @@ async def term_check(request: Request, payload: dict = Body(...)):
                 if a in text:
                     issues.append({"kind": "alias", "term": t["name"], "variant": a,
                                    "path": c["path"], "name": c["name"],
-                                   "hint": f"这里用的是「{a}」，术语表里写的是「{t['name']}」"})
+                                   "hint": f"Ở đây dùng「{a}」, bảng thuật ngữ ghi là「{t['name']}」"})
                     break
     for c in files[:60]:
         try:
@@ -191,7 +191,7 @@ async def term_check(request: Request, payload: dict = Body(...)):
                 if bad != name and bad in text:
                     issues.append({"kind": "typo", "term": name, "variant": bad,
                                    "path": c["path"], "name": c["name"],
-                                   "hint": f"「{bad}」是不是「{name}」写错了"})
+                                   "hint": f"「{bad}」có phải là viết sai của「{name}」không"})
                     break
     return {"items": issues[:200], "count": len(issues)}
 
@@ -270,7 +270,7 @@ async def material_item(request: Request, slug: str, id: int):
     s = _slug(slug)
     row = dbm.db().one("SELECT * FROM material WHERE id=? AND slug=?", (id, s))
     if not row:
-        raise HTTPException(404, "没有这条素材")
+        raise HTTPException(404, "Không có tư liệu này")
     return {"item": _material_row(dict(row), False)}
 
 
@@ -280,13 +280,13 @@ async def material_save(request: Request, payload: dict = Body(...)):
     s = _slug(payload.get("slug"))
     title = str(payload.get("title") or "").strip()
     if not title:
-        raise HTTPException(400, "素材得有个标题")
+        raise HTTPException(400, "Tư liệu phải có tiêu đề")
     tags = [str(t).strip() for t in (payload.get("tags") or []) if str(t).strip()]
     mid = payload.get("id")
     d = dbm.db()
     if mid:
         if not d.one("SELECT id FROM material WHERE id=? AND slug=?", (mid, s)):
-            raise HTTPException(404, "没有这条素材")
+            raise HTTPException(404, "Không có tư liệu này")
         d.execute("UPDATE material SET kind=?, title=?, body=?, tags_json=?, path=?,"
                   " updated_at=? WHERE id=?",
                   (str(payload.get("kind") or "note"), title, str(payload.get("body") or ""),
@@ -314,7 +314,7 @@ async def material_delete(request: Request, id: int = 0, ids: str = "", slug: st
         todo.append(int(id))
     todo = list(dict.fromkeys(todo))
     if not todo:
-        raise HTTPException(400, "要删哪条？给 id 或 ids")
+        raise HTTPException(400, "Xóa mục nào? Hãy cho id hoặc ids")
     d = dbm.db()
     gone, missing = [], []
     for mid in todo:
@@ -325,7 +325,7 @@ async def material_delete(request: Request, id: int = 0, ids: str = "", slug: st
     for mid in gone:
         d.execute("DELETE FROM material WHERE id=?", (mid,))
     if not gone:
-        raise HTTPException(404, "这些素材在「%s」里找不到" % s)
+        raise HTTPException(404, "Không tìm thấy các tư liệu này trong「%s」" % s)
     return {"ok": True, "deleted": gone, "count": len(gone), "missing": missing}
 
 
@@ -357,13 +357,13 @@ async def replace(request: Request, payload: dict = Body(...)):
     find = str(payload.get("find") or "")
     to = str(payload.get("replace") or "")
     if not find:
-        raise HTTPException(400, "要替换什么？")
+        raise HTTPException(400, "Thay thế cái gì?")
     scope = str(payload.get("scope") or "manuscript")
     limit_path = str(payload.get("path") or "")
     if limit_path:
         files = [c for c in chapter_files(s) if c["path"] == limit_path]
         if not files:
-            raise HTTPException(404, "没有这一章")
+            raise HTTPException(404, "Không có chương này")
     else:
         files = [c for c in chapter_files(s) if c["path"].startswith(scope)] or chapter_files(s)
     hits = []
@@ -383,7 +383,7 @@ async def replace(request: Request, payload: dict = Body(...)):
     changed = 0
     for h in hits:
         text = read_text(s, h["path"])
-        write_text(s, h["path"], text.replace(find, to), origin="user", note="全文替换")
+        write_text(s, h["path"], text.replace(find, to), origin="user", note="Thay thế toàn văn")
         changed += h["count"]
     from .books import sync_book
     sync_book(s)

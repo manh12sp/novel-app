@@ -137,7 +137,7 @@
   background-color:var(--paper-2);background-size:cover;background-position:center;
   display:grid;place-items:center;font-size:var(--t-sm);color:var(--ink-3);
 }
-.ubg-prev:not(.has)::after{content:'还没传图 · 现在用的是默认纸纹'}
+.ubg-prev:not(.has)::after{content:'Chưa tải ảnh · đang dùng vân giấy mặc định'}
 .ubg-state{margin-top:var(--sp-2);font-size:var(--t-sm);color:var(--ink-2);line-height:1.6}
 .ubg-state .ubg-none{color:var(--ink-3)}
 .ubg-state .ubg-on{color:var(--accent);font-weight:var(--w-medium)}

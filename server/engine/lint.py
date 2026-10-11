@@ -23,7 +23,7 @@ from bisect import bisect_right
 from . import lint_rules as R
 
 SEV_WEIGHT = {1: 1.0, 2: 2.5, 3: 5.0}
-GRADE_BANDS = [(90, "干净"), (75, "还行"), (0, "要改")]
+GRADE_BANDS = [(90, "Sạch"), (75, "Tạm được"), (0, "Cần sửa")]
 CATEGORIES = R.CATEGORIES
 RULE_SUMMARY = R.summary()
 
@@ -221,7 +221,7 @@ def _ck_rhythm_mono(text, lines, starts):
     mean = sum(lens) / len(lens)
     var = sum((x - mean) ** 2 for x in lens) / len(lens)
     if var ** 0.5 <= max(3.0, mean * 0.18):
-        return [_h(1, sents[0], lines, f"{len(lens)} 句平均 {mean:.0f} 字，长短几乎一样")]
+        return [_h(1, sents[0], lines, f"{len(lens)} câu trung bình {mean:.0f} chữ, dài ngắn gần như bằng nhau")]
     return []
 
 
@@ -233,7 +233,7 @@ def _ck_para_mono(text, lines, starts):
     mean = sum(lens) / len(lens)
     var = sum((x - mean) ** 2 for x in lens) / len(lens)
     if var ** 0.5 <= max(5.0, mean * 0.22):
-        return [_h(ps[0][0], ps[0][1], lines, f"{len(ps)} 段平均 {mean:.0f} 字，段落长度太齐")]
+        return [_h(ps[0][0], ps[0][1], lines, f"{len(ps)} đoạn trung bình {mean:.0f} chữ, độ dài đoạn quá đều")]
     return []
 
 
@@ -243,7 +243,7 @@ def _ck_para_start(text, lines, starts):
     for i in range(len(ps) - 2):
         a, b, c = (ps[i][1][:1], ps[i + 1][1][:1], ps[i + 2][1][:1])
         if a and a == b == c and a not in "。！？\n":
-            out.append(_h(ps[i][0], ps[i][1], lines, f"连续三段以「{a}」开头"))
+            out.append(_h(ps[i][0], ps[i][1], lines, f"Ba đoạn liền mở đầu bằng「{a}」"))
     return out
 
 
@@ -254,7 +254,7 @@ def _ck_sent_end(text, lines, starts):
         a, b, c = (sents[i].strip()[-1:], sents[i + 1].strip()[-1:],
                    sents[i + 2].strip()[-1:])
         if a == b == c and a not in "。！？…":
-            out.append(_h(1, sents[i][-30:], lines, f"连续三句以「{a}」收尾"))
+            out.append(_h(1, sents[i][-30:], lines, f"Ba câu liền kết thúc bằng「{a}」"))
             break
     return out
 
@@ -262,14 +262,14 @@ def _ck_sent_end(text, lines, starts):
 def _ck_dialog_tag(text, lines, starts):
     n = len(re.findall(r"(说道|问道|答道|回道|应道|回答道|开口道)", text))
     if n >= max(6, len(text) / 1000 * 6):
-        return [_h(1, "说道/问道", lines, f"对话标签 {n} 处")]
+        return [_h(1, "说道/问道", lines, f"Nhãn lời thoại {n} chỗ")]
     return []
 
 
 def _ck_de_density(text, lines, starts):
     n = text.count("的")
     if n >= max(20, len(text) / 1000 * 42):
-        return [_h(1, "的" * 3, lines, f"「的」{n} 处 / {len(text)} 字")]
+        return [_h(1, "的" * 3, lines, f"「的」{n} chỗ / {len(text)} chữ")]
     return []
 
 
@@ -282,8 +282,8 @@ def _ck_de_density(text, lines, starts):
 #      句子数 × 词条数 = 平方级的开销。
 # 现在：一句话只切一次、每组用**一个预编译的择一正则**扫一遍，成语归成语、套话归套话，互不重复。
 
-_IDIOM_GROUP = [r for r in _WORDS if r["category"] == "套路用语"]
-_CLICHE_GROUP = [r for r in _WORDS if r["category"] in ("情绪直述", "心理偷懒")]
+_IDIOM_GROUP = [r for r in _WORDS if r["category"] == "Lối nói sáo mòn"]
+_CLICHE_GROUP = [r for r in _WORDS if r["category"] in ("Kể thẳng cảm xúc", "Lười tả tâm lý")]
 
 
 def _alt_matcher(group):
@@ -321,12 +321,12 @@ def _stack_scan(text: str) -> tuple:
             ids = {i for m in _IDIOM_RX.finditer(text, a, b)
                    for i in _IDIOM_IDS.get(m.group(0), [])}
             if len(ids) >= 3:
-                idiom.append((text.count("\n", 0, a), seg_s, "这句里有 %d 处成语" % len(ids)))
+                idiom.append((text.count("\n", 0, a), seg_s, "Câu này có %d thành ngữ" % len(ids)))
         if _CLICHE_RX is not None and len(cliche) < 5:
             ids = {i for m in _CLICHE_RX.finditer(text, a, b)
                    for i in _CLICHE_IDS.get(m.group(0), [])}
             if len(ids) >= 3:
-                cliche.append((text.count("\n", 0, a), seg_s, "这句里有 %d 处套话" % len(ids)))
+                cliche.append((text.count("\n", 0, a), seg_s, "Câu này có %d sáo ngữ" % len(ids)))
     return tuple(idiom), tuple(cliche)
 
 
@@ -345,7 +345,7 @@ def _ck_quote_mix(text, lines, starts):
     a, b = text.count("「"), text.count("“")
     if a >= 3 and b >= 3:
         i = text.find("“") if b else 0
-        return [_h(text.count("\n", 0, i), "“", lines, f"「」{a} 处、“”{b} 处")]
+        return [_h(text.count("\n", 0, i), "“", lines, f"「」{a} chỗ, “”{b} chỗ")]
     return []
 
 
@@ -354,14 +354,14 @@ def _ck_para_end(text, lines, starts):
     for i, ln in enumerate(lines):
         s = ln.strip()
         if s and re.search(r"(总之|无论如何|不管怎样|说到底|这就是|这才是|由此可见)[。！？…]?$", s):
-            out.append(_h(i, s, lines, "段落末尾总结"))
+            out.append(_h(i, s, lines, "Tổng kết cuối đoạn"))
     return out
 
 
 def _ck_chapter_start(text, lines, starts):
     head = "\n".join(lines[:6])
-    for pat, why in ((r"(注定|将会|即将|从此)", "开头就预告"),
-                     (r"(这一天|那一刻|那一夜)[，,]?[^。\n]{0,20}(注定|改变)", "开头就总结")):
+    for pat, why in ((r"(注定|将会|即将|从此)", "Mở đầu đã báo trước"),
+                     (r"(这一天|那一刻|那一夜)[，,]?[^。\n]{0,20}(注定|改变)", "Mở đầu đã tổng kết")):
         if re.search(pat, head):
             return [_h(0, lines[0] if lines else "", lines, why)]
     return []
@@ -370,27 +370,27 @@ def _ck_chapter_start(text, lines, starts):
 def _ck_chapter_end(text, lines, starts):
     tail = "\n".join(lines[-4:])
     if re.search(r"(未完待续|预知后事|敬请期待|下回分解)", tail) or tail.strip().endswith("……"):
-        return [_h(max(0, len(lines) - 2), lines[-1] if lines else "", lines, "结尾喊口号/留省略号")]
+        return [_h(max(0, len(lines) - 2), lines[-1] if lines else "", lines, "Kết bằng hô khẩu hiệu/để lửng dấu ba chấm")]
     return []
 
 
 def _density_rule(text, lines, token: str, per_k: float, floor: int, what: str):
     n = text.count(token)
     if n >= max(floor, len(text) / 1000 * per_k):
-        return [_h(1, token, lines, f"{what} {n} 处")]
+        return [_h(1, token, lines, f"{what} {n} chỗ")]
     return []
 
 
 def _ck_exclaim(text, lines, starts):
-    return _density_rule(text, lines, "！", 8, 8, "感叹号")
+    return _density_rule(text, lines, "！", 8, 8, "Dấu chấm than")
 
 
 def _ck_dash(text, lines, starts):
-    return _density_rule(text, lines, "——", 6, 4, "破折号")
+    return _density_rule(text, lines, "——", 6, 4, "Dấu gạch ngang")
 
 
 def _ck_ellipsis(text, lines, starts):
-    return _density_rule(text, lines, "…", 10, 6, "省略号")
+    return _density_rule(text, lines, "…", 10, 6, "Dấu ba chấm")
 
 
 def _ck_short_run(text, lines, starts):
@@ -399,7 +399,7 @@ def _ck_short_run(text, lines, starts):
     for s in sents:
         run = run + 1 if len(s) <= 8 else 0
         if run >= 5:
-            return [_h(1, s, lines, "连着五句都很短")]
+            return [_h(1, s, lines, "Năm câu liền đều rất ngắn")]
     return []
 
 
@@ -407,7 +407,7 @@ def _ck_adverb_start(text, lines, starts):
     sents = [s.strip() for s in _sentences(text) if s.strip()]
     for i in range(len(sents) - 1):
         if re.match(r"^[\u4e00-\u9fa5]{1,4}地", sents[i]) and re.match(r"^[\u4e00-\u9fa5]{1,4}地", sents[i + 1]):
-            return [_h(1, sents[i], lines, "连着两句以副词开头")]
+            return [_h(1, sents[i], lines, "Hai câu liền mở đầu bằng phó từ")]
     return []
 
 
@@ -417,27 +417,27 @@ def _ck_adj_run(text, lines, starts):
     for s in sents:
         run = run + 1 if re.match(r"^(很|非常|十分|格外|无比)", s) else 0
         if run >= 3:
-            return [_h(1, s, lines, "连着三句都是「很…」判断句")]
+            return [_h(1, s, lines, "Ba câu liền đều là câu phán đoán「rất…」")]
     return []
 
 
 def _ck_punct_run(text, lines, starts):
     for m in re.finditer(r"[，。！？；：]{2,}|…{3,}|—{4,}", text):
-        return [_h(text.count("\n", 0, m.start()), m.group(0), lines, "标点连排")]
+        return [_h(text.count("\n", 0, m.start()), m.group(0), lines, "Dấu câu xếp liền")]
     return []
 
 
 def _ck_space_run(text, lines, starts):
     for i, ln in enumerate(lines):
         if re.search(r"[\u4e00-\u9fa5]\s{2,}[\u4e00-\u9fa5]", ln):
-            return [_h(i, ln, lines, "多余空格")]
+            return [_h(i, ln, lines, "Khoảng trắng thừa")]
     return []
 
 
 def _ck_name_repeat(text, lines, starts):
     for i, ln in enumerate(lines):
         for m in re.finditer(r"([\u4e00-\u9fa5]{2,3})(?:[\u4e00-\u9fa5，、]{0,10}\1){4,}", ln):
-            return [_h(i, ln, lines, f"「{m.group(1)}」在一段里重复太多次")]
+            return [_h(i, ln, lines, f"「{m.group(1)}」lặp quá nhiều lần trong một đoạn")]
     return []
 
 
@@ -445,23 +445,23 @@ def _ck_pronoun_start(text, lines, starts):
     ps = _paras(lines)
     n = sum(1 for _, p in ps if p[:1] in ("他", "她"))
     if len(ps) >= 6 and n / len(ps) >= 0.9:
-        return [_h(ps[0][0], ps[0][1], lines, f"{n}/{len(ps)} 段以「他/她」开头")]
+        return [_h(ps[0][0], ps[0][1], lines, f"{n}/{len(ps)} đoạn mở đầu bằng「anh/cô」")]
     return []
 
 
 def _ck_metaphor_dense(text, lines, starts):
-    return _density_rule(text, lines, "像", 22, 10, "「像」字比喻")
+    return _density_rule(text, lines, "像", 22, 10, "So sánh bằng chữ「như」")
 
 
 def _ck_passive(text, lines, starts):
-    return _density_rule(text, lines, "被", 18, 8, "「被」字句")
+    return _density_rule(text, lines, "被", 18, 8, "Câu chữ「bị」")
 
 
 def _ck_vp_mix(text, lines, starts):
     for i, ln in enumerate(lines):
         if re.search(r"我[^。！？\n]{0,20}他|他[^。！？\n]{0,20}我", ln) and ("我" in ln and "他" in ln) \
                 and re.search(r"(走过去|转过头|心里想|说道)", ln):
-            return [_h(i, ln, lines, "同一段里人称混用")]
+            return [_h(i, ln, lines, "Trộn ngôi kể trong cùng một đoạn")]
     return []
 
 
@@ -478,7 +478,7 @@ def _ck_vp_jump(text, lines, starts):
         b_me = len(re.findall(r"[我咱]", b))
         b_ta = len(re.findall(r"[他她]", b))
         if a_me >= 3 and a_ta == 0 and b_ta >= 3 and b_me == 0:
-            out.append(_h(ps[i + 1][0], b, lines, "上一段第一人称、这一段第三人称，视角跳了"))
+            out.append(_h(ps[i + 1][0], b, lines, "Đoạn trước ngôi thứ nhất, đoạn này ngôi thứ ba, góc nhìn bị nhảy"))
     return out[:3]
 
 
@@ -486,14 +486,14 @@ def _ck_quote_mono(text, lines, starts):
     n1 = text.count("「")
     n2 = text.count("“")
     if n1 >= 6 and n2 == 0:
-        return [_h(1, "「", lines, f"全书 {n1} 处都只用「」，对话形式单一")]
+        return [_h(1, "「", lines, f"Cả sách {n1} chỗ đều chỉ dùng「」, hình thức thoại đơn điệu")]
     return []
 
 
 def _ck_blank_dense(text, lines, starts):
     blanks = sum(1 for ln in lines if not ln.strip())
     if len(lines) and blanks / max(1, len(lines)) > 0.6:
-        return [_h(1, "", lines, f"{blanks}/{len(lines)} 行是空行")]
+        return [_h(1, "", lines, f"{blanks}/{len(lines)} dòng là dòng trống")]
     return []
 
 
@@ -502,14 +502,14 @@ def _ck_dialog_ratio(text, lines, starts):
         return []
     r = text.count("「") / (len(text) / 1000)
     if r > 14:
-        return [_h(1, "「", lines, "几乎全是对话")]
+        return [_h(1, "「", lines, "Gần như toàn là thoại")]
     if r == 0 and len(text) > 800:
-        return [_h(1, "", lines, "整章没有对话")]
+        return [_h(1, "", lines, "Cả chương không có thoại")]
     return []
 
 
 def _ck_emotion_adj(text, lines, starts):
-    return _density_rule(text, lines, "很", 12, 6, "「很…」式判断")
+    return _density_rule(text, lines, "很", 12, 6, "Phán đoán kiểu「rất…」")
 
 
 def _ck_sent_repeat(text, lines, starts):
@@ -519,19 +519,19 @@ def _ck_sent_repeat(text, lines, starts):
         b = set(re.findall(r"[\u4e00-\u9fa5]{2}", sents[i + 1]))
         common = a & b
         if len(common) >= 4:
-            return [_h(1, sents[i + 1], lines, "相邻两句实词重复：" + "、".join(sorted(common)[:5]))]
+            return [_h(1, sents[i + 1], lines, "Hai câu kề nhau lặp thực từ: " + "、".join(sorted(common)[:5]))]
     return []
 
 
 def _ck_number_spam(text, lines, starts):
-    return _density_rule(text, lines, "0", 20, 12, "数字")
+    return _density_rule(text, lines, "0", 20, 12, "Con số")
 
 
 def _ck_seq_word(text, lines, starts):
     for i, ln in enumerate(lines):
         n = len(re.findall(r"(然后|于是|接着|随后|因此|所以|然而|但是)", ln))
         if n >= 3:
-            return [_h(i, ln, lines, "一段里挤了好几个过渡词")]
+            return [_h(i, ln, lines, "Một đoạn chen chúc mấy từ chuyển ý")]
     return []
 
 
@@ -570,7 +570,7 @@ CHECKERS = {
     "doc.quote.mix": _ck_quote_mix,
     "doc.cliche.stack": _ck_cliche_stack,
 }
-assert set(CHECKERS) == {r["id"] for r in _DOC}, "篇章检查器和规则表对不上"
+assert set(CHECKERS) == {r["id"] for r in _DOC}, "Bộ kiểm tra cấp văn bản và bảng quy tắc không khớp"
 
 
 # ── 全章缓存（打磨加的）────────────────────────────────────────────────

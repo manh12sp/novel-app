@@ -27,7 +27,7 @@ def _scope(payload: dict) -> tuple[str, str]:
     slug = str(payload.get("slug") or "").strip() if scope == "book" else ""
     if scope == "book":
         if not slug:
-            raise HTTPException(400, "缺少 slug")
+            raise HTTPException(400, "Thiếu slug")
         from .books import require_book
         slug = require_book(slug)
     return scope, slug
@@ -51,9 +51,9 @@ def _next_version(scope: str, slug: str, key: str) -> int:
 def _check_key(key: str) -> str:
     key = str(key or "").strip()
     if not key:
-        raise HTTPException(400, "缺少提示词 key")
+        raise HTTPException(400, "Thiếu key của lời nhắc")
     if key not in PROFILES and not key.startswith("custom."):
-        raise HTTPException(400, "不认识的提示词：%s" % key)
+        raise HTTPException(400, "Không nhận ra lời nhắc: %s" % key)
     return key
 
 
@@ -110,7 +110,7 @@ async def prompts_save(request: Request, payload: dict = Body(...)):
     scope, slug = _scope(payload)
     body = str(payload.get("body") or "")
     if not body.strip():
-        raise HTTPException(400, "正文不能是空的（想恢复内置的就点「恢复内置」）")
+        raise HTTPException(400, "Nội dung không được trống (muốn khôi phục bản có sẵn thì bấm「Khôi phục bản có sẵn」)")
     note = str(payload.get("note") or "").strip()[:200]
     d = dbm.db()
     ver = _next_version(scope, slug, key)
@@ -152,12 +152,12 @@ async def prompts_diff(request: Request, key: str, version: int, scope: str = "g
     old = dbm.db().one("SELECT body,note FROM prompt_version WHERE scope=? AND slug=? AND key=?"
                        " AND version=?", (scope, slug, key, int(version)))
     if not old:
-        raise HTTPException(404, "没有这个版本")
+        raise HTTPException(404, "Không có phiên bản này")
     cur_body, source, cur_ver = effective(key, slug)
     diff = list(difflib.unified_diff((old["body"] or "").splitlines(),
                                     (cur_body or "").splitlines(),
                                     fromfile="v%d" % int(version),
-                                    tofile="现在（%s）" % ("没改过" if source == "builtin" else "v%d" % cur_ver),
+                                    tofile="Hiện tại (%s)" % ("chưa sửa" if source == "builtin" else "v%d" % cur_ver),
                                     lineterm="", n=2))
     return {"key": key, "version": int(version), "note": old["note"],
             "from": old["body"], "to": cur_body, "diff": diff[:400]}
@@ -169,11 +169,11 @@ async def prompts_rollback(request: Request, payload: dict = Body(...)):
     current_user(request)
     key = _check_key(payload.get("key"))
     scope, slug = _scope(payload)
-    ver = num(payload.get("version"), 0, name="提示词版本号")
+    ver = num(payload.get("version"), 0, name="Số phiên bản lời nhắc")
     old = dbm.db().one("SELECT body FROM prompt_version WHERE scope=? AND slug=? AND key=? AND version=?",
                        (scope, slug, key, ver))
     if not old:
-        raise HTTPException(404, "没有这个版本")
+        raise HTTPException(404, "Không có phiên bản này")
     cur = _row(scope, slug, key)
     new_ver = _next_version(scope, slug, key)
     d = dbm.db()
@@ -184,7 +184,7 @@ async def prompts_rollback(request: Request, payload: dict = Body(...)):
               (scope, slug, key, name, key, old["body"], new_ver, now_ms()))
     d.execute("INSERT INTO prompt_version(scope,slug,key,version,body,note,created_at)"
               " VALUES(?,?,?,?,?,?,?)",
-              (scope, slug, key, new_ver, old["body"], "回滚到 v%d" % ver, now_ms()))
+              (scope, slug, key, new_ver, old["body"], "Quay lại v%d" % ver, now_ms()))
     return {"ok": True, "version": new_ver, "from": ver}
 
 
@@ -234,9 +234,9 @@ async def snippets_save(request: Request, payload: dict = Body(...)):
     if not key:
         key = "s" + str(now_ms())
     if not name:
-        raise HTTPException(400, "片段得有个名字")
+        raise HTTPException(400, "Đoạn mẫu phải có tên")
     if not body.strip():
-        raise HTTPException(400, "片段内容是空的")
+        raise HTTPException(400, "Nội dung đoạn mẫu đang trống")
     dbm.db().execute(
         "INSERT INTO snippet(key,name,body,tags,use_count,updated_at) VALUES(?,?,?,?,0,?)"
         " ON CONFLICT(key) DO UPDATE SET name=excluded.name, body=excluded.body,"
